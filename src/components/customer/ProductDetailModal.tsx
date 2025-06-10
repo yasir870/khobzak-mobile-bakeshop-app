@@ -85,7 +85,7 @@ const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModa
 
           {/* Price */}
           <div className="text-center">
-            <span className="text-2xl font-bold text-amber-700">{product.price} SAR</span>
+            <span className="text-2xl font-bold text-amber-700">{product.price} IQD</span>
           </div>
 
           {/* Quantity Selector */}
@@ -114,7 +114,7 @@ const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModa
           {/* Total Price */}
           <div className="text-center">
             <p className="text-amber-600">
-              Total: <span className="font-bold text-lg">{product.price * quantity} SAR</span>
+              Total: <span className="font-bold text-lg">{product.price * quantity} IQD</span>
             </p>
           </div>
 

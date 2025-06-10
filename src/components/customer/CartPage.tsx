@@ -1,49 +1,32 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, ShoppingCart, Clock, Package, CheckCircle } from 'lucide-react';
+import CheckoutPage from './CheckoutPage';
 
 interface CartPageProps {
   onBack: () => void;
-  onShowOrders: () => void;
   cartItemCount: number;
 }
 
 const CartPage = ({ onBack, cartItemCount }: CartPageProps) => {
   const [activeTab, setActiveTab] = useState('cart');
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [orderHistory, setOrderHistory] = useState<any[]>([]);
 
-  // Mock cart items
+  // Mock cart items - in real app, this would come from context/state
   const cartItems = [
-    { id: 1, name: 'Traditional Arabic Bread', nameAr: 'خبز عربي تقليدي', price: 5, quantity: 2 },
-    { id: 2, name: 'Cheese Bread', nameAr: 'خبز الجبن', price: 8, quantity: 1 },
+    { id: 1, name: 'Traditional Arabic Bread', nameAr: 'خبز عربي تقليدي', price: 5000, quantity: 2 },
+    { id: 2, name: 'Cheese Bread', nameAr: 'خبز الجبن', price: 8000, quantity: 1 },
   ];
 
-  // Mock order history
-  const orderHistory = [
-    {
-      id: 'ORD001',
-      date: '2024-06-08',
-      status: 'delivered',
-      items: ['Traditional Arabic Bread x2', 'Za\'atar Bread x1'],
-      total: 16,
-    },
-    {
-      id: 'ORD002',
-      date: '2024-06-05',
-      status: 'in-transit',
-      items: ['Whole Wheat Bread x3', 'Sesame Bread x2'],
-      total: 33,
-    },
-    {
-      id: 'ORD003',
-      date: '2024-06-01',
-      status: 'delivered',
-      items: ['Sweet Date Bread x1', 'Cheese Bread x2'],
-      total: 25,
-    },
-  ];
+  useEffect(() => {
+    // Load order history from localStorage
+    const orders = JSON.parse(localStorage.getItem('userOrders') || '[]');
+    setOrderHistory(orders);
+  }, []);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -62,12 +45,32 @@ const CartPage = ({ onBack, cartItemCount }: CartPageProps) => {
         return 'Delivered';
       case 'in-transit':
         return 'In Transit';
-      default:
+      case 'processing':
         return 'Processing';
+      default:
+        return 'Pending';
     }
   };
 
   const cartTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+  const handleOrderComplete = (orderData: any) => {
+    // Update order history
+    setOrderHistory(prev => [orderData, ...prev]);
+    setShowCheckout(false);
+    setActiveTab('orders');
+  };
+
+  if (showCheckout) {
+    return (
+      <CheckoutPage
+        onBack={() => setShowCheckout(false)}
+        onOrderComplete={handleOrderComplete}
+        cartItems={cartItems}
+        cartTotal={cartTotal}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
@@ -111,12 +114,12 @@ const CartPage = ({ onBack, cartItemCount }: CartPageProps) => {
                             <h3 className="font-medium text-amber-800">{item.name}</h3>
                             <p className="text-sm text-amber-600">{item.nameAr}</p>
                             <p className="text-sm text-gray-600">
-                              {item.price} SAR × {item.quantity}
+                              {item.price} IQD × {item.quantity}
                             </p>
                           </div>
                           <div className="text-right">
                             <p className="font-bold text-amber-700">
-                              {item.price * item.quantity} SAR
+                              {item.price * item.quantity} IQD
                             </p>
                           </div>
                         </div>
@@ -129,9 +132,13 @@ const CartPage = ({ onBack, cartItemCount }: CartPageProps) => {
                   <CardContent className="p-6">
                     <div className="flex justify-between items-center mb-4">
                       <span className="text-lg font-medium text-amber-800">Total:</span>
-                      <span className="text-2xl font-bold text-amber-700">{cartTotal} SAR</span>
+                      <span className="text-2xl font-bold text-amber-700">{cartTotal} IQD</span>
                     </div>
-                    <Button className="w-full bg-amber-600 hover:bg-amber-700" size="lg">
+                    <Button 
+                      className="w-full bg-amber-600 hover:bg-amber-700" 
+                      size="lg"
+                      onClick={() => setShowCheckout(true)}
+                    >
                       Proceed to Checkout
                     </Button>
                   </CardContent>
@@ -169,14 +176,18 @@ const CartPage = ({ onBack, cartItemCount }: CartPageProps) => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {order.items.map((item, index) => (
+                      {order.items.map((item: string, index: number) => (
                         <p key={index} className="text-sm text-gray-600">• {item}</p>
                       ))}
                     </div>
                     <div className="mt-4 pt-4 border-t border-gray-200">
                       <div className="flex justify-between items-center">
                         <span className="font-medium text-amber-800">Total:</span>
-                        <span className="font-bold text-amber-700">{order.total} SAR</span>
+                        <span className="font-bold text-amber-700">{order.total} IQD</span>
+                      </div>
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-sm text-gray-600">Payment:</span>
+                        <span className="text-sm font-medium">{order.paymentMethod === 'cash' ? 'Cash on Delivery' : 'Online Payment'}</span>
                       </div>
                     </div>
                   </CardContent>

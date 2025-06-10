@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, User, Clock, MessageSquare, LogOut } from 'lucide-react';
 import ProductDetailModal from './ProductDetailModal';
 import CartPage from './CartPage';
+import ProfilePage from './ProfilePage';
 
 interface CustomerDashboardProps {
   onLogout: () => void;
@@ -26,6 +26,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
   const [cartItems, setCartItems] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState<BreadProduct | null>(null);
   const [showCart, setShowCart] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
 
   const breadTypes: BreadProduct[] = [
@@ -33,7 +34,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
       id: 1,
       name: 'Traditional Arabic Bread',
       nameAr: 'خبز عربي تقليدي',
-      price: 5,
+      price: 5000,
       description: 'Fresh, soft traditional Arabic flatbread',
       detailedDescription: 'Our traditional Arabic bread is made fresh daily using time-honored recipes passed down through generations. Made with high-quality flour and baked in traditional ovens, this bread has a perfect soft texture and authentic taste that pairs perfectly with any meal.',
       images: ['🥖', '🍞', '🥯'],
@@ -43,7 +44,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
       id: 2,
       name: 'Whole Wheat Bread',
       nameAr: 'خبز القمح الكامل',
-      price: 7,
+      price: 7000,
       description: 'Healthy whole wheat bread, rich in fiber',
       detailedDescription: 'Packed with nutrients and fiber, our whole wheat bread is perfect for health-conscious customers. Made with 100% whole wheat flour, this bread provides sustained energy and has a rich, nutty flavor that makes every bite satisfying.',
       images: ['🍞', '🌾', '🥖'],
@@ -53,7 +54,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
       id: 3,
       name: 'Sesame Bread',
       nameAr: 'خبز السمسم',
-      price: 6,
+      price: 6000,
       description: 'Delicious bread topped with sesame seeds',
       detailedDescription: 'Our sesame bread features a golden crust generously topped with premium sesame seeds. The seeds add a delightful crunch and nutty flavor, making this bread perfect for sandwiches or enjoyed on its own.',
       images: ['🥯', '🌰', '🍞'],
@@ -63,7 +64,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
       id: 4,
       name: 'Cheese Bread',
       nameAr: 'خبز الجبن',
-      price: 8,
+      price: 8000,
       description: 'Soft bread filled with melted cheese',
       detailedDescription: 'Indulge in our cheese bread featuring a soft, fluffy texture with pockets of melted cheese throughout. Made with high-quality cheese and fresh ingredients, this bread is perfect for cheese lovers and makes an excellent snack or side dish.',
       images: ['🧀', '🍞', '🥖'],
@@ -73,7 +74,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
       id: 5,
       name: 'Za\'atar Bread',
       nameAr: 'خبز الزعتر',
-      price: 6,
+      price: 6000,
       description: 'Traditional bread with za\'atar herbs',
       detailedDescription: 'Experience the authentic taste of the Middle East with our za\'atar bread. Topped with a aromatic blend of za\'atar herbs, olive oil, and sesame seeds, this bread offers a perfect balance of flavors and is ideal for breakfast or as a healthy snack.',
       images: ['🌿', '🍞', '🥖'],
@@ -83,7 +84,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
       id: 6,
       name: 'Sweet Date Bread',
       nameAr: 'خبز التمر الحلو',
-      price: 9,
+      price: 9000,
       description: 'Sweet bread with dates and honey',
       detailedDescription: 'Our sweet date bread combines the natural sweetness of dates with a touch of honey, creating a delightful treat. Perfect for breakfast or dessert, this bread offers a unique flavor profile that celebrates traditional Middle Eastern ingredients.',
       images: ['🍯', '🥖', '🍞'],
@@ -104,12 +105,14 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
     return (
       <CartPage 
         onBack={() => setShowCart(false)}
-        onShowOrders={() => {
-          setShowCart(false);
-          setShowOrders(true);
-        }}
         cartItemCount={cartItems}
       />
+    );
+  }
+
+  if (showProfile) {
+    return (
+      <ProfilePage onBack={() => setShowProfile(false)} />
     );
   }
 
@@ -172,7 +175,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
                 <CardContent>
                   <p className="text-sm text-gray-600 mb-4">{bread.description}</p>
                   <div className="text-center">
-                    <span className="text-lg font-bold text-amber-700">{bread.price} SAR</span>
+                    <span className="text-lg font-bold text-amber-700">{bread.price} IQD</span>
                   </div>
                 </CardContent>
               </Card>
@@ -185,12 +188,16 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
           <Button 
             variant="outline" 
             className="h-16 flex items-center justify-center space-x-3"
-            onClick={() => setShowOrders(true)}
+            onClick={() => setShowCart(true)}
           >
             <Clock className="h-5 w-5" />
             <span>My Orders</span>
           </Button>
-          <Button variant="outline" className="h-16 flex items-center justify-center space-x-3">
+          <Button 
+            variant="outline" 
+            className="h-16 flex items-center justify-center space-x-3"
+            onClick={() => setShowProfile(true)}
+          >
             <User className="h-5 w-5" />
             <span>Profile</span>
           </Button>

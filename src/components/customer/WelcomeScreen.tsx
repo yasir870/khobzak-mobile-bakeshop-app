@@ -18,6 +18,15 @@ const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  const validateIraqiPhone = (phoneNumber: string) => {
+    // Remove all spaces and special characters except +
+    const cleanPhone = phoneNumber.replace(/[\s-]/g, '');
+    
+    // Check for Iraqi format: 07515497130 or +9647515497130
+    const iraqiPhoneRegex = /^(07\d{9}|\+9647\d{9})$/;
+    return iraqiPhoneRegex.test(cleanPhone);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -33,12 +42,11 @@ const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
       return;
     }
 
-    // Validate phone number format (basic)
-    const phoneRegex = /^\+966[0-9]{9}$/;
-    if (!phoneRegex.test(phone)) {
+    // Validate Iraqi phone number format
+    if (!validateIraqiPhone(phone)) {
       toast({
         title: "Invalid Phone Number",
-        description: "Please enter a valid Saudi phone number (+966XXXXXXXXX).",
+        description: "Please enter a valid Iraqi phone number (07XXXXXXXXX or +9647XXXXXXXXX).",
         variant: "destructive"
       });
       setIsLoading(false);
@@ -47,7 +55,14 @@ const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
 
     try {
       // In real implementation, save to Supabase Users table
-      // For now, simulate API call
+      // For now, simulate API call and store in localStorage
+      const userData = {
+        name,
+        phone: phone.replace(/[\s-]/g, ''), // Store clean phone number
+        completedWelcome: true
+      };
+      localStorage.setItem('userData', JSON.stringify(userData));
+      
       setTimeout(() => {
         toast({
           title: "Welcome to Khobzak!",
@@ -106,10 +121,11 @@ const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+966 5XX XXX XXX"
+                  placeholder="07XXXXXXXXX or +9647XXXXXXXXX"
                   className="border-amber-200 focus:border-amber-500"
                   required
                 />
+                <p className="text-xs text-amber-600">Iraqi phone numbers only</p>
               </div>
 
               <div className="space-y-2">
@@ -122,7 +138,7 @@ const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
                   type="tel"
                   value={phoneConfirm}
                   onChange={(e) => setPhoneConfirm(e.target.value)}
-                  placeholder="+966 5XX XXX XXX"
+                  placeholder="Re-enter your phone number"
                   className="border-amber-200 focus:border-amber-500"
                   required
                 />
