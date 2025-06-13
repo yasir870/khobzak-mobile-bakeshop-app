@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Mail, Phone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface LoginFormProps {
   role: 'customer' | 'driver';
@@ -26,37 +27,61 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
     setIsLoading(true);
 
     try {
-      // For now, simulate authentication
-      // In real implementation, this would use Supabase auth
       if (role === 'driver') {
-        // Simulate driver verification against authorized list
-        const authorizedDrivers = ['driver@khobzak.com', '+966501234567'];
+        // التحقق من السائق في قاعدة البيانات
         const identifier = email || phone;
         
-        if (!authorizedDrivers.includes(identifier)) {
+        const { data: driver, error } = await supabase
+          .from('drivers')
+          .select('*')
+          .or(`email.eq.${identifier},phone.eq.${identifier}`)
+          .single();
+
+        if (error || !driver) {
           toast({
-            title: "Access Denied",
-            description: "You are not authorized as a driver. Please contact administration.",
+            title: "خطأ في تسجيل الدخول",
+            description: "السائق غير موجود في النظام. يرجى التواصل مع الإدارة.",
             variant: "destructive"
           });
           setIsLoading(false);
           return;
         }
-      }
 
-      // Simulate successful login
-      setTimeout(() => {
-        toast({
-          title: "Login Successful",
-          description: `Welcome ${role}!`
-        });
-        onAuthSuccess(role);
-        setIsLoading(false);
-      }, 1000);
+        if (!driver.approved) {
+          toast({
+            title: "حساب غير مُفعّل",
+            description: "حسابك لم يتم تفعيله بعد. يرجى انتظار موافقة الإدارة.",
+            variant: "destructive"
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        // محاكاة تسجيل دخول ناجح للسائق المُفعّل
+        setTimeout(() => {
+          toast({
+            title: "تم تسجيل الدخول بنجاح",
+            description: `مرحباً ${driver.name}!`
+          });
+          onAuthSuccess(role);
+          setIsLoading(false);
+        }, 1000);
+      } else {
+        // للزبائن - محاكاة تسجيل الدخول العادي
+        setTimeout(() => {
+          toast({
+            title: "تم تسجيل الدخول بنجاح",
+            description: `مرحباً بك!`
+          });
+          onAuthSuccess(role);
+          setIsLoading(false);
+        }, 1000);
+      }
     } catch (error) {
+      console.error('Login error:', error);
       toast({
-        title: "Login Failed",
-        description: "Please check your credentials and try again.",
+        title: "خطأ في تسجيل الدخول",
+        description: "حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.",
         variant: "destructive"
       });
       setIsLoading(false);
@@ -72,13 +97,13 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
           className="mb-4 text-amber-700 hover:text-amber-800"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Role Selection
+          العودة لاختيار نوع الحساب
         </Button>
 
         <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
           <CardHeader className="text-center">
             <CardTitle className="text-xl text-amber-800">
-              {role === 'customer' ? 'Customer' : 'Driver'} {isLogin ? 'Login' : 'Register'}
+              {role === 'customer' ? 'زبون' : 'سائق'} - {isLogin ? 'تسجيل دخول' : 'إنشاء حساب'}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -86,14 +111,14 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
               <div className="space-y-2">
                 <Label htmlFor="email" className="flex items-center text-amber-700">
                   <Mail className="mr-2 h-4 w-4" />
-                  Email
+                  البريد الإلكتروني
                 </Label>
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
+                  placeholder="أدخل بريدك الإلكتروني"
                   className="border-amber-200 focus:border-amber-500"
                 />
               </div>
@@ -102,27 +127,27 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
                 <div className="space-y-2">
                   <Label htmlFor="phone" className="flex items-center text-amber-700">
                     <Phone className="mr-2 h-4 w-4" />
-                    Phone Number (Alternative)
+                    رقم الهاتف (بديل)
                   </Label>
                   <Input
                     id="phone"
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+966 5XX XXX XXX"
+                    placeholder="+964 7XX XXX XXX"
                     className="border-amber-200 focus:border-amber-500"
                   />
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-amber-700">Password</Label>
+                <Label htmlFor="password" className="text-amber-700">كلمة المرور</Label>
                 <Input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
+                  placeholder="أدخل كلمة المرور"
                   className="border-amber-200 focus:border-amber-500"
                   required
                 />
@@ -133,7 +158,7 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
                 className="w-full bg-amber-600 hover:bg-amber-700 text-white"
                 disabled={isLoading || (!email && !phone)}
               >
-                {isLoading ? 'Authenticating...' : `${isLogin ? 'Login' : 'Register'} as ${role}`}
+                {isLoading ? 'جاري التحقق...' : `${isLogin ? 'تسجيل دخول' : 'إنشاء حساب'} كـ${role === 'customer' ? 'زبون' : 'سائق'}`}
               </Button>
 
               {role === 'customer' && (
@@ -144,7 +169,7 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
                     onClick={() => setIsLogin(!isLogin)}
                     className="text-amber-600 hover:text-amber-700"
                   >
-                    {isLogin ? "Don't have an account? Register" : "Already have an account? Login"}
+                    {isLogin ? "ليس لديك حساب؟ إنشاء حساب" : "لديك حساب؟ تسجيل دخول"}
                   </Button>
                 </div>
               )}
