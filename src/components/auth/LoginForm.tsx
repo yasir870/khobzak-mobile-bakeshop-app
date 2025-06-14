@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,23 +14,133 @@ interface LoginFormProps {
   onBack: () => void;
 }
 
+const CREDENTIALS_KEY = "khobzak_customer_credentials"; // For remember me
+
 const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const { toast } = useToast();
+
+  // تحميل بيانات محفوظة إذا كان تذكرني مفعل
+  useEffect(() => {
+    if (role === "customer" && isLogin) {
+      const creds = localStorage.getItem(CREDENTIALS_KEY);
+      if (creds) {
+        try {
+          const parsed = JSON.parse(creds);
+          setEmail(parsed.email ?? "");
+          setPassword(parsed.password ?? "");
+          setRememberMe(true);
+        } catch {}
+      }
+    }
+  }, [role, isLogin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      if (role === "customer") {
+        // login 
+        if (isLogin) {
+          // بحث حسب الإيميل وكلمة السر
+          const { data: customer, error } = await supabase
+            .from('customers')
+            .select('*')
+            .eq('email', email)
+            .eq('password', password)
+            .maybeSingle();
+
+          if (!customer) {
+            toast({
+              title: "بيانات خاطئة",
+              description: "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+              variant: "destructive"
+            });
+            setIsLoading(false);
+            return;
+          }
+
+          // حفظ بيانات الدخول إذا تم اختيار "تذكرني"
+          if (rememberMe) {
+            localStorage.setItem(CREDENTIALS_KEY, JSON.stringify({ email, password }));
+          } else {
+            localStorage.removeItem(CREDENTIALS_KEY);
+          }
+
+          toast({
+            title: "تم تسجيل الدخول بنجاح",
+            description: `مرحباً ${customer.name}!`
+          });
+          onAuthSuccess(role);
+          setIsLoading(false);
+        } else {
+          // sign up
+          // تحقق أن الإيميل والهاتف غير مستخدمين
+          const { data: exists } = await supabase
+            .from('customers')
+            .select('id')
+            .or(`email.eq.${email},phone.eq.${phone}`)
+            .maybeSingle();
+
+          if (exists) {
+            toast({
+              title: "استخدام مسبق",
+              description: "الإيميل أو الهاتف مستخدم مسبقًا.",
+              variant: "destructive"
+            });
+            setIsLoading(false);
+            return;
+          }
+
+          // الاسم إلزامي أثناء sign up
+          const nameEl = (document.getElementById("customer-signup-name") as HTMLInputElement);
+          const name = nameEl?.value.trim();
+          if (!name) {
+            toast({
+              title: "الاسم مطلوب",
+              description: "يرجى إدخال الاسم الكامل.",
+              variant: "destructive"
+            });
+            setIsLoading(false);
+            return;
+          }
+
+          // الإضافة
+          const { error } = await supabase
+            .from("customers")
+            .insert([{ email, password, phone, name }]);
+
+          if (error) {
+            toast({
+              title: "خطأ",
+              description: "فشل إنشاء الحساب، جرب لاحقًا.",
+              variant: "destructive"
+            });
+            setIsLoading(false);
+            return;
+          }
+
+          // auto-login بعد التسجيل
+          if (rememberMe) {
+            localStorage.setItem(CREDENTIALS_KEY, JSON.stringify({ email, password }));
+          }
+          toast({ title: "تم إنشاء الحساب!", description: "يمكنك الآن تسجيل الدخول" });
+          setIsLogin(true);
+          setIsLoading(false);
+        }
+        return; // نهاية منطق الزبون
+      }
+
+      // للسائقين (نفس المنطق القديم)
       if (role === 'driver') {
-        // التحقق من السائق في قاعدة البيانات
         const identifier = email || phone;
-        
+
         const { data: driver, error } = await supabase
           .from('drivers')
           .select('*')
@@ -57,21 +167,10 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
           return;
         }
 
-        // محاكاة تسجيل دخول ناجح للسائق المُفعّل
         setTimeout(() => {
           toast({
             title: "تم تسجيل الدخول بنجاح",
             description: `مرحباً ${driver.name}!`
-          });
-          onAuthSuccess(role);
-          setIsLoading(false);
-        }, 1000);
-      } else {
-        // للزبائن - محاكاة تسجيل الدخول العادي
-        setTimeout(() => {
-          toast({
-            title: "تم تسجيل الدخول بنجاح",
-            description: `مرحباً بك!`
           });
           onAuthSuccess(role);
           setIsLoading(false);
@@ -108,6 +207,21 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* اسم المستخدم فقط عند الإنشاء */}
+              {role === "customer" && !isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="customer-signup-name" className="flex items-center text-amber-700">
+                    الاسم الكامل
+                  </Label>
+                  <Input
+                    id="customer-signup-name"
+                    type="text"
+                    placeholder="أدخل الاسم الكامل"
+                    className="border-amber-200 focus:border-amber-500"
+                  />
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="email" className="flex items-center text-amber-700">
                   <Mail className="mr-2 h-4 w-4" />
@@ -120,6 +234,7 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="أدخل بريدك الإلكتروني"
                   className="border-amber-200 focus:border-amber-500"
+                  required
                 />
               </div>
 
@@ -140,6 +255,25 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
                 </div>
               )}
 
+              {/* عند تسجيل الزبون (إنشاء حساب) */}
+              {role === "customer" && !isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="flex items-center text-amber-700">
+                    <Phone className="mr-2 h-4 w-4" />
+                    رقم الهاتف
+                  </Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="07XXXXXXXXX أو +9647XXXXXXXXX"
+                    className="border-amber-200 focus:border-amber-500"
+                    required
+                  />
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-amber-700">كلمة المرور</Label>
                 <Input
@@ -153,12 +287,28 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
                 />
               </div>
 
+              {/* خيار تذكرني للعملاء */}
+              {role === "customer" && (
+                <div className="flex items-center space-x-2 mb-[-0.5rem] rtl:space-x-reverse">
+                  <input
+                    type="checkbox"
+                    id="rememberMe"
+                    checked={rememberMe}
+                    onChange={e => setRememberMe(e.target.checked)}
+                    className="rounded border-amber-400 mr-2 size-4"
+                  />
+                  <Label htmlFor="rememberMe" className="text-amber-700 cursor-pointer select-none">
+                    تذكرني
+                  </Label>
+                </div>
+              )}
+
               <Button
                 type="submit"
                 className="w-full bg-amber-600 hover:bg-amber-700 text-white"
-                disabled={isLoading || (!email && !phone)}
+                disabled={isLoading || (!email && !phone) || (role === "customer" && !password)}
               >
-                {isLoading ? 'جاري التحقق...' : `${isLogin ? 'تسجيل دخول' : 'إنشاء حساب'} كـ${role === 'customer' ? 'زبون' : 'سائق'}`}
+                {isLoading ? (isLogin ? 'جاري التحقق...' : "جاري الإنشاء...") : `${isLogin ? 'تسجيل دخول' : 'إنشاء حساب'} كـ${role === 'customer' ? 'زبون' : 'سائق'}`}
               </Button>
 
               {role === 'customer' && (

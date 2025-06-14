@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      customers: {
+        Row: {
+          created_at: string
+          email: string
+          id: number
+          name: string
+          password: string
+          phone: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: number
+          name: string
+          password: string
+          phone: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: number
+          name?: string
+          password?: string
+          phone?: string
+        }
+        Relationships: []
+      }
       drivers: {
         Row: {
           approved: boolean
