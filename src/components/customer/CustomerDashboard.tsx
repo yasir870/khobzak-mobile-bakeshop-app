@@ -203,8 +203,12 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
                 className="bg-white/90 backdrop-blur-sm hover:shadow-lg transition-shadow cursor-pointer"
                 onClick={() => handleProductClick(bread)}
               >
-                <CardHeader className="text-center">
-                  <div className="text-4xl mb-2">{bread.images[0]}</div>
+                <CardHeader className="text-center flex flex-col items-center">
+                  <img
+                    src={bread.images[0]}
+                    alt={bread.name}
+                    className="h-32 w-32 object-cover rounded-lg mb-2 border shadow"
+                  />
                   <CardTitle className="text-lg text-amber-800">{bread.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
