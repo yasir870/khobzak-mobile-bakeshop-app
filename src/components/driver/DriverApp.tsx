@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +6,9 @@ import { LogOut, MapPin, Phone, Clock, Archive, Truck, RefreshCw } from 'lucide-
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Info } from 'lucide-react';
 
 type OrderStatus = 'pending' | 'accepted' | 'in-transit' | 'delivered' | 'rejected';
 
@@ -130,6 +132,24 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
       : ['delivered', 'rejected'].includes(order.status)
   );
 
+  // إضافة حالة زر كشف كل الأرقام
+  const [showAllPhones, setShowAllPhones] = useState(false);
+  const [allPhones, setAllPhones] = useState<string[]>([]);
+  const [loadingPhones, setLoadingPhones] = useState(false);
+
+  // دالة جلب الأرقام من قاعدة البيانات
+  const handleShowAllPhones = async () => {
+    setLoadingPhones(true);
+    setShowAllPhones(true);
+    const { data, error } = await supabase.from('customers').select('phone');
+    setLoadingPhones(false);
+    if (data && Array.isArray(data)) {
+      setAllPhones(data.map((e: any) => e.phone));
+    } else {
+      setAllPhones(['حدث خطأ في جلب الأرقام!']);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
@@ -139,7 +159,18 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
             <h1 className="text-2xl font-bold text-blue-800">لوحة السائق</h1>
             <p className="text-sm text-blue-600">خبزك – توصيل الطلبات</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            {/* زر فحص كل الأرقام */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="border-blue-600 text-blue-900"
+              onClick={handleShowAllPhones}
+              type="button"
+            >
+              <Info className="h-4 w-4 mr-1" />
+              فحص كل الأرقام
+            </Button>
             <Button onClick={fetchOrders} size="icon" variant="ghost" title="تحديث الطلبات">
               <RefreshCw className="h-5 w-5" />
             </Button>
@@ -150,6 +181,33 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
           </div>
         </div>
       </header>
+
+      {/* نافذة تعرض كل أرقام الزبائن */}
+      <Dialog open={showAllPhones} onOpenChange={setShowAllPhones}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>كل أرقام الزبائن من قاعدة البيانات</DialogTitle>
+            <DialogDescription>
+              هذه قائمة بجميع الأرقام كما هي مخزنة في supabase (قد تحتاج لإغلاق النافذة وإعادة الضغط لجلب جديد).
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="h-56 w-full pr-2">
+            {loadingPhones ? (
+              <div className="text-blue-800 py-6 text-center">جاري التحميل...</div>
+            ) : (
+              <ul className="space-y-1 text-gray-900 text-base ltr:text-left">
+                {allPhones.length === 0 ? (
+                  <li>لا يوجد أرقام مسجلة.</li>
+                ) : (
+                  allPhones.map((phone, idx) => (
+                    <li key={idx} className="border-b py-1">{phone || <span className="text-red-500">null</span>}</li>
+                  ))
+                )}
+              </ul>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
 
       {/* Tabs */}
       <main className="max-w-4xl mx-auto px-4 pt-8 pb-16">
