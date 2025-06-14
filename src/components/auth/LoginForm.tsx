@@ -39,20 +39,23 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
     }
   }, [role, isLogin]);
 
-  // دالة توحيد ارقام العراق: "07XXXXXXXXX" أو "+9647XXXXXXXXX" كلها تتحول لصيغة 07XXXXXXXXX
+  // توحيد الرقم العراقي إلى 07XXXXXXXXX فقط
   function normalizeIraqiPhone(phone: string) {
-    let p = phone.trim().replace(/\s+/g, ''); // Remove spaces
-    if (p.startsWith("+9647")) {
-      p = "0" + p.slice(4);
-    }
+    let p = phone.trim().replace(/\D/g, ''); // Remove any non-digits
+    // إذا المستخدم كتب +9647 أو 009647 أو 9647 نزيل بادئة العراق ونحولها إلى 07XXXXXXXXX
+    if (p.startsWith('9647')) p = '0' + p.slice(3);
+    if (p.startsWith('009647')) p = '0' + p.slice(5);
+    if (p.startsWith('07') && p.length === 11) return p;
+    // إذا العدد صار 10 أرقام بعد 0 نعيده مع الـ0
+    if (p.startsWith('7') && p.length === 10) return '0' + p;
+    // أي صيغة ثانية ندخلها كما هي (سيتم رفضها لاحقاً في التحقق)
     return p;
   }
 
-  // دالة التحقق من رقم عراقي صحيح
+  // رقم عراقي صحيح: يبدأ بـ07 ويتكون من 11 رقم
   function isValidIraqiPhone(phone: string) {
-    // يسمح 07XXXXXXXXX أو +9647XXXXXXXXX (يجب أن يتبعهم 8 أرقام)
-    const regex = /^((07\d{9})|(\+9647\d{9}))$/;
-    return regex.test(phone.trim());
+    const normalized = normalizeIraqiPhone(phone);
+    return /^07\d{9}$/.test(normalized);
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,11 +65,9 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
     try {
       if (role === "customer") {
         if (isLogin) {
-          // بحث حسب الإيميل أو الهاتف فقط
+          // الدخول: نقبل فقط الصيغة 07XXXXXXXXX (11 رقم) إذا المستخدم وضع رقم
           const identifierRaw = email.trim();
           const identifier = normalizeIraqiPhone(identifierRaw);
-
-          // إذا كانت الصيغة بريد إلكتروني، استخدم مباشرة، وإلا حول كرقم هاتف
           const isEmail = /^\S+@\S+\.\S+$/.test(identifierRaw);
 
           if (!identifierRaw || !password) {
@@ -79,7 +80,17 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // جلب الزبون بناءً على الإيميل أو الرقم الموحّد فقط
+          if (!isEmail && !isValidIraqiPhone(identifierRaw)) {
+            toast({
+              title: "رقم الهاتف غير صحيح",
+              description: "الرجاء إدخال رقم يبدأ بـ07 ويتكون من 11 رقم فقط (مثال: 07712345678).",
+              variant: "destructive"
+            });
+            setIsLoading(false);
+            return;
+          }
+
+          // البحث الدقيق حسب الصيغة الموحدة فقط
           let customerQuery;
           if (isEmail) {
             customerQuery = supabase
@@ -91,7 +102,7 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             customerQuery = supabase
               .from('customers')
               .select('*')
-              .eq('phone', identifier)
+              .eq('phone', normalizeIraqiPhone(identifierRaw))
               .maybeSingle();
           }
           const { data: customer, error } = await customerQuery;
@@ -99,7 +110,7 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
           if (!customer) {
             toast({
               title: "الحساب غير موجود",
-              description: "لا يوجد حساب مرتبط بهذا البريد الإلكتروني أو رقم الهاتف.",
+              description: "لا يوجد حساب مرتبط بهذا البريد الإلكتروني أو رقم الهاتف المُوحد.",
               variant: "destructive"
             });
             setIsLoading(false);
@@ -132,7 +143,6 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
           setIsLoading(false);
         } else {
           // sign up
-          // إضافة تحقق جديد: يجب إدخال كلا من الإيميل والهاتف
           if (!email || !phone) {
             toast({
               title: "البيانات ناقصة",
@@ -143,18 +153,12 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // تحقق أن الإيميل والهاتف غير مستخدمين
           const normalizedPhone = normalizeIraqiPhone(phone);
-          const { data: exists } = await supabase
-            .from('customers')
-            .select('id')
-            .or(`email.eq.${email},phone.eq.${normalizedPhone}`)
-            .maybeSingle();
 
-          if (exists) {
+          if (!isValidIraqiPhone(phone)) {
             toast({
-              title: "استخدام مسبق",
-              description: "الإيميل أو الهاتف مستخدم مسبقًا.",
+              title: "رقم غير صحيح",
+              description: "يرجى إدخال رقم يبدأ بـ07 ويتكون من 11 رقم فقط (مثال: 07712345678).",
               variant: "destructive"
             });
             setIsLoading(false);
@@ -174,11 +178,17 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // تحقق من صحة رقم الهاتف (عراقي)
-          if (!isValidIraqiPhone(normalizedPhone)) {
+          // تحقق أن الإيميل والهاتف غير مستخدمين
+          const { data: exists } = await supabase
+            .from('customers')
+            .select('id')
+            .or(`email.eq.${email},phone.eq.${normalizedPhone}`)
+            .maybeSingle();
+
+          if (exists) {
             toast({
-              title: "رقم غير صحيح",
-              description: "الرجاء إدخال رقم عراقي يبدأ بـ 07 أو +9647 ويتألف من 11 رقم.",
+              title: "استخدام مسبق",
+              description: "الإيميل أو الهاتف مستخدم مسبقًا.",
               variant: "destructive"
             });
             setIsLoading(false);
@@ -213,7 +223,7 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // الإضافة الفعلية
+          // الإضافة الفعلية بصيغة موحدة
           const { error: insertError } = await supabase
             .from("customers")
             .insert([{ email: email.trim(), password, phone: normalizedPhone, name }]);
@@ -238,7 +248,7 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
           setIsLogin(true);
           setIsLoading(false);
         }
-        return; // نهاية منطق الزبون
+        return;
       }
 
       // تسجيل دخول السائق: البريد أو الهاتف + كلمة سر مطابقة
