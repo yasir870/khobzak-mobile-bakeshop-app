@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +17,6 @@ interface CheckoutPageProps {
 
 const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: CheckoutPageProps) => {
   const [address, setAddress] = useState('');
-  const [deliveryTime, setDeliveryTime] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -28,7 +26,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
     e.preventDefault();
     setIsLoading(true);
 
-    if (!address || !deliveryTime) {
+    if (!address) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -46,7 +44,6 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
         items: cartItems.map(item => `${item.name} x${item.quantity}`),
         total: cartTotal,
         address,
-        deliveryTime,
         paymentMethod,
         notes,
         createdAt: new Date().toISOString()
@@ -128,25 +125,6 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="Enter your full delivery address"
-                className="border-amber-200 focus:border-amber-500"
-                required
-              />
-            </CardContent>
-          </Card>
-
-          {/* Delivery Time */}
-          <Card className="bg-white/90 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="text-lg text-amber-800 flex items-center">
-                <Clock className="mr-2 h-5 w-5" />
-                Preferred Delivery Time
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Input
-                type="datetime-local"
-                value={deliveryTime}
-                onChange={(e) => setDeliveryTime(e.target.value)}
                 className="border-amber-200 focus:border-amber-500"
                 required
               />
