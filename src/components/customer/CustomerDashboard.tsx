@@ -32,6 +32,10 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
   const [showCart, setShowCart] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
+  const [showAllPhones, setShowAllPhones] = useState(false);
+  const [allPhones, setAllPhones] = useState<string[]>([]);
+  const [loadingPhones, setLoadingPhones] = useState(false);
+
   const breadTypes: BreadProduct[] = [
     {
       id: 1,
@@ -104,6 +108,18 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
     setSelectedProduct(null);
   };
 
+  const handleShowAllPhones = async () => {
+    setLoadingPhones(true);
+    setShowAllPhones(true);
+    const { data, error } = await supabase.from('customers').select('phone');
+    setLoadingPhones(false);
+    if (data && Array.isArray(data)) {
+      setAllPhones(data.map((e: any) => e.phone));
+    } else {
+      setAllPhones(['حدث خطأ في جلب الأرقام!']);
+    }
+  };
+
   if (showCart) {
     return (
       <CartPage 
@@ -146,9 +162,47 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
+            {/* زر مؤقت (لفحص الأرقام) يظهر للإدارة فقط */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="border-blue-600 text-blue-900"
+              onClick={handleShowAllPhones}
+              type="button"
+            >
+              <Info className="h-4 w-4 mr-1" />
+              فحص كل الأرقام
+            </Button>
           </div>
         </div>
       </header>
+
+      {/* نافذة تعرض كل الأرقام */}
+      <Dialog open={showAllPhones} onOpenChange={setShowAllPhones}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>كل أرقام الزبائن من قاعدة البيانات</DialogTitle>
+            <DialogDescription>
+              هذه قائمة بجميع الأرقام كما هي مخزنة في supabase (قد تحتاج لإغلاق النافذة وإعادة الضغط لجلب جديد).
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="h-56 w-full pr-2">
+            {loadingPhones ? (
+              <div className="text-blue-800 py-6 text-center">جاري التحميل...</div>
+            ) : (
+              <ul className="space-y-1 text-gray-900 text-base ltr:text-left">
+                {allPhones.length === 0 ? (
+                  <li>لا يوجد أرقام مسجلة.</li>
+                ) : (
+                  allPhones.map((phone, idx) => (
+                    <li key={idx} className="border-b py-1">{phone || <span className="text-red-500">null</span>}</li>
+                  ))
+                )}
+              </ul>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
 
       {/* Main Content with top padding to account for fixed header */}
       <main className="max-w-4xl mx-auto px-4 pt-24 pb-8">
