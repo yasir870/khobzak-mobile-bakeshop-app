@@ -175,20 +175,42 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
         return; // نهاية منطق الزبون
       }
 
-      // للسائقين (نفس المنطق القديم)
+      // تسجيل دخول السائق: الايميل أو الهاتف + كلمة سر مطابقة
       if (role === 'driver') {
         const identifier = email || phone;
 
+        if (!identifier || !password) {
+          toast({
+            title: "بيانات ناقصة",
+            description: "يرجى إدخال البريد أو رقم الهاتف بالإضافة إلى كلمة المرور.",
+            variant: "destructive"
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        // جلب السائق حسب الايميل أو الهاتف
         const { data: driver, error } = await supabase
           .from('drivers')
           .select('*')
           .or(`email.eq.${identifier},phone.eq.${identifier}`)
-          .single();
+          .maybeSingle();
 
-        if (error || !driver) {
+        if (!driver) {
           toast({
             title: "خطأ في تسجيل الدخول",
             description: "السائق غير موجود في النظام. يرجى التواصل مع الإدارة.",
+            variant: "destructive"
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        // التحقق من كلمة السر
+        if (!driver.password || driver.password !== password) {
+          toast({
+            title: "كلمة المرور غير صحيحة",
+            description: "يرجى التحقق من كلمة المرور والمحاولة مرة أخرى.",
             variant: "destructive"
           });
           setIsLoading(false);
@@ -272,7 +294,7 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="أدخل بريدك الإلكتروني"
                   className="border-amber-200 focus:border-amber-500"
-                  required
+                  required={role === "customer" ? true : false}
                 />
               </div>
 
@@ -325,7 +347,7 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
                 />
               </div>
 
-              {/* خيار تذكرني للعملاء */}
+              {/* خيار تذكرني للعملاء فقط */}
               {role === "customer" && (
                 <div className="flex items-center space-x-2 mb-[-0.5rem] rtl:space-x-reverse">
                   <input
@@ -344,9 +366,16 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
               <Button
                 type="submit"
                 className="w-full bg-amber-600 hover:bg-amber-700 text-white"
-                disabled={isLoading || (!email && !phone) || (role === "customer" && !password)}
+                disabled={
+                  isLoading ||
+                  (!email && !phone) ||
+                  (role === "customer" && !password) ||
+                  (role === "driver" && !password)
+                }
               >
-                {isLoading ? (isLogin ? 'جاري التحقق...' : "جاري الإنشاء...") : `${isLogin ? 'تسجيل دخول' : 'إنشاء حساب'} كـ${role === 'customer' ? 'زبون' : 'سائق'}`}
+                {isLoading
+                  ? (isLogin ? 'جاري التحقق...' : "جاري الإنشاء...")
+                  : `${isLogin ? 'تسجيل دخول' : 'إنشاء حساب'} كـ${role === 'customer' ? 'زبون' : 'سائق'}`}
               </Button>
 
               {role === 'customer' && (
