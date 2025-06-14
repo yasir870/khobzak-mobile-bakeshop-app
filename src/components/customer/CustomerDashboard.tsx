@@ -38,6 +38,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
   const [allPhones, setAllPhones] = useState<string[]>([]);
   const [loadingPhones, setLoadingPhones] = useState(false);
 
+  // عدل صور المنتجات من Emoji إلى روابط الصور الحقيقية التي رفعتها على Supabase
   const breadTypes: BreadProduct[] = [
     {
       id: 1,
@@ -46,7 +47,9 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
       price: 1000,
       description: "خبز دائري يُخبز داخل تنور طيني. طري من الداخل ومقرمش من الخارج، مثالي للفطور والغداء.",
       detailedDescription: "خبز دائري يُخبز داخل تنور طيني. طري بالشَدّة من الداخل ومقرمش من الخارج لوجبة فطور أو غداء شعبية جدًا. عدد القطع: 8. ملاحظات: شعبي جدًا.",
-      images: ['🔥', '🥯'],
+      images: [
+        "https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/products/tanour.jpg"
+      ],
       category: "شعبي جدًا",
       pieces: 8,
       notes: "شعبي جدًا"
@@ -58,7 +61,9 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
       price: 1000,
       description: "رغيف طويل، هش من الداخل ويُخبز في أفران حجرية. مناسب للسندويشات أو مع الشوربة.",
       detailedDescription: "رغيف طويل هوائي هش من الداخل. يُخبز في أفران حجرية مخصصة ليمنحك خبز يومي للسندويشات أو مع الشوربة. عدد القطع: 8. ملاحظات: يومي.",
-      images: ['🥖', '🪨'],
+      images: [
+        "https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/products/samoon.jpg"
+      ],
       category: "يومي",
       pieces: 8,
       notes: "يومي"
@@ -70,7 +75,9 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
       price: 1000,
       description: "رقيق جدًا يُطهى على صاج معدني، مثالي للفطور مع العسل أو يستخدم للف الدولمة.",
       detailedDescription: "خبز رقاق رقيق جدًا يُطهى سريعًا على صاج معدني ساخن. خفيف ومناسب للفطور مع العسل أو للف الدولمة. عدد القطع: 4. ملاحظات: خفيف.",
-      images: ['🥞', '🍯'],
+      images: [
+        "https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/products/ragag.jpg"
+      ],
       category: "خفيف",
       pieces: 4,
       notes: "خفيف"
@@ -82,7 +89,9 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
       price: 1000,
       description: "خبز رقيق لكنه قوي ومتين، مثالي للفّ الشاورما والفلافل، لا يتمزق بسهولة.",
       detailedDescription: "خبز خاص رقيق لكن متين ومتماسك. مناسب جدًا للفّ الشاورما والفلافل والساندويشات المتنوعة دون أن يتمزق أو يتشقق. عدد القطع: 4. ملاحظات: ساندويش.",
-      images: ['🌯', '🥙'],
+      images: [
+        "https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/products/shawerma.jpg"
+      ],
       category: "ساندويش",
       pieces: 4,
       notes: "ساندويش"
@@ -94,7 +103,9 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
       price: 1000,
       description: "خبز خاص لمرضى السكري، مصنوع بدون سكر وبدقيق صحي منخفض الكربوهيدرات.",
       detailedDescription: "خبز صحي مخصص لمرضى السكري ولأنماط الغذاء الصحية. مصنوع بدون سكر وبدقيق خاص منخفض الكربوهيدرات. عدد القطع: 4. ملاحظات: صحي / لمرضى السكري.",
-      images: ['🥯', '💚'],
+      images: [
+        "https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/products/sokari.jpg"
+      ],
       category: "صحي",
       pieces: 4,
       notes: "صحي / لمرضى السكري"
