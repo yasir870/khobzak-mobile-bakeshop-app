@@ -240,13 +240,15 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // auto-login بعد التسجيل
+          // auto-login بعد التسجيل: دخول مباشر لتطبيق الزبون
           if (rememberMe) {
             localStorage.setItem(CREDENTIALS_KEY, JSON.stringify({ email: email.trim(), password }));
           }
-          toast({ title: "تم إنشاء الحساب!", description: "يمكنك الآن تسجيل الدخول" });
-          setIsLogin(true);
+          toast({ title: "تم إنشاء الحساب!", description: "تم تحويلك للتطبيق مباشرةً ✨" });
+          // استقبال مباشر إلى التطبيق بدلاً من setIsLogin
+          onAuthSuccess(role);
           setIsLoading(false);
+          return;
         }
         return;
       }
