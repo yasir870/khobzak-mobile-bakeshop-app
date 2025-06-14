@@ -39,6 +39,15 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
     }
   }, [role, isLogin]);
 
+  // دالة توحيد ارقام العراق: "07XXXXXXXXX" أو "+9647XXXXXXXXX" كلها تتحول لصيغة 07XXXXXXXXX
+  function normalizeIraqiPhone(phone: string) {
+    let p = phone.trim().replace(/\s+/g, ''); // Remove spaces
+    if (p.startsWith("+9647")) {
+      p = "0" + p.slice(4);
+    }
+    return p;
+  }
+
   // دالة التحقق من رقم عراقي صحيح
   function isValidIraqiPhone(phone: string) {
     // يسمح 07XXXXXXXXX أو +9647XXXXXXXXX (يجب أن يتبعهم 8 أرقام)
@@ -54,8 +63,13 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
       if (role === "customer") {
         if (isLogin) {
           // بحث حسب الإيميل أو الهاتف فقط
-          const identifier = email.trim();
-          if (!identifier || !password) {
+          const identifierRaw = email.trim();
+          const identifier = normalizeIraqiPhone(identifierRaw);
+
+          // إذا كانت الصيغة بريد إلكتروني، استخدم مباشرة، وإلا حول كرقم هاتف
+          const isEmail = /^\S+@\S+\.\S+$/.test(identifierRaw);
+
+          if (!identifierRaw || !password) {
             toast({
               title: "بيانات ناقصة",
               description: "يرجى إدخال البريد أو رقم الهاتف بالإضافة إلى كلمة المرور.",
@@ -65,12 +79,22 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // جلب الزبون بناءً على الإيميل أو الهاتف فقط
-          const { data: customer, error } = await supabase
-            .from('customers')
-            .select('*')
-            .or(`email.eq.${identifier},phone.eq.${identifier}`)
-            .maybeSingle();
+          // جلب الزبون بناءً على الإيميل أو الرقم الموحّد فقط
+          let customerQuery;
+          if (isEmail) {
+            customerQuery = supabase
+              .from('customers')
+              .select('*')
+              .eq('email', identifierRaw)
+              .maybeSingle();
+          } else {
+            customerQuery = supabase
+              .from('customers')
+              .select('*')
+              .eq('phone', identifier)
+              .maybeSingle();
+          }
+          const { data: customer, error } = await customerQuery;
 
           if (!customer) {
             toast({
@@ -95,7 +119,7 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
 
           // حفظ بيانات الدخول إذا تم اختيار "تذكرني"
           if (rememberMe) {
-            localStorage.setItem(CREDENTIALS_KEY, JSON.stringify({ email: identifier, password }));
+            localStorage.setItem(CREDENTIALS_KEY, JSON.stringify({ email: identifierRaw, password }));
           } else {
             localStorage.removeItem(CREDENTIALS_KEY);
           }
@@ -120,10 +144,11 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
           }
 
           // تحقق أن الإيميل والهاتف غير مستخدمين
+          const normalizedPhone = normalizeIraqiPhone(phone);
           const { data: exists } = await supabase
             .from('customers')
             .select('id')
-            .or(`email.eq.${email},phone.eq.${phone}`)
+            .or(`email.eq.${email},phone.eq.${normalizedPhone}`)
             .maybeSingle();
 
           if (exists) {
@@ -150,7 +175,7 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
           }
 
           // تحقق من صحة رقم الهاتف (عراقي)
-          if (!isValidIraqiPhone(phone)) {
+          if (!isValidIraqiPhone(normalizedPhone)) {
             toast({
               title: "رقم غير صحيح",
               description: "الرجاء إدخال رقم عراقي يبدأ بـ 07 أو +9647 ويتألف من 11 رقم.",
@@ -175,7 +200,7 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
           const { data: existingCustomer, error: existingCustomerError } = await supabase
             .from('customers')
             .select('*')
-            .or(`email.eq.${email},phone.eq.${phone}`)
+            .or(`email.eq.${email},phone.eq.${normalizedPhone}`)
             .maybeSingle();
 
           if (existingCustomer) {
@@ -188,10 +213,10 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // الإضافة الفعلية (التغيير هنا: لا نظهر رسالة النجاح إلا إذا نجح الإدخال)
+          // الإضافة الفعلية
           const { error: insertError } = await supabase
             .from("customers")
-            .insert([{ email, password, phone, name }]);
+            .insert([{ email: email.trim(), password, phone: normalizedPhone, name }]);
 
           if (insertError) {
             toast({
@@ -207,7 +232,7 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
 
           // auto-login بعد التسجيل
           if (rememberMe) {
-            localStorage.setItem(CREDENTIALS_KEY, JSON.stringify({ email, password }));
+            localStorage.setItem(CREDENTIALS_KEY, JSON.stringify({ email: email.trim(), password }));
           }
           toast({ title: "تم إنشاء الحساب!", description: "يمكنك الآن تسجيل الدخول" });
           setIsLogin(true);
