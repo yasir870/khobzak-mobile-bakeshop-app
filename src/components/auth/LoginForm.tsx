@@ -107,6 +107,9 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
           }
           const { data: customer, error } = await customerQuery;
 
+          // سجل كل عمليات جلب العملاء لتشخيص المشاكل
+          console.log('جاري جلب العميل:', { email: identifierRaw, phone: normalizeIraqiPhone(identifierRaw) });
+          if (error) console.error('خطأ عند جلب بيانات العميل:', error);
           if (!customer) {
             toast({
               title: "الحساب غير موجود",
@@ -178,12 +181,14 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // تحقق أن الإيميل والهاتف غير مستخدمين
-          const { data: exists } = await supabase
+          // تأكيد عدم وجود مستخدم بنفس البريد أو رقم الهاتف
+          const { data: exists, error: existsError } = await supabase
             .from('customers')
             .select('id')
             .or(`email.eq.${email},phone.eq.${normalizedPhone}`)
             .maybeSingle();
+
+          console.log('فحص إذا كان يوجد زبون سابق:', { email, phone: normalizedPhone, exists });
 
           if (exists) {
             toast({
@@ -206,27 +211,13 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // محاولة جلب سجل موجود لنفس المعلومة 
-          const { data: existingCustomer, error: existingCustomerError } = await supabase
-            .from('customers')
-            .select('*')
-            .or(`email.eq.${email},phone.eq.${normalizedPhone}`)
-            .maybeSingle();
-
-          if (existingCustomer) {
-            toast({
-              title: "الحساب موجود",
-              description: "البريد الإلكتروني أو رقم الهاتف مرتبط بالحساب الحالي.",
-              variant: "destructive"
-            });
-            setIsLoading(false);
-            return;
-          }
-
-          // الإضافة الفعلية بصيغة موحدة
+          // إضافة سجل الزبون الجديد
+          const insertData = { email: email.trim(), password, phone: normalizedPhone, name };
           const { error: insertError } = await supabase
             .from("customers")
-            .insert([{ email: email.trim(), password, phone: normalizedPhone, name }]);
+            .insert([insertData]);
+
+          console.log('محاولة إدخال زبون جديد:', insertData, 'نتيجة:', insertError);
 
           if (insertError) {
             toast({
@@ -240,12 +231,11 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // auto-login بعد التسجيل: دخول مباشر لتطبيق الزبون
+          // auto-login بعد التسجيل: دخول مباشر
           if (rememberMe) {
             localStorage.setItem(CREDENTIALS_KEY, JSON.stringify({ email: email.trim(), password }));
           }
           toast({ title: "تم إنشاء الحساب!", description: "تم تحويلك للتطبيق مباشرةً ✨" });
-          // استقبال مباشر إلى التطبيق بدلاً من setIsLogin
           onAuthSuccess(role);
           setIsLoading(false);
           return;
