@@ -1,57 +1,134 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, MapPin, Phone, Clock } from 'lucide-react';
+import { LogOut, MapPin, Phone, Clock, Archive, Truck, RefreshCw } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+
+type OrderStatus = 'pending' | 'accepted' | 'in-transit' | 'delivered' | 'rejected';
+
+interface Order {
+  id: number;
+  customer_id: number;
+  driver_id: number | null;
+  type: string;
+  quantity: number;
+  total_price: number;
+  notes: string | null;
+  status: OrderStatus;
+  address: string;
+  customer_phone: string;
+  delivered_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Customer {
+  id: number;
+  name: string;
+  phone: string;
+}
 
 interface DriverAppProps {
   onLogout: () => void;
 }
 
+const STATUS_LABELS: Record<OrderStatus, string> = {
+  pending: "بانتظار القبول",
+  accepted: "مقبول",
+  "in-transit": "قيد التوصيل",
+  delivered: "تم التسليم",
+  rejected: "مرفوض",
+};
+
+const STATUS_COLOR: Record<OrderStatus, string> = {
+  pending: "bg-yellow-500",
+  accepted: "bg-blue-500",
+  "in-transit": "bg-purple-500",
+  delivered: "bg-green-500",
+  rejected: "bg-red-600",
+};
+
+const TABS = [
+  { key: "active", label: "الطلبات الجديدة", icon: <Truck className="h-4 w-4 mr-1" /> },
+  { key: "archive", label: "الأرشيف", icon: <Archive className="h-4 w-4 mr-1" /> },
+];
+
 const DriverApp = ({ onLogout }: DriverAppProps) => {
-  const [orders] = useState([
-    {
-      id: '001',
-      customer: 'Ahmed Al-Rashid',
-      phone: '+966501234567',
-      address: '123 King Fahd Road, Riyadh',
-      items: 'Arabic Bread x2, Cheese Bread x1',
-      total: 18,
-      status: 'pending',
-      orderTime: '10:30 AM'
-    },
-    {
-      id: '002',
-      customer: 'Fatima Al-Zahra',
-      phone: '+966509876543',
-      address: '456 Prince Mohammed Street, Riyadh',
-      items: 'Whole Wheat x3, Za\'atar Bread x2',
-      total: 33,
-      status: 'accepted',
-      orderTime: '11:15 AM'
-    }
-  ]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [customers, setCustomers] = useState<Record<number, Customer>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [tab, setTab] = useState<'active' | 'archive'>('active');
+  const { toast } = useToast();
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-500';
-      case 'accepted': return 'bg-blue-500';
-      case 'in-transit': return 'bg-purple-500';
-      case 'delivered': return 'bg-green-500';
-      default: return 'bg-gray-500';
+  // جلب الطلبات والعملاء
+  const fetchOrders = async () => {
+    setIsLoading(true);
+    // جلب جميع الطلبات
+    const { data: ordersData, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) {
+      toast({
+        title: "حدث خطأ",
+        description: "فشل جلب الطلبات من الخادم.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
     }
+    setOrders(ordersData || []);
+
+    // جلب معلومات العملاء المرتبطة
+    const customerIds = Array.from(new Set((ordersData || []).map((o: Order) => o.customer_id)));
+    if (customerIds.length) {
+      const { data: customersData } = await supabase
+        .from('customers')
+        .select('id, name, phone')
+        .in('id', customerIds);
+      // تحويل لماب سريعة
+      const custMap: Record<number, Customer> = {};
+      (customersData || []).forEach((c: Customer) => { custMap[c.id] = c });
+      setCustomers(custMap);
+    } else {
+      setCustomers({});
+    }
+    setIsLoading(false);
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending': return 'Pending';
-      case 'accepted': return 'Accepted';
-      case 'in-transit': return 'In Transit';
-      case 'delivered': return 'Delivered';
-      default: return status;
+  useEffect(() => {
+    fetchOrders();
+    // إضافة زر تحديث في المستقبل عبر سوكيت real-time إذا رغبت
+  }, []);
+
+  // تحديث حالة الطلب
+  const updateOrderStatus = async (orderId: number, nextStatus: OrderStatus) => {
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: nextStatus })
+      .eq('id', orderId);
+    if (error) {
+      toast({
+        title: "فشل تحديث الحالة",
+        description: "لم يتم تغيير حالة الطلب.",
+        variant: "destructive"
+      });
+      return;
     }
+    toast({ title: "تم تحديث حالة الطلب بنجاح" });
+    fetchOrders();
   };
+
+  // تصنيف الطلبات حسب التبويب
+  const filteredOrders = orders.filter(order =>
+    tab === 'active'
+      ? ['pending', 'accepted', 'in-transit'].includes(order.status)
+      : ['delivered', 'rejected'].includes(order.status)
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -59,116 +136,130 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
       <header className="bg-white/90 backdrop-blur-sm shadow-sm border-b border-blue-200">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-blue-800">Driver Dashboard</h1>
-            <p className="text-sm text-blue-600">خبزك Delivery Service</p>
+            <h1 className="text-2xl font-bold text-blue-800">لوحة السائق</h1>
+            <p className="text-sm text-blue-600">خبزك – توصيل الطلبات</p>
           </div>
-          <Button onClick={onLogout} variant="ghost" size="sm">
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={fetchOrders} size="icon" variant="ghost" title="تحديث الطلبات">
+              <RefreshCw className="h-5 w-5" />
+            </Button>
+            <Button onClick={onLogout} variant="ghost" size="sm">
+              <LogOut className="h-4 w-4 mr-2" />
+              خروج
+            </Button>
+          </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card className="bg-white/90 backdrop-blur-sm">
-            <CardContent className="p-6 text-center">
-              <h3 className="text-2xl font-bold text-blue-800">5</h3>
-              <p className="text-blue-600">Today's Deliveries</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-white/90 backdrop-blur-sm">
-            <CardContent className="p-6 text-center">
-              <h3 className="text-2xl font-bold text-green-600">245 SAR</h3>
-              <p className="text-blue-600">Today's Earnings</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-white/90 backdrop-blur-sm">
-            <CardContent className="p-6 text-center">
-              <h3 className="text-2xl font-bold text-orange-600">2</h3>
-              <p className="text-blue-600">Pending Orders</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Orders List */}
-        <div>
-          <h3 className="text-2xl font-bold text-blue-800 mb-6">Delivery Orders</h3>
-          <div className="space-y-4">
-            {orders.map((order) => (
-              <Card key={order.id} className="bg-white/90 backdrop-blur-sm">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-lg text-blue-800">Order #{order.id}</CardTitle>
-                      <p className="text-sm text-gray-600 flex items-center mt-1">
-                        <Clock className="h-4 w-4 mr-1" />
-                        {order.orderTime}
-                      </p>
-                    </div>
-                    <Badge className={`${getStatusColor(order.status)} text-white`}>
-                      {getStatusText(order.status)}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <h4 className="font-semibold text-blue-800 mb-2">Customer Info</h4>
-                      <p className="text-sm text-gray-700">{order.customer}</p>
-                      <p className="text-sm text-gray-600 flex items-center">
-                        <Phone className="h-4 w-4 mr-1" />
-                        {order.phone}
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-blue-800 mb-2">Delivery Address</h4>
-                      <p className="text-sm text-gray-700 flex items-start">
-                        <MapPin className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" />
-                        {order.address}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-blue-800 mb-2">Order Items</h4>
-                    <p className="text-sm text-gray-700">{order.items}</p>
-                    <p className="text-lg font-bold text-blue-700 mt-2">Total: {order.total} SAR</p>
-                  </div>
-
-                  <div className="flex space-x-2">
-                    {order.status === 'pending' && (
-                      <>
-                        <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                          Accept Order
-                        </Button>
-                        <Button size="sm" variant="outline" className="text-red-600 border-red-600 hover:bg-red-50">
-                          Decline
-                        </Button>
-                      </>
-                    )}
-                    {order.status === 'accepted' && (
-                      <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
-                        Start Delivery
-                      </Button>
-                    )}
-                    {order.status === 'in-transit' && (
-                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                        Mark as Delivered
-                      </Button>
-                    )}
-                    <Button size="sm" variant="outline">
-                      <Phone className="h-4 w-4 mr-1" />
-                      Call Customer
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+      {/* Tabs */}
+      <main className="max-w-4xl mx-auto px-4 pt-8 pb-16">
+        <Tabs defaultValue={tab} value={tab} onValueChange={v => setTab(v as typeof tab)}>
+          <TabsList className="mb-6">
+            {TABS.map(t => (
+              <TabsTrigger key={t.key} value={t.key}>
+                {t.icon}
+                {t.label}
+              </TabsTrigger>
             ))}
-          </div>
-        </div>
+          </TabsList>
+          {TABS.map(t => (
+            <TabsContent key={t.key} value={t.key}>
+              <div className="space-y-4">
+                {isLoading ? (
+                  <div className="w-full flex justify-center py-8 text-blue-800">
+                    <span className="animate-spin mr-2">⏳</span> جاري تحميل الطلبات...
+                  </div>
+                ) : filteredOrders.length === 0 ? (
+                  <div className="p-6 text-center text-blue-700 bg-white/70 rounded-lg shadow">لا توجد طلبات حالياً.</div>
+                ) : (
+                  filteredOrders.map(order => {
+                    const cust = customers[order.customer_id];
+                    return (
+                      <Card key={order.id} className="bg-white/90 backdrop-blur-sm">
+                        <CardHeader>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle className="text-lg text-blue-800">طلب #{order.id}</CardTitle>
+                              <p className="text-xs text-gray-600 flex items-center mt-0.5">
+                                <Clock className="h-4 w-4 mr-1" />
+                                {new Date(order.created_at).toLocaleString()}
+                              </p>
+                            </div>
+                            <Badge className={`${STATUS_COLOR[order.status]} text-white`}>
+                              {STATUS_LABELS[order.status]}
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                            <div>
+                              <h4 className="font-semibold text-blue-800 mb-2">معلومات العميل</h4>
+                              <p className="text-sm text-gray-700">{cust?.name || "مجهول"}</p>
+                              <p className="text-xs text-gray-600 flex items-center">
+                                <Phone className="h-3 w-3 mr-1" />
+                                {cust?.phone ?? order.customer_phone}
+                              </p>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-blue-800 mb-2">عنوان التوصيل</h4>
+                              <p className="text-sm text-gray-700 flex items-start">
+                                <MapPin className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" />
+                                {order.address}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mb-3">
+                            <h4 className="font-semibold text-blue-800 mb-2">تفاصيل الطلب</h4>
+                            <p className="text-xs text-gray-700">{order.type} × {order.quantity}</p>
+                            {order.notes && <div className="text-xs text-gray-500 mt-1">ملاحظات: {order.notes}</div>}
+                            <p className="text-base font-bold text-blue-700 mt-2">الإجمالي: {order.total_price} د.ع</p>
+                          </div>
+                          <div className="flex gap-2 flex-wrap">
+                            {/* أزرار تغيير الحالة حسب الحالة الحالية */}
+                            {order.status === 'pending' && (
+                              <>
+                                <Button size="sm" className="bg-green-600 hover:bg-green-700"
+                                  onClick={() => updateOrderStatus(order.id, "accepted")}
+                                >
+                                  قبول الطلب
+                                </Button>
+                                <Button size="sm" variant="outline" className="text-red-600 border-red-600 hover:bg-red-50"
+                                  onClick={() => updateOrderStatus(order.id, "rejected")}
+                                >
+                                  رفض الطلب
+                                </Button>
+                              </>
+                            )}
+                            {order.status === 'accepted' && (
+                              <Button size="sm" className="bg-purple-600 hover:bg-purple-700"
+                                onClick={() => updateOrderStatus(order.id, "in-transit")}
+                              >
+                                بدء التوصيل
+                              </Button>
+                            )}
+                            {order.status === 'in-transit' && (
+                              <Button size="sm" className="bg-blue-600 hover:bg-blue-700"
+                                onClick={() => updateOrderStatus(order.id, "delivered")}
+                              >
+                                تم التسليم
+                              </Button>
+                            )}
+                            {/* اتصال بالعميل */}
+                            <Button size="sm" variant="outline" asChild>
+                              <a href={`tel:${cust?.phone ?? order.customer_phone}`}>
+                                <Phone className="h-4 w-4 mr-1" /> اتصل بالعميل
+                              </a>
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                )}
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
       </main>
     </div>
   );
