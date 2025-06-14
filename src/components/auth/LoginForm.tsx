@@ -97,6 +97,17 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
           setIsLoading(false);
         } else {
           // sign up
+          // إضافة تحقق جديد: يجب إدخال كلا من الإيميل والهاتف
+          if (!email || !phone) {
+            toast({
+              title: "البيانات ناقصة",
+              description: "يرجى إدخال كل من البريد الإلكتروني ورقم الهاتف معاً.",
+              variant: "destructive"
+            });
+            setIsLoading(false);
+            return;
+          }
+
           // تحقق أن الإيميل والهاتف غير مستخدمين
           const { data: exists } = await supabase
             .from('customers')
@@ -127,19 +138,8 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // تحقق صحة الإيميل أو الهاتف
-          if (!email && !phone) {
-            toast({
-              title: "مطلوب بريد إلكتروني أو رقم هاتف",
-              description: "يرجى إدخال بريد إلكتروني أو رقم هاتف.",
-              variant: "destructive"
-            });
-            setIsLoading(false);
-            return;
-          }
-
           // تحقق من صحة رقم الهاتف (عراقي)
-          if (phone && !isValidIraqiPhone(phone)) {
+          if (!isValidIraqiPhone(phone)) {
             toast({
               title: "رقم غير صحيح",
               description: "الرجاء إدخال رقم عراقي يبدأ بـ 07 أو +9647 ويتألف من 11 رقم.",
@@ -149,8 +149,8 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // التحقق من صحة البريد الإلكتروني (فقط إذا دخل بريد)
-          if (email && !/^\S+@\S+\.\S+$/.test(email)) {
+          // التحقق من صحة البريد الإلكتروني
+          if (!/^\S+@\S+\.\S+$/.test(email)) {
             toast({
               title: "بريد إلكتروني غير صالح",
               description: "يرجى إدخال بريد إلكتروني صحيح.",
