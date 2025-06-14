@@ -53,18 +53,29 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
     try {
       if (role === "customer") {
         if (isLogin) {
-          // بحث حسب الإيميل وكلمة السر
+          // بحث حسب الإيميل أو الهاتف وكلمة السر
+          const identifier = email.trim();
+          if (!identifier || !password) {
+            toast({
+              title: "بيانات ناقصة",
+              description: "يرجى إدخال البريد أو رقم الهاتف بالإضافة إلى كلمة المرور.",
+              variant: "destructive"
+            });
+            setIsLoading(false);
+            return;
+          }
+
           const { data: customer, error } = await supabase
             .from('customers')
             .select('*')
-            .eq('email', email)
+            .or(`email.eq.${identifier},phone.eq.${identifier}`)
             .eq('password', password)
             .maybeSingle();
 
           if (!customer) {
             toast({
               title: "بيانات خاطئة",
-              description: "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+              description: "البريد الإلكتروني أو رقم الهاتف أو كلمة المرور غير صحيحة.",
               variant: "destructive"
             });
             setIsLoading(false);
@@ -73,7 +84,7 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
 
           // حفظ بيانات الدخول إذا تم اختيار "تذكرني"
           if (rememberMe) {
-            localStorage.setItem(CREDENTIALS_KEY, JSON.stringify({ email, password }));
+            localStorage.setItem(CREDENTIALS_KEY, JSON.stringify({ email: identifier, password }));
           } else {
             localStorage.removeItem(CREDENTIALS_KEY);
           }
@@ -175,10 +186,9 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
         return; // نهاية منطق الزبون
       }
 
-      // تسجيل دخول السائق: الايميل أو الهاتف + كلمة سر مطابقة
+      // تسجيل دخول السائق: البريد أو الهاتف + كلمة سر مطابقة
       if (role === 'driver') {
-        const identifier = email || phone;
-
+        const identifier = email.trim();
         if (!identifier || !password) {
           toast({
             title: "بيانات ناقصة",
@@ -189,7 +199,6 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
           return;
         }
 
-        // جلب السائق حسب الايميل أو الهاتف
         const { data: driver, error } = await supabase
           .from('drivers')
           .select('*')
@@ -206,7 +215,6 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
           return;
         }
 
-        // التحقق من كلمة السر
         if (!driver.password || driver.password !== password) {
           toast({
             title: "كلمة المرور غير صحيحة",
@@ -282,56 +290,74 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center text-amber-700">
-                  <Mail className="mr-2 h-4 w-4" />
-                  البريد الإلكتروني
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="أدخل بريدك الإلكتروني"
-                  className="border-amber-200 focus:border-amber-500"
-                  required={role === "customer" ? true : false}
-                />
-              </div>
-
-              {role === 'driver' && (
+              {/* خانة واحدة في login لكلا الدورين، في signup تبقى كما كانت */}
+              {isLogin ? (
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="flex items-center text-amber-700">
-                    <Phone className="mr-2 h-4 w-4" />
-                    رقم الهاتف (بديل)
+                  <Label htmlFor="identifier" className="flex items-center text-amber-700">
+                    <Mail className="mr-2 h-4 w-4" />
+                    البريد الإلكتروني أو رقم الهاتف
                   </Label>
                   <Input
-                    id="phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+964 7XX XXX XXX"
-                    className="border-amber-200 focus:border-amber-500"
-                  />
-                </div>
-              )}
-
-              {/* عند تسجيل الزبون (إنشاء حساب) */}
-              {role === "customer" && !isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="flex items-center text-amber-700">
-                    <Phone className="mr-2 h-4 w-4" />
-                    رقم الهاتف
-                  </Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="07XXXXXXXXX أو +9647XXXXXXXXX"
+                    id="identifier"
+                    type="text"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="أدخل البريد الإلكتروني أو رقم الهاتف"
                     className="border-amber-200 focus:border-amber-500"
                     required
                   />
                 </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="flex items-center text-amber-700">
+                      <Mail className="mr-2 h-4 w-4" />
+                      البريد الإلكتروني
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="أدخل بريدك الإلكتروني"
+                      className="border-amber-200 focus:border-amber-500"
+                      required={role === "customer"}
+                    />
+                  </div>
+                  {role === 'driver' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="phone" className="flex items-center text-amber-700">
+                        <Phone className="mr-2 h-4 w-4" />
+                        رقم الهاتف (بديل)
+                      </Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="+964 7XX XXX XXX"
+                        className="border-amber-200 focus:border-amber-500"
+                      />
+                    </div>
+                  )}
+                  {role === "customer" && !isLogin && (
+                    <div className="space-y-2">
+                      <Label htmlFor="phone" className="flex items-center text-amber-700">
+                        <Phone className="mr-2 h-4 w-4" />
+                        رقم الهاتف
+                      </Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="07XXXXXXXXX أو +9647XXXXXXXXX"
+                        className="border-amber-200 focus:border-amber-500"
+                        required
+                      />
+                    </div>
+                  )}
+                </>
               )}
 
               <div className="space-y-2">
