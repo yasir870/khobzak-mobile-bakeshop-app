@@ -162,47 +162,13 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
-            {/* زر مؤقت (لفحص الأرقام) يظهر للإدارة فقط */}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="border-blue-600 text-blue-900"
-              onClick={handleShowAllPhones}
-              type="button"
-            >
-              <Info className="h-4 w-4 mr-1" />
-              فحص كل الأرقام
-            </Button>
+            {/* تمت إزالة زر فحص كل الأرقام نهائيًا */}
           </div>
         </div>
       </header>
 
-      {/* نافذة تعرض كل الأرقام */}
-      <Dialog open={showAllPhones} onOpenChange={setShowAllPhones}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>كل أرقام الزبائن من قاعدة البيانات</DialogTitle>
-            <DialogDescription>
-              هذه قائمة بجميع الأرقام كما هي مخزنة في supabase (قد تحتاج لإغلاق النافذة وإعادة الضغط لجلب جديد).
-            </DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="h-56 w-full pr-2">
-            {loadingPhones ? (
-              <div className="text-blue-800 py-6 text-center">جاري التحميل...</div>
-            ) : (
-              <ul className="space-y-1 text-gray-900 text-base ltr:text-left">
-                {allPhones.length === 0 ? (
-                  <li>لا يوجد أرقام مسجلة.</li>
-                ) : (
-                  allPhones.map((phone, idx) => (
-                    <li key={idx} className="border-b py-1">{phone || <span className="text-red-500">null</span>}</li>
-                  ))
-                )}
-              </ul>
-            )}
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
+      {/* نافذة عرض الأرقام أيضاً ستختفي لأنه لا يوجد زر يفتحها */}
+      
 
       {/* Main Content with top padding to account for fixed header */}
       <main className="max-w-4xl mx-auto px-4 pt-24 pb-8">
