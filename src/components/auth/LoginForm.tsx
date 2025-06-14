@@ -65,7 +65,6 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
     try {
       if (role === "customer") {
         if (isLogin) {
-          // الدخول: نقبل فقط الصيغة 07XXXXXXXXX (11 رقم) إذا المستخدم وضع رقم
           const identifierRaw = email.trim();
           const identifier = normalizeIraqiPhone(identifierRaw);
           const isEmail = /^\S+@\S+\.\S+$/.test(identifierRaw);
@@ -90,7 +89,6 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // البحث الدقيق حسب الصيغة الموحدة فقط
           let customerQuery;
           if (isEmail) {
             customerQuery = supabase
@@ -107,7 +105,6 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
           }
           const { data: customer, error } = await customerQuery;
 
-          // سجل كل عمليات جلب العملاء لتشخيص المشاكل
           console.log('جاري جلب العميل:', { email: identifierRaw, phone: normalizeIraqiPhone(identifierRaw) });
           if (error) console.error('خطأ عند جلب بيانات العميل:', error);
           if (!customer) {
@@ -120,7 +117,6 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // تحقق من كلمة المرور
           if (customer.password !== password) {
             toast({
               title: "كلمة المرور غير صحيحة",
@@ -131,7 +127,6 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // حفظ بيانات الدخول إذا تم اختيار "تذكرني"
           if (rememberMe) {
             localStorage.setItem(CREDENTIALS_KEY, JSON.stringify({ email: identifierRaw, password }));
           } else {
@@ -145,7 +140,6 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
           onAuthSuccess(role);
           setIsLoading(false);
         } else {
-          // sign up
           if (!email || !phone) {
             toast({
               title: "البيانات ناقصة",
@@ -168,7 +162,6 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // الاسم إلزامي أثناء sign up
           const nameEl = (document.getElementById("customer-signup-name") as HTMLInputElement);
           const name = nameEl?.value.trim();
           if (!name) {
@@ -181,7 +174,6 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // تأكيد عدم وجود مستخدم بنفس البريد أو رقم الهاتف
           const { data: exists, error: existsError } = await supabase
             .from('customers')
             .select('id')
@@ -200,7 +192,6 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // التحقق من صحة البريد الإلكتروني
           if (!/^\S+@\S+\.\S+$/.test(email)) {
             toast({
               title: "بريد إلكتروني غير صالح",
@@ -211,7 +202,6 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // إضافة سجل الزبون الجديد
           const insertData = { email: email.trim(), password, phone: normalizedPhone, name };
           const { error: insertError } = await supabase
             .from("customers")
@@ -231,7 +221,6 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // auto-login بعد التسجيل: دخول مباشر
           if (rememberMe) {
             localStorage.setItem(CREDENTIALS_KEY, JSON.stringify({ email: email.trim(), password }));
           }
@@ -243,7 +232,6 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
         return;
       }
 
-      // تسجيل دخول السائق: البريد أو الهاتف + كلمة سر مطابقة
       if (role === 'driver') {
         const identifier = email.trim();
         if (!identifier || !password) {
@@ -332,7 +320,6 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* اسم المستخدم فقط عند الإنشاء */}
               {role === "customer" && !isLogin && (
                 <div className="space-y-2">
                   <Label htmlFor="customer-signup-name" className="flex items-center text-amber-700">
@@ -347,7 +334,6 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
                 </div>
               )}
 
-              {/* خانة واحدة في login لكلا الدورين، في signup تبقى كما كانت */}
               {isLogin ? (
                 <div className="space-y-2">
                   <Label htmlFor="identifier" className="flex items-center text-amber-700">
@@ -430,7 +416,6 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
                 />
               </div>
 
-              {/* خيار تذكرني للعملاء فقط */}
               {role === "customer" && (
                 <div className="flex items-center space-x-2 mb-[-0.5rem] rtl:space-x-reverse">
                   <input
