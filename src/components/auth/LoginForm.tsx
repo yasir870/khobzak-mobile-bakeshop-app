@@ -179,7 +179,9 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
           if (error) {
             toast({
               title: "خطأ",
-              description: "فشل إنشاء الحساب، جرب لاحقًا.",
+              description: error.message
+                ? `فشل في إنشاء الحساب: ${error.message}`
+                : "فشل إنشاء الحساب، جرب لاحقًا.",
               variant: "destructive"
             });
             setIsLoading(false);
