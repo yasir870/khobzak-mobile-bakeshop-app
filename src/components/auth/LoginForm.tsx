@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,13 +39,19 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
     }
   }, [role, isLogin]);
 
+  // دالة التحقق من رقم عراقي صحيح
+  function isValidIraqiPhone(phone: string) {
+    // يسمح 07XXXXXXXXX أو +9647XXXXXXXXX (يجب أن يتبعهم 8 أرقام)
+    const regex = /^((07\d{9})|(\+9647\d{9}))$/;
+    return regex.test(phone.trim());
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
       if (role === "customer") {
-        // login 
         if (isLogin) {
           // بحث حسب الإيميل وكلمة السر
           const { data: customer, error } = await supabase
@@ -105,6 +110,39 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             toast({
               title: "الاسم مطلوب",
               description: "يرجى إدخال الاسم الكامل.",
+              variant: "destructive"
+            });
+            setIsLoading(false);
+            return;
+          }
+
+          // تحقق صحة الإيميل أو الهاتف
+          if (!email && !phone) {
+            toast({
+              title: "مطلوب بريد إلكتروني أو رقم هاتف",
+              description: "يرجى إدخال بريد إلكتروني أو رقم هاتف.",
+              variant: "destructive"
+            });
+            setIsLoading(false);
+            return;
+          }
+
+          // تحقق من صحة رقم الهاتف (عراقي)
+          if (phone && !isValidIraqiPhone(phone)) {
+            toast({
+              title: "رقم غير صحيح",
+              description: "الرجاء إدخال رقم عراقي يبدأ بـ 07 أو +9647 ويتألف من 11 رقم.",
+              variant: "destructive"
+            });
+            setIsLoading(false);
+            return;
+          }
+
+          // التحقق من صحة البريد الإلكتروني (فقط إذا دخل بريد)
+          if (email && !/^\S+@\S+\.\S+$/.test(email)) {
+            toast({
+              title: "بريد إلكتروني غير صالح",
+              description: "يرجى إدخال بريد إلكتروني صحيح.",
               variant: "destructive"
             });
             setIsLoading(false);
