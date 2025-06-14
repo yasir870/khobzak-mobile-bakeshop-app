@@ -53,7 +53,7 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
     try {
       if (role === "customer") {
         if (isLogin) {
-          // بحث حسب الإيميل أو الهاتف وكلمة السر
+          // بحث حسب الإيميل أو الهاتف فقط
           const identifier = email.trim();
           if (!identifier || !password) {
             toast({
@@ -65,17 +65,28 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
+          // جلب الزبون بناءً على الإيميل أو الهاتف فقط
           const { data: customer, error } = await supabase
             .from('customers')
             .select('*')
             .or(`email.eq.${identifier},phone.eq.${identifier}`)
-            .eq('password', password)
             .maybeSingle();
 
           if (!customer) {
             toast({
-              title: "بيانات خاطئة",
-              description: "البريد الإلكتروني أو رقم الهاتف أو كلمة المرور غير صحيحة.",
+              title: "الحساب غير موجود",
+              description: "لا يوجد حساب مرتبط بهذا البريد الإلكتروني أو رقم الهاتف.",
+              variant: "destructive"
+            });
+            setIsLoading(false);
+            return;
+          }
+
+          // تحقق من كلمة المرور
+          if (customer.password !== password) {
+            toast({
+              title: "كلمة المرور غير صحيحة",
+              description: "الرجاء التحقق من كلمة المرور والمحاولة مرة أخرى.",
               variant: "destructive"
             });
             setIsLoading(false);
