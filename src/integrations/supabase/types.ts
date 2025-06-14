@@ -69,6 +69,69 @@ export type Database = {
         }
         Relationships: []
       }
+      orders: {
+        Row: {
+          address: string
+          created_at: string
+          customer_id: number
+          customer_phone: string
+          delivered_at: string | null
+          driver_id: number | null
+          id: number
+          notes: string | null
+          quantity: number
+          status: string
+          total_price: number
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          customer_id: number
+          customer_phone: string
+          delivered_at?: string | null
+          driver_id?: number | null
+          id?: number
+          notes?: string | null
+          quantity: number
+          status?: string
+          total_price: number
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          customer_id?: number
+          customer_phone?: string
+          delivered_at?: string | null
+          driver_id?: number | null
+          id?: number
+          notes?: string | null
+          quantity?: number
+          status?: string
+          total_price?: number
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       خبزك: {
         Row: {
           created_at: string
