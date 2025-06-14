@@ -24,6 +24,8 @@ export interface BreadProduct {
   detailedDescription: string;
   images: string[];
   category: string;
+  pieces: number;
+  notes: string;
 }
 
 const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
@@ -39,63 +41,63 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
   const breadTypes: BreadProduct[] = [
     {
       id: 1,
-      name: 'Traditional Arabic Bread',
-      nameAr: 'خبز عربي تقليدي',
-      price: 5000,
-      description: 'Fresh, soft traditional Arabic flatbread',
-      detailedDescription: 'Our traditional Arabic bread is made fresh daily using time-honored recipes passed down through generations. Made with high-quality flour and baked in traditional ovens, this bread has a perfect soft texture and authentic taste that pairs perfectly with any meal.',
-      images: ['🥖', '🍞', '🥯'],
-      category: 'Traditional'
+      name: "خبز التنور",
+      nameAr: "",
+      price: 1000,
+      description: "خبز دائري يُخبز داخل تنور طيني. طري من الداخل ومقرمش من الخارج، مثالي للفطور والغداء.",
+      detailedDescription: "خبز دائري يُخبز داخل تنور طيني. طري بالشَدّة من الداخل ومقرمش من الخارج لوجبة فطور أو غداء شعبية جدًا. عدد القطع: 8. ملاحظات: شعبي جدًا.",
+      images: ['🔥', '🥯'],
+      category: "شعبي جدًا",
+      pieces: 8,
+      notes: "شعبي جدًا"
     },
     {
       id: 2,
-      name: 'Whole Wheat Bread',
-      nameAr: 'خبز القمح الكامل',
-      price: 7000,
-      description: 'Healthy whole wheat bread, rich in fiber',
-      detailedDescription: 'Packed with nutrients and fiber, our whole wheat bread is perfect for health-conscious customers. Made with 100% whole wheat flour, this bread provides sustained energy and has a rich, nutty flavor that makes every bite satisfying.',
-      images: ['🍞', '🌾', '🥖'],
-      category: 'Healthy'
+      name: "خبز الصمون الحجري",
+      nameAr: "",
+      price: 1000,
+      description: "رغيف طويل، هش من الداخل ويُخبز في أفران حجرية. مناسب للسندويشات أو مع الشوربة.",
+      detailedDescription: "رغيف طويل هوائي هش من الداخل. يُخبز في أفران حجرية مخصصة ليمنحك خبز يومي للسندويشات أو مع الشوربة. عدد القطع: 8. ملاحظات: يومي.",
+      images: ['🥖', '🪨'],
+      category: "يومي",
+      pieces: 8,
+      notes: "يومي"
     },
     {
       id: 3,
-      name: 'Sesame Bread',
-      nameAr: 'خبز السمسم',
-      price: 6000,
-      description: 'Delicious bread topped with sesame seeds',
-      detailedDescription: 'Our sesame bread features a golden crust generously topped with premium sesame seeds. The seeds add a delightful crunch and nutty flavor, making this bread perfect for sandwiches or enjoyed on its own.',
-      images: ['🥯', '🌰', '🍞'],
-      category: 'Specialty'
+      name: "خبز الرقاق (صاج)",
+      nameAr: "",
+      price: 1000,
+      description: "رقيق جدًا يُطهى على صاج معدني، مثالي للفطور مع العسل أو يستخدم للف الدولمة.",
+      detailedDescription: "خبز رقاق رقيق جدًا يُطهى سريعًا على صاج معدني ساخن. خفيف ومناسب للفطور مع العسل أو للف الدولمة. عدد القطع: 4. ملاحظات: خفيف.",
+      images: ['🥞', '🍯'],
+      category: "خفيف",
+      pieces: 4,
+      notes: "خفيف"
     },
     {
       id: 4,
-      name: 'Cheese Bread',
-      nameAr: 'خبز الجبن',
-      price: 8000,
-      description: 'Soft bread filled with melted cheese',
-      detailedDescription: 'Indulge in our cheese bread featuring a soft, fluffy texture with pockets of melted cheese throughout. Made with high-quality cheese and fresh ingredients, this bread is perfect for cheese lovers and makes an excellent snack or side dish.',
-      images: ['🧀', '🍞', '🥖'],
-      category: 'Specialty'
+      name: "خبز الشاورما",
+      nameAr: "",
+      price: 1000,
+      description: "خبز رقيق لكنه قوي ومتين، مثالي للفّ الشاورما والفلافل، لا يتمزق بسهولة.",
+      detailedDescription: "خبز خاص رقيق لكن متين ومتماسك. مناسب جدًا للفّ الشاورما والفلافل والساندويشات المتنوعة دون أن يتمزق أو يتشقق. عدد القطع: 4. ملاحظات: ساندويش.",
+      images: ['🌯', '🥙'],
+      category: "ساندويش",
+      pieces: 4,
+      notes: "ساندويش"
     },
     {
       id: 5,
-      name: 'Za\'atar Bread',
-      nameAr: 'خبز الزعتر',
-      price: 6000,
-      description: 'Traditional bread with za\'atar herbs',
-      detailedDescription: 'Experience the authentic taste of the Middle East with our za\'atar bread. Topped with a aromatic blend of za\'atar herbs, olive oil, and sesame seeds, this bread offers a perfect balance of flavors and is ideal for breakfast or as a healthy snack.',
-      images: ['🌿', '🍞', '🥖'],
-      category: 'Traditional'
-    },
-    {
-      id: 6,
-      name: 'Sweet Date Bread',
-      nameAr: 'خبز التمر الحلو',
-      price: 9000,
-      description: 'Sweet bread with dates and honey',
-      detailedDescription: 'Our sweet date bread combines the natural sweetness of dates with a touch of honey, creating a delightful treat. Perfect for breakfast or dessert, this bread offers a unique flavor profile that celebrates traditional Middle Eastern ingredients.',
-      images: ['🍯', '🥖', '🍞'],
-      category: 'Sweet'
+      name: "خبز السكري",
+      nameAr: "",
+      price: 1000,
+      description: "خبز خاص لمرضى السكري، مصنوع بدون سكر وبدقيق صحي منخفض الكربوهيدرات.",
+      detailedDescription: "خبز صحي مخصص لمرضى السكري ولأنماط الغذاء الصحية. مصنوع بدون سكر وبدقيق خاص منخفض الكربوهيدرات. عدد القطع: 4. ملاحظات: صحي / لمرضى السكري.",
+      images: ['🥯', '💚'],
+      category: "صحي",
+      pieces: 4,
+      notes: "صحي / لمرضى السكري"
     }
   ];
 
@@ -168,7 +170,6 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
       </header>
 
       {/* نافذة عرض الأرقام أيضاً ستختفي لأنه لا يوجد زر يفتحها */}
-      
 
       {/* Main Content with top padding to account for fixed header */}
       <main className="max-w-4xl mx-auto px-4 pt-24 pb-8">
@@ -182,7 +183,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
 
         {/* Bread Menu */}
         <div className="mb-8">
-          <h3 className="text-2xl font-bold text-amber-800 mb-6">Our Fresh Bread</h3>
+          <h3 className="text-2xl font-bold text-amber-800 mb-6">أنواع الخبز المتوفرة</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {breadTypes.map((bread) => (
               <Card 
@@ -193,12 +194,15 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
                 <CardHeader className="text-center">
                   <div className="text-4xl mb-2">{bread.images[0]}</div>
                   <CardTitle className="text-lg text-amber-800">{bread.name}</CardTitle>
-                  <p className="text-sm text-amber-600 font-medium">{bread.nameAr}</p>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-600 mb-4">{bread.description}</p>
-                  <div className="text-center">
-                    <span className="text-lg font-bold text-amber-700">{bread.price} IQD</span>
+                  <p className="text-sm text-gray-600 mb-3">{bread.description}</p>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-base text-amber-700 font-semibold">السعر: {bread.price} د.ع</span>
+                    <span className="text-base text-amber-700 font-semibold">الكمية: {bread.pieces} {bread.pieces === 1 ? "قطعة" : "قطع"}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-base text-gray-600">ملاحظات: {bread.notes}</span>
                   </div>
                 </CardContent>
               </Card>
