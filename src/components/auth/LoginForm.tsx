@@ -171,16 +171,33 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             return;
           }
 
-          // الإضافة
-          const { error } = await supabase
+          // محاولة جلب سجل موجود لنفس المعلومة 
+          const { data: existingCustomer, error: existingCustomerError } = await supabase
+            .from('customers')
+            .select('*')
+            .or(`email.eq.${email},phone.eq.${phone}`)
+            .maybeSingle();
+
+          if (existingCustomer) {
+            toast({
+              title: "الحساب موجود",
+              description: "البريد الإلكتروني أو رقم الهاتف مرتبط بالحساب الحالي.",
+              variant: "destructive"
+            });
+            setIsLoading(false);
+            return;
+          }
+
+          // الإضافة الفعلية (التغيير هنا: لا نظهر رسالة النجاح إلا إذا نجح الإدخال)
+          const { error: insertError } = await supabase
             .from("customers")
             .insert([{ email, password, phone, name }]);
 
-          if (error) {
+          if (insertError) {
             toast({
               title: "خطأ",
-              description: error.message
-                ? `فشل في إنشاء الحساب: ${error.message}`
+              description: insertError.message
+                ? `فشل في إنشاء الحساب: ${insertError.message}`
                 : "فشل إنشاء الحساب، جرب لاحقًا.",
               variant: "destructive"
             });
