@@ -1,26 +1,21 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, ShoppingCart, Clock, Package, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Clock, Package, CheckCircle, Minus, Plus, Trash2 } from 'lucide-react';
 import CheckoutPage from './CheckoutPage';
+import { CartProduct } from './CustomerDashboard';
 
 interface CartPageProps {
   onBack: () => void;
-  cartItemCount: number;
+  cartItems: CartProduct[];
+  setCartItems: React.Dispatch<React.SetStateAction<CartProduct[]>>;
 }
 
-const CartPage = ({ onBack, cartItemCount }: CartPageProps) => {
+const CartPage = ({ onBack, cartItems, setCartItems }: CartPageProps) => {
   const [activeTab, setActiveTab] = useState('cart');
   const [showCheckout, setShowCheckout] = useState(false);
   const [orderHistory, setOrderHistory] = useState<any[]>([]);
-
-  // Mock cart items - in real app, this would come from context/state
-  const cartItems = [
-    { id: 1, name: 'Traditional Arabic Bread', nameAr: 'خبز عربي تقليدي', price: 5000, quantity: 2 },
-    { id: 2, name: 'Cheese Bread', nameAr: 'خبز الجبن', price: 8000, quantity: 1 },
-  ];
 
   useEffect(() => {
     // Load order history from localStorage
@@ -52,13 +47,30 @@ const CartPage = ({ onBack, cartItemCount }: CartPageProps) => {
     }
   };
 
+  // العمليات على السلة الحقيقية:
+  const handleQuantityChange = (id: number, change: number) => {
+    setCartItems(prev =>
+      prev.map(item =>
+        item.id === id
+          ? { ...item, quantity: Math.max(1, item.quantity + change) }
+          : item
+      )
+    );
+  };
+
+  const handleRemoveItem = (id: number) => {
+    setCartItems(prev => prev.filter(item => item.id !== id));
+  };
+
   const cartTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   const handleOrderComplete = (orderData: any) => {
-    // Update order history
     setOrderHistory(prev => [orderData, ...prev]);
     setShowCheckout(false);
     setActiveTab('orders');
+    // Clear the cart after order complete
+    setCartItems([]);
+    localStorage.removeItem('cartItems');
   };
 
   if (showCheckout) {
@@ -94,7 +106,7 @@ const CartPage = ({ onBack, cartItemCount }: CartPageProps) => {
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="cart" className="flex items-center space-x-2">
               <ShoppingCart className="h-4 w-4" />
-              <span>Cart ({cartItemCount})</span>
+              <span>Cart ({cartItems.reduce((sum, i) => sum + i.quantity, 0)})</span>
             </TabsTrigger>
             <TabsTrigger value="orders" className="flex items-center space-x-2">
               <Clock className="h-4 w-4" />
@@ -117,10 +129,18 @@ const CartPage = ({ onBack, cartItemCount }: CartPageProps) => {
                               {item.price} IQD × {item.quantity}
                             </p>
                           </div>
-                          <div className="text-right">
+                          <div className="flex flex-col items-end space-y-2">
+                            <div className="flex items-center space-x-1 mb-2">
+                              <Button variant="outline" size="icon" className="h-7 w-7 p-0" onClick={() => handleQuantityChange(item.id, -1)} disabled={item.quantity === 1}><Minus className="h-4 w-4" /></Button>
+                              <span className="w-6 text-center font-medium">{item.quantity}</span>
+                              <Button variant="outline" size="icon" className="h-7 w-7 p-0" onClick={() => handleQuantityChange(item.id, 1)}><Plus className="h-4 w-4" /></Button>
+                            </div>
                             <p className="font-bold text-amber-700">
                               {item.price * item.quantity} IQD
                             </p>
+                            <Button variant="ghost" size="icon" className="text-red-500 hover:bg-red-50" onClick={() => handleRemoveItem(item.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                       </CardContent>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -29,8 +29,13 @@ export interface BreadProduct {
   notes: string;
 }
 
+export interface CartProduct extends BreadProduct {
+  quantity: number;
+}
+
 const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
-  const [cartItems, setCartItems] = useState(0);
+  // سنستخدم array من المنتجات مع quantity
+  const [cartItems, setCartItems] = useState<CartProduct[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<BreadProduct | null>(null);
   const [showCart, setShowCart] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -114,32 +119,52 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
     }
   ];
 
+  // تحميل cart من localStorage (مرة واحدة عند أول تحميل للكومبوننت)
+  useEffect(() => {
+    const storedCart = localStorage.getItem('cartItems');
+    if (storedCart) {
+      setCartItems(JSON.parse(storedCart));
+    }
+  }, []);
+
+  // حفظ cart في localStorage كلما تغيرت
+  useEffect(() => {
+    localStorage.setItem('cartItems', JSON.stringify(cartItems));
+  }, [cartItems]);
+
   const handleProductClick = (product: BreadProduct) => {
     setSelectedProduct(product);
   };
 
+  // تعديل دالة إضافة للسلة مع دمج المنتج إذا تكرر
   const handleAddToCart = (quantity: number) => {
-    setCartItems(prev => prev + quantity);
+    if (!selectedProduct) return;
+
+    setCartItems((prev) => {
+      // هل المنتج موجود بالفعل؟
+      const exists = prev.find(item => item.id === selectedProduct.id);
+      if (exists) {
+        // إذا موجود، فقط زيد الكمية
+        return prev.map(item =>
+          item.id === selectedProduct.id
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        );
+      } else {
+        // إذا جديد، أضفه مع الكمية المطلوبة
+        return [...prev, { ...selectedProduct, quantity }];
+      }
+    });
     setSelectedProduct(null);
   };
 
-  const handleShowAllPhones = async () => {
-    setLoadingPhones(true);
-    setShowAllPhones(true);
-    const { data, error } = await supabase.from('customers').select('phone');
-    setLoadingPhones(false);
-    if (data && Array.isArray(data)) {
-      setAllPhones(data.map((e: any) => e.phone));
-    } else {
-      setAllPhones(['حدث خطأ في جلب الأرقام!']);
-    }
-  };
-
+  // تمرير cartItems و setCartItems إلى CartPage ليستطيع التغيير (حذف، زيادة، ..)
   if (showCart) {
     return (
       <CartPage 
         onBack={() => setShowCart(false)}
-        cartItemCount={cartItems}
+        cartItems={cartItems}
+        setCartItems={setCartItems}
       />
     );
   }
@@ -167,9 +192,9 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
               onClick={() => setShowCart(true)}
             >
               <ShoppingCart className="h-4 w-4" />
-              {cartItems > 0 && (
-                <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-amber-600 text-white text-xs">
-                  {cartItems}
+              {cartItems.length > 0 && (
+                <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-amber-600 text-white text-xs flex items-center justify-center">
+                  {cartItems.reduce((total, item) => total + item.quantity, 0)}
                 </Badge>
               )}
             </Button>
@@ -177,12 +202,9 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
-            {/* تمت إزالة زر فحص كل الأرقام نهائيًا */}
           </div>
         </div>
       </header>
-
-      {/* نافذة عرض الأرقام أيضاً ستختفي لأنه لا يوجد زر يفتحها */}
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 pt-24 pb-8">
@@ -194,7 +216,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
           </CardContent>
         </Card>
 
-        {/* Bread Menu - الآن تم نقله لمكون منفصل */}
+        {/* Bread Menu */}
         <BreadMenuList breadTypes={breadTypes} onProductClick={handleProductClick} />
 
         {/* Quick Actions */}
