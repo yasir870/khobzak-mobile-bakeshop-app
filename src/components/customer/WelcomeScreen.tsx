@@ -60,7 +60,7 @@ const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
         completedWelcome: true
       };
       localStorage.setItem('userData', JSON.stringify(userData));
-      // إزالة أي انتظار أو رسالة
+      localStorage.setItem('welcomeCompleted', 'true'); // <--- أضف هذا السطر
       onComplete();
       setIsLoading(false);
     } catch (error) {
