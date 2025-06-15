@@ -50,5 +50,13 @@
   "bread_shawarma_detailedDescription": "Special thin but strong and cohesive bread. Very suitable for wrapping shawarma, falafel, and various sandwiches without tearing or cracking. Pieces: 4. Notes: Sandwich.",
   "bread_sukari_name": "Diabetic Bread",
   "bread_sukari_description": "Special bread for diabetics, made without sugar and with healthy, low-carbohydrate flour.",
-  "bread_sukari_detailedDescription": "Healthy bread for diabetics and healthy lifestyles. Made without sugar and with special low-carbohydrate flour. Pieces: 4. Notes: Healthy / For diabetics."
+  "bread_sukari_detailedDescription": "Healthy bread for diabetics and healthy lifestyles. Made without sugar and with special low-carbohydrate flour. Pieces: 4. Notes: Healthy / For diabetics.",
+  "toastMissingInfoTitle": "Missing Information",
+  "toastAddressMissing": "Please fill in your delivery address.",
+  "toastUserError": "Could not identify you. Please log out and log in again.",
+  "toastOrderSuccessTitle": "Order Placed Successfully!",
+  "toastOrderSuccessDesc": "Your order #{orderId} has been placed and will be prepared soon.",
+  "toastOrderErrorTitle": "Error Placing Order",
+  "toastOrderErrorDesc": "Failed to place your order. Please try again.",
+  "unknown": "Unknown"
 }

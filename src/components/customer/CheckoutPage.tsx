@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,10 +48,10 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
 
     if (!address || !customerId) {
       toast({
-        title: "Missing Information",
+        title: t('toastMissingInfoTitle'),
         description: !address
-          ? "Please fill in your delivery address."
-          : "Could not identify you. Please log out and log in again.",
+          ? t('toastAddressMissing')
+          : t('toastUserError'),
         variant: "destructive"
       });
       setIsLoading(false);
@@ -72,7 +73,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
           notes,
           status: 'pending',
           address,
-          customer_phone: getCustomerPhone() || "Unknown",
+          customer_phone: getCustomerPhone() || t('unknown'),
         }
       ]).select().single();
 
@@ -99,15 +100,15 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
       localStorage.setItem('userOrders', JSON.stringify(existingOrders));
 
       toast({
-        title: "Order Placed Successfully!",
-        description: `Your order #${orderData.id} has been placed and will be prepared soon.`
+        title: t('toastOrderSuccessTitle'),
+        description: t('toastOrderSuccessDesc', { orderId: orderData.id })
       });
       onOrderComplete(orderData);
       setIsLoading(false);
     } catch (error: any) {
       toast({
-        title: "Error Placing Order",
-        description: error.message || "Failed to place your order. Please try again.",
+        title: t('toastOrderErrorTitle'),
+        description: error.message || t('toastOrderErrorDesc'),
         variant: "destructive"
       });
       setIsLoading(false);
@@ -147,7 +148,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
                   </div>
                 ))}
                 <div className="border-t pt-2 flex justify-between font-bold">
-                  <span>Total:</span>
+                  <span>{t('total')}:</span>
                   <span>{cartTotal} IQD</span>
                 </div>
               </div>
