@@ -3,7 +3,7 @@ const About = () => (
   <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center px-4">
     <div className="bg-white rounded-xl shadow-lg max-w-lg w-full p-8 text-center space-y-4">
       <img
-        src="/lovable-uploads/photo-1472396961693-142e6e269027"
+        src="https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//A_logo_on_a_grid-patterned_beige_background_featur.png"
         alt="Logo"
         className="mx-auto w-20 h-20 rounded-full border-amber-200 border-4 mb-3"
       />
@@ -18,3 +18,4 @@ const About = () => (
 );
 
 export default About;
+

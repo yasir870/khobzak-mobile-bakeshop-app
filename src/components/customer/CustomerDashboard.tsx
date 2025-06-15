@@ -185,7 +185,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             {/* Icon */}
-            <span className="w-8 h-8 bg-[url('/lovable-uploads/photo-1472396961693-142e6e269027')] bg-cover bg-center rounded-full border-2 border-amber-300 shadow"></span>
+            <span className="w-8 h-8 bg-[url('https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//A_logo_on_a_grid-patterned_beige_background_featur.png')] bg-cover bg-center rounded-full border-2 border-amber-300 shadow"></span>
             <div>
               <h1 className="text-2xl font-bold text-amber-800 flex items-center gap-2">خبزك</h1>
               <p className="text-sm text-amber-600">Fresh Bread Delivery</p>
