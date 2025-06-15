@@ -153,9 +153,12 @@ const CustomerDashboard = ({
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-amber-200">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            {/* Icon */}
-            <span className="w-8 h-8 bg-[url('https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//A_logo_on_a_grid-patterned_beige_background_featur.png')] bg-cover bg-center rounded-full border-2 border-amber-300 shadow text-2xl"></span>
+          <div className="flex items-center gap-4">
+            {/* Logo Image - مكبرة */}
+            <span
+              className="w-32 h-32 bg-[url('https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//A_logo_on_a_grid-patterned_beige_background_featur.png')] bg-cover bg-center rounded-full border-2 border-amber-300 shadow"
+              aria-label="Logo"
+            ></span>
             <div>
               <h1 className="text-2xl font-bold text-amber-800 flex items-center gap-2">خبزك</h1>
               <p className="text-sm text-amber-600">Fresh Bread Delivery</p>
