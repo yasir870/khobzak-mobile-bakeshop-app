@@ -2,7 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Mail, Phone, Whatsapp } from "lucide-react";
+import { Mail, Phone, Icon, icons } from "lucide-react";
 import React from "react";
 
 interface ContactDialogProps {
@@ -12,6 +12,11 @@ interface ContactDialogProps {
 
 const whatsappNumber = "07515497130";
 const email = "yh62731@gmail.com";
+
+// الحل الصحيح لتعريف أيقونة واتساب من lucide-react
+const Whatsapp = (props: React.ComponentProps<typeof Icon>) => (
+  <Icon iconNode={icons.whatsapp} {...props} />
+);
 
 const ContactDialog: React.FC<ContactDialogProps> = ({ open, onOpenChange }) => {
   const handleCopyEmail = () => {
@@ -67,3 +72,4 @@ const ContactDialog: React.FC<ContactDialogProps> = ({ open, onOpenChange }) => 
 };
 
 export default ContactDialog;
+
