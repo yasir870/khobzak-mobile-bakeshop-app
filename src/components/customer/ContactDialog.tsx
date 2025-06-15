@@ -2,7 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Mail, Phone, icons } from "lucide-react";
+import { Mail, Phone, Whatsapp } from "lucide-react";
 import React from "react";
 
 interface ContactDialogProps {
@@ -12,9 +12,6 @@ interface ContactDialogProps {
 
 const whatsappNumber = "07515497130";
 const email = "yh62731@gmail.com";
-
-// Assign the WhatsApp icon as a React component
-const Whatsapp = icons.whatsapp;
 
 const ContactDialog: React.FC<ContactDialogProps> = ({ open, onOpenChange }) => {
   const handleCopyEmail = () => {
