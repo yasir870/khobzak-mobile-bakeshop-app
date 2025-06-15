@@ -78,7 +78,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
       description: "رقيق جدًا يُطهى على صاج معدني، مثالي للفطور مع العسل أو يستخدم للف الدولمة.",
       detailedDescription: "خبز رقاق رقيق جدًا يُطهى سريعًا على صاج معدني ساخن. خفيف ومناسب للفطور مع العسل أو للف الدولمة. عدد القطع: 4. ملاحظات: خفيف.",
       images: [
-        "https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/products/ragag.jpg"
+        "https://img-global.cpcdn.com/recipes/138143f1b4cf972e/600x440cq90/%D8%A7%D9%84%D8%B5%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B1%D8%A6%D9%8A%D8%B3%D9%8A%D8%A9-%D9%84%D9%88%D8%B5%D9%81%D8%A9%D8%AE%D8%A8%D8%B2-%D8%B4%D8%B1%D8%A7%D9%83.jpg"
       ],
       category: "خفيف",
       pieces: 4,
