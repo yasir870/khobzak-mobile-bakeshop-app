@@ -106,7 +106,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
       description: "خبز خاص لمرضى السكري، مصنوع بدون سكر وبدقيق صحي منخفض الكربوهيدرات.",
       detailedDescription: "خبز صحي مخصص لمرضى السكري ولأنماط الغذاء الصحية. مصنوع بدون سكر وبدقيق خاص منخفض الكربوهيدرات. عدد القطع: 4. ملاحظات: صحي / لمرضى السكري.",
       images: [
-        "https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/products/sokari.jpg"
+        "https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//hq720.jpg"
       ],
       category: "صحي",
       pieces: 4,
