@@ -42,10 +42,14 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
     e.preventDefault();
     setIsLoading(true);
 
-    if (!address) {
+    const customerId = getCustomerId();
+
+    if (!address || !customerId) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields.",
+        description: !address
+          ? "Please fill in your delivery address."
+          : "Could not identify you. Please log out and log in again.",
         variant: "destructive"
       });
       setIsLoading(false);
@@ -59,7 +63,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
 
       const { data, error } = await supabase.from("orders").insert([
         {
-          customer_id: getCustomerId(),
+          customer_id: customerId,
           driver_id: null,
           type: typeString,
           quantity: cartItems.reduce((sum, item) => sum + item.quantity, 0),
@@ -101,8 +105,8 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
       setIsLoading(false);
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Failed to place your order. Please try again.",
+        title: "Error Placing Order",
+        description: error.message || "Failed to place your order. Please try again.",
         variant: "destructive"
       });
       setIsLoading(false);
