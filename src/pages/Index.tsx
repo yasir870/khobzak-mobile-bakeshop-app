@@ -1,16 +1,18 @@
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Truck } from 'lucide-react';
 import LoginForm from '@/components/auth/LoginForm';
 import CustomerApp from '@/components/customer/CustomerApp';
 import DriverApp from '@/components/driver/DriverApp';
+import { useTranslation } from '@/context/LanguageContext';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 const Index = () => {
   const [selectedRole, setSelectedRole] = useState<'customer' | 'driver' | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<'customer' | 'driver' | null>(null);
+  const { t } = useTranslation();
 
   const handleRoleSelect = (role: 'customer' | 'driver') => {
     setSelectedRole(role);
@@ -52,16 +54,16 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-amber-800 mb-2">خبزك</h1>
+          <h1 className="text-4xl font-bold text-amber-800 mb-2">{t('appName')}</h1>
           <h2 className="text-2xl font-semibold text-amber-700 mb-1">Khobzak</h2>
-          <p className="text-amber-600">Fresh Bread Delivery Service</p>
+          <p className="text-amber-600">{t('appSlogan')}</p>
         </div>
 
         <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
           <CardHeader className="text-center">
-            <CardTitle className="text-xl text-amber-800">Choose Your Role</CardTitle>
+            <CardTitle className="text-xl text-amber-800">{t('chooseYourRole')}</CardTitle>
             <CardDescription className="text-amber-600">
-              Select how you'd like to use the app
+              {t('selectHowToUse')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -71,9 +73,9 @@ const Index = () => {
               size="lg"
             >
               <Users className="mr-3 h-6 w-6" />
-              <div className="text-left">
-                <div>Customer</div>
-                <div className="text-sm opacity-90">Order fresh bread</div>
+              <div className="text-left rtl:text-right">
+                <div>{t('customer')}</div>
+                <div className="text-sm opacity-90">{t('customerDescription')}</div>
               </div>
             </Button>
 
@@ -84,11 +86,14 @@ const Index = () => {
               size="lg"
             >
               <Truck className="mr-3 h-6 w-6" />
-              <div className="text-left">
-                <div>Driver</div>
-                <div className="text-sm opacity-75">Deliver orders</div>
+              <div className="text-left rtl:text-right">
+                <div>{t('driver')}</div>
+                <div className="text-sm opacity-75">{t('driverDescription')}</div>
               </div>
             </Button>
+            <div className="pt-4 flex justify-center">
+              <LanguageSwitcher />
+            </div>
           </CardContent>
         </Card>
       </div>
