@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,8 +26,8 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
 
   // helper: get customer_phone from localStorage OR ask user for it later if needed
   const getCustomerPhone = () => {
-    // Suppose you store phone with "customerPhone" key, otherwise fallback to prompt
-    return localStorage.getItem("customerPhone") || "";
+    // We store phone with "userPhone" key during login
+    return localStorage.getItem("userPhone") || "";
   };
 
   // helper: get customer_id from localStorage OR let Supabase assign
