@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import CustomerDashboard from './CustomerDashboard';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface CustomerAppProps {
   onLogout: () => void;
@@ -9,28 +10,56 @@ interface CustomerAppProps {
 
 const CustomerApp = ({ onLogout }: CustomerAppProps) => {
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchAndStoreCustomerId = async () => {
       const phone = localStorage.getItem('userPhone');
-      if (phone && !localStorage.getItem('customerId')) {
+
+      // If we already have a customerId, we're good.
+      if (localStorage.getItem('customerId')) {
+        setIsLoading(false);
+        return;
+      }
+
+      // If we have a phone but no ID, try to fetch the ID.
+      if (phone) {
         const { data: customer, error } = await supabase
           .from('customers')
           .select('id')
           .eq('phone', phone)
           .single();
 
-        if (error) {
-          console.error('Error fetching customer id:', error);
-        } else if (customer) {
+        if (error || !customer) {
+          console.error('Error fetching customer id:', error?.message || 'Customer not found');
+          toast({
+            title: 'Authentication Error',
+            description: 'Could not verify your profile. Please log in again.',
+            variant: 'destructive',
+          });
+          // Use a small timeout to allow the toast to be seen before logging out.
+          setTimeout(() => {
+            onLogout();
+          }, 2000);
+        } else {
           localStorage.setItem('customerId', customer.id.toString());
+          setIsLoading(false);
         }
+      } else {
+        // If no phone and no ID, we can't proceed.
+        toast({
+          title: 'Authentication Error',
+          description: 'Your session has expired. Please log in again.',
+          variant: 'destructive',
+        });
+        setTimeout(() => {
+          onLogout();
+        }, 2000);
       }
-      setIsLoading(false);
     };
 
     fetchAndStoreCustomerId();
-  }, []);
+  }, [onLogout, toast]);
 
   if (isLoading) {
     return (
