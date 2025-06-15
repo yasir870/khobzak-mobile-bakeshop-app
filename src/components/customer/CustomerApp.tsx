@@ -13,52 +13,45 @@ const CustomerApp = ({ onLogout }: CustomerAppProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchAndStoreCustomerId = async () => {
+    const verifyAndFetchCustomerId = async () => {
       const phone = localStorage.getItem('userPhone');
 
-      // If we already have a customerId, we're good.
-      if (localStorage.getItem('customerId')) {
-        setIsLoading(false);
-        return;
-      }
-
-      // If we have a phone but no ID, try to fetch the ID.
-      if (phone) {
-        const { data: customer, error } = await supabase
-          .from('customers')
-          .select('id')
-          .eq('phone', phone)
-          .single();
-
-        if (error || !customer) {
-          console.error('Error fetching customer id:', error?.message || 'Customer not found');
-          toast({
-            title: 'Authentication Error',
-            description: 'Could not verify your profile. Please log in again.',
-            variant: 'destructive',
-          });
-          // Use a small timeout to allow the toast to be seen before logging out.
-          setTimeout(() => {
-            onLogout();
-          }, 2000);
-        } else {
-          localStorage.setItem('customerId', customer.id.toString());
-          setIsLoading(false);
-        }
-      } else {
-        // If no phone and no ID, we can't proceed.
+      if (!phone) {
+        // No phone in storage, user must log in.
         toast({
           title: 'Authentication Error',
           description: 'Your session has expired. Please log in again.',
           variant: 'destructive',
         });
-        setTimeout(() => {
-          onLogout();
-        }, 2000);
+        setTimeout(() => onLogout(), 2000);
+        return;
+      }
+
+      // We have a phone, let's verify it and get the ID from Supabase.
+      const { data: customer, error } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('phone', phone)
+        .single();
+
+      if (error || !customer) {
+        console.error('Error verifying customer profile:', error?.message || 'Customer not found');
+        // Clear potentially stale customerId
+        localStorage.removeItem('customerId');
+        toast({
+          title: 'Authentication Error',
+          description: 'Could not verify your profile. Please log in again.',
+          variant: 'destructive',
+        });
+        setTimeout(() => onLogout(), 2000);
+      } else {
+        // Success. Store the fresh customer ID and proceed.
+        localStorage.setItem('customerId', customer.id.toString());
+        setIsLoading(false);
       }
     };
 
-    fetchAndStoreCustomerId();
+    verifyAndFetchCustomerId();
   }, [onLogout, toast]);
 
   if (isLoading) {
