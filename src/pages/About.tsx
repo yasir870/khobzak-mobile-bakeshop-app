@@ -5,7 +5,7 @@ const About = () => (
       <img
         src="https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//A_logo_on_a_grid-patterned_beige_background_featur.png"
         alt="Logo"
-        className="mx-auto w-32 h-32 rounded-full border-amber-200 border-4 mb-3"
+        className="mx-auto w-16 h-16 md:w-24 md:h-24 rounded-full border-amber-200 border-4 mb-3 transition-all duration-300 hover:scale-125 hover:w-32 hover:h-32"
       />
       <h1 className="text-3xl font-bold text-amber-800 mb-2">من نحن - خبزك</h1>
       <p className="text-amber-700 leading-relaxed">

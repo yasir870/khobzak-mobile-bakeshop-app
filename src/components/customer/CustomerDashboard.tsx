@@ -154,9 +154,9 @@ const CustomerDashboard = ({
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-amber-200">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            {/* Logo Image - مكبرة */}
+            {/* Logo Image - متحركة مع hover */}
             <span
-              className="w-32 h-32 bg-[url('https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//A_logo_on_a_grid-patterned_beige_background_featur.png')] bg-cover bg-center rounded-full border-2 border-amber-300 shadow"
+              className="w-16 h-16 md:w-24 md:h-24 bg-[url('https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//A_logo_on_a_grid-patterned_beige_background_featur.png')] bg-cover bg-center rounded-full border-2 border-amber-300 shadow transition-all duration-300 hover:scale-125 hover:w-32 hover:h-32"
               aria-label="Logo"
             ></span>
             <div>
