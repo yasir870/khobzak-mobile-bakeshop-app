@@ -63,7 +63,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
       description: "رغيف طويل، هش من الداخل ويُخبز في أفران حجرية. مناسب للسندويشات أو مع الشوربة.",
       detailedDescription: "رغيف طويل هوائي هش من الداخل. يُخبز في أفران حجرية مخصصة ليمنحك خبز يومي للسندويشات أو مع الشوربة. عدد القطع: 8. ملاحظات: يومي.",
       images: [
-        "https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/products/samoon.jpg"
+        "https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos/maxresdefault.jpg"
       ],
       category: "يومي",
       pieces: 8,
