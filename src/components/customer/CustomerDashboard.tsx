@@ -48,7 +48,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
       description: "خبز دائري يُخبز داخل تنور طيني. طري من الداخل ومقرمش من الخارج، مثالي للفطور والغداء.",
       detailedDescription: "خبز دائري يُخبز داخل تنور طيني. طري بالشَدّة من الداخل ومقرمش من الخارج لوجبة فطور أو غداء شعبية جدًا. عدد القطع: 8. ملاحظات: شعبي جدًا.",
       images: [
-        "https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/products/tanour.jpg",
+        "https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//148efc9e-20d5-427d-8b10-a02c6732cc66.png",
         "https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos/maxresdefault.jpg"
       ],
       category: "شعبي جدًا",
