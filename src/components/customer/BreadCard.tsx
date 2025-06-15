@@ -10,27 +10,33 @@ interface BreadCardProps {
 const BreadCard = ({ bread, onClick }: BreadCardProps) => {
   return (
     <Card
-      className="bg-white/90 backdrop-blur-sm hover:shadow-lg transition-shadow cursor-pointer"
+      className="bg-card/95 backdrop-blur-sm hover:shadow-warm-lg transition-all duration-300 cursor-pointer border border-primary/20 hover:border-primary/40 hover:scale-[1.02]"
       onClick={() => onClick(bread)}
     >
-      <CardHeader className="text-center flex flex-col items-center">
+      <CardHeader className="text-center flex flex-col items-center pb-3">
         <img
           src={bread.images[0]}
           alt={bread.name}
-          className="h-32 w-32 object-cover rounded-lg mb-2 border shadow"
+          className="h-36 w-36 object-cover rounded-xl mb-3 border-2 border-primary/20 shadow-warm transition-transform duration-300 hover:scale-105"
         />
-        <CardTitle className="text-lg text-amber-800">{bread.name}</CardTitle>
+        <CardTitle className="text-xl text-primary font-bold">{bread.name}</CardTitle>
       </CardHeader>
-      <CardContent>
-        <p className="text-sm text-gray-600 mb-3">{bread.description}</p>
-        <div className="flex justify-between items-center mb-1">
-          <span className="text-base text-amber-700 font-semibold">السعر: {bread.price} د.ع</span>
-          <span className="text-base text-amber-700 font-semibold">
-            الكمية: {bread.pieces} {bread.pieces === 1 ? "قطعة" : "قطع"}
-          </span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-base text-gray-600">ملاحظات: {bread.notes}</span>
+      <CardContent className="pt-0">
+        <p className="text-sm text-foreground/70 mb-4 leading-relaxed">{bread.description}</p>
+        <div className="space-y-2">
+          <div className="flex justify-between items-center p-2 bg-accent/30 rounded-lg">
+            <span className="text-sm font-medium text-primary">السعر:</span>
+            <span className="text-base text-primary font-bold">{bread.price} د.ع</span>
+          </div>
+          <div className="flex justify-between items-center p-2 bg-muted/40 rounded-lg">
+            <span className="text-sm font-medium text-primary">الكمية:</span>
+            <span className="text-base text-primary font-bold">
+              {bread.pieces} {bread.pieces === 1 ? "قطعة" : "قطع"}
+            </span>
+          </div>
+          <div className="p-2 bg-primary/5 rounded-lg">
+            <span className="text-xs text-foreground/60">ملاحظات: {bread.notes}</span>
+          </div>
         </div>
       </CardContent>
     </Card>
