@@ -92,7 +92,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
       description: "خبز رقيق لكنه قوي ومتين، مثالي للفّ الشاورما والفلافل، لا يتمزق بسهولة.",
       detailedDescription: "خبز خاص رقيق لكن متين ومتماسك. مناسب جدًا للفّ الشاورما والفلافل والساندويشات المتنوعة دون أن يتمزق أو يتشقق. عدد القطع: 4. ملاحظات: ساندويش.",
       images: [
-        "https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/products/shawerma.jpg"
+        "https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//ff1d836db4413360366355d14e6ed8c8_w750_h500.jpg"
       ],
       category: "ساندويش",
       pieces: 4,
