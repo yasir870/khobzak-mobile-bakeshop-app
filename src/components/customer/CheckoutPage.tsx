@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, MapPin, Clock, CreditCard, Banknote } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CheckoutPageProps {
   onBack: () => void;
@@ -21,6 +22,20 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  // helper: get customer_phone from localStorage OR ask user for it later if needed
+  const getCustomerPhone = () => {
+    // Suppose you store phone with "customerPhone" key, otherwise fallback to prompt
+    return localStorage.getItem("customerPhone") || "";
+  };
+
+  // helper: get customer_id from localStorage OR let Supabase assign
+  const getCustomerId = () => {
+    // Suppose you store customer ID with "customerId" key
+    // Else fallback to null
+    const val = localStorage.getItem("customerId");
+    return val ? parseInt(val) : null;
+  };
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,32 +52,53 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
     }
 
     try {
+      // Prepare order for Supabase
+      // Note: "type" will be a string من أنواع الخبز المطلوبة، آسهل شيء نفصلها بفارزة (CSV)
+      const typeString = cartItems.map(item => `${item.name} x${item.quantity}`).join(", ");
+
+      const { data, error } = await supabase.from("orders").insert([
+        {
+          customer_id: getCustomerId(),
+          driver_id: null,
+          type: typeString,
+          quantity: cartItems.reduce((sum, item) => sum + item.quantity, 0),
+          total_price: cartTotal,
+          notes,
+          status: 'pending',
+          address,
+          customer_phone: getCustomerPhone() || "Unknown",
+        }
+      ]).select().single();
+
+      if (error) {
+        throw error;
+      }
+
+      // orderData structure (for local usage)
       const orderData = {
-        id: `ORD${Date.now()}`,
+        id: data?.id,
         date: new Date().toISOString().split('T')[0],
-        status: 'processing',
+        status: data?.status || 'pending',
         items: cartItems.map(item => `${item.name} x${item.quantity}`),
         total: cartTotal,
         address,
         paymentMethod,
         notes,
-        createdAt: new Date().toISOString()
+        createdAt: data?.created_at || new Date().toISOString()
       };
 
-      // In real implementation, save to Supabase orders table
+      // (اختياري): الاحتفاظ بالطلب الجديد في localStorage/ذاكرة العميل
       const existingOrders = JSON.parse(localStorage.getItem('userOrders') || '[]');
       existingOrders.push(orderData);
       localStorage.setItem('userOrders', JSON.stringify(existingOrders));
 
-      setTimeout(() => {
-        toast({
-          title: "Order Placed Successfully!",
-          description: `Your order #${orderData.id} has been placed and will be prepared soon.`
-        });
-        onOrderComplete(orderData);
-        setIsLoading(false);
-      }, 1000);
-    } catch (error) {
+      toast({
+        title: "Order Placed Successfully!",
+        description: `Your order #${orderData.id} has been placed and will be prepared soon.`
+      });
+      onOrderComplete(orderData);
+      setIsLoading(false);
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Failed to place your order. Please try again.",
