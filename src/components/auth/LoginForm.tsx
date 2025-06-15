@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -133,6 +134,9 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
             localStorage.removeItem(CREDENTIALS_KEY);
           }
 
+          // FIX: Store the phone number on successful login
+          localStorage.setItem('userPhone', customer.phone);
+
           toast({
             title: "تم تسجيل الدخول بنجاح",
             description: `مرحباً ${customer.name}!`
@@ -224,6 +228,10 @@ const LoginForm = ({ role, onAuthSuccess, onBack }: LoginFormProps) => {
           if (rememberMe) {
             localStorage.setItem(CREDENTIALS_KEY, JSON.stringify({ email: email.trim(), password }));
           }
+          
+          // FIX: Store the phone number on successful signup
+          localStorage.setItem('userPhone', normalizedPhone);
+
           toast({ title: "تم إنشاء الحساب!", description: "تم تحويلك للتطبيق مباشرةً ✨" });
           onAuthSuccess(role);
           setIsLoading(false);
