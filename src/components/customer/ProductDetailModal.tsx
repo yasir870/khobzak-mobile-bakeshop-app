@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +10,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { useTranslation } from '@/context/LanguageContext';
 
 interface ProductDetailModalProps {
   product: BreadProduct;
@@ -20,6 +20,7 @@ interface ProductDetailModalProps {
 
 const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModalProps) => {
   const [quantity, setQuantity] = useState(1);
+  const { t } = useTranslation();
 
   const handleQuantityChange = (change: number) => {
     const newQuantity = quantity + change;
@@ -95,7 +96,7 @@ const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModa
         <CardContent className="space-y-6">
           {/* الوصف التفصيلي */}
           <div>
-            <h3 className="font-semibold text-amber-800 mb-2">Description</h3>
+            <h3 className="font-semibold text-amber-800 mb-2">{t('description')}</h3>
             <p className="text-gray-600 leading-relaxed">{product.detailedDescription}</p>
           </div>
 
@@ -106,7 +107,7 @@ const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModa
 
           {/* اختيار الكمية */}
           <div className="flex items-center justify-center space-x-4">
-            <span className="font-medium text-amber-800">Quantity:</span>
+            <span className="font-medium text-amber-800">{t('quantity')}:</span>
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
@@ -130,7 +131,7 @@ const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModa
           {/* السعر الإجمالي */}
           <div className="text-center">
             <p className="text-amber-600">
-              Total: <span className="font-bold text-lg">{product.price * quantity} IQD</span>
+              {t('total')}: <span className="font-bold text-lg">{product.price * quantity} IQD</span>
             </p>
           </div>
 
@@ -140,7 +141,7 @@ const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModa
             className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium"
             size="lg"
           >
-            Add {quantity} to Cart
+            {t('addQuantityToCart', { quantity })}
           </Button>
         </CardContent>
       </Card>

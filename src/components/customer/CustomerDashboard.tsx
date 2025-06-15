@@ -13,6 +13,8 @@ import { Info } from 'lucide-react';
 import BreadMenuList from "./BreadMenuList";
 import ContactDialog from "./ContactDialog";
 import Footer from "./Footer";
+import { useTranslation } from '@/context/LanguageContext';
+
 interface CustomerDashboardProps {
   onLogout: () => void;
 }
@@ -34,6 +36,7 @@ export interface CartProduct extends BreadProduct {
 const CustomerDashboard = ({
   onLogout
 }: CustomerDashboardProps) => {
+  const { t } = useTranslation();
   // سنستخدم array من المنتجات مع quantity
   const [cartItems, setCartItems] = useState<CartProduct[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<BreadProduct | null>(null);
@@ -48,55 +51,55 @@ const CustomerDashboard = ({
   // عدل صور المنتجات من Emoji إلى روابط الصور الحقيقية التي رفعتها على Supabase
   const breadTypes: BreadProduct[] = [{
     id: 1,
-    name: "خبز التنور",
+    name: t('bread_tanour_name'),
     nameAr: "",
     price: 1000,
-    description: "خبز دائري يُخبز داخل تنور طيني. طري من الداخل ومقرمش من الخارج، مثالي للفطور والغداء.",
-    detailedDescription: "خبز دائري يُخبز داخل تنور طيني. طري بالشَدّة من الداخل ومقرمش من الخارج لوجبة فطور أو غداء شعبية جدًا. عدد القطع: 8. ملاحظات: شعبي جدًا.",
+    description: t('bread_tanour_description'),
+    detailedDescription: t('bread_tanour_detailedDescription'),
     images: ["https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//148efc9e-20d5-427d-8b10-a02c6732cc66.png", "https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos/maxresdefault.jpg"],
     category: "شعبي جدًا",
     pieces: 8,
     notes: "شعبي جدًا"
   }, {
     id: 2,
-    name: "خبز الصمون الحجري",
+    name: t('bread_samoon_name'),
     nameAr: "",
     price: 1000,
-    description: "رغيف طويل، هش من الداخل ويُخبز في أفران حجرية. مناسب للسندويشات أو مع الشوربة.",
-    detailedDescription: "رغيف طويل هوائي هش من الداخل. يُخبز في أفران حجرية مخصصة ليمنحك خبز يومي للسندويشات أو مع الشوربة. عدد القطع: 8. ملاحظات: يومي.",
+    description: t('bread_samoon_description'),
+    detailedDescription: t('bread_samoon_detailedDescription'),
     images: ["https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos/maxresdefault.jpg"],
     category: "يومي",
     pieces: 8,
     notes: "يومي"
   }, {
     id: 3,
-    name: "خبز الرقاق (صاج)",
+    name: t('bread_ruqaq_name'),
     nameAr: "",
     price: 1000,
-    description: "رقيق جدًا يُطهى على صاج معدني، مثالي للفطور مع العسل أو يستخدم للف الدولمة.",
-    detailedDescription: "خبز رقاق رقيق جدًا يُطهى سريعًا على صاج معدني ساخن. خفيف ومناسب للفطور مع العسل أو للف الدولمة. عدد القطع: 4. ملاحظات: خفيف.",
+    description: t('bread_ruqaq_description'),
+    detailedDescription: t('bread_ruqaq_detailedDescription'),
     images: ["https://img-global.cpcdn.com/recipes/138143f1b4cf972e/600x440cq90/%D8%A7%D9%84%D8%B5%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B1%D8%A6%D9%8A%D8%B3%D9%8A%D8%A9-%D9%84%D9%88%D8%B5%D9%81%D8%A9%D8%AE%D8%A8%D8%B2-%D8%B4%D8%B1%D8%A7%D9%83.jpg"],
     category: "خفيف",
     pieces: 4,
     notes: "خفيف"
   }, {
     id: 4,
-    name: "خبز الشاورما",
+    name: t('bread_shawarma_name'),
     nameAr: "",
     price: 1000,
-    description: "خبز رقيق لكنه قوي ومتين، مثالي للفّ الشاورما والفلافل، لا يتمزق بسهولة.",
-    detailedDescription: "خبز خاص رقيق لكن متين ومتماسك. مناسب جدًا للفّ الشاورما والفلافل والساندويشات المتنوعة دون أن يتمزق أو يتشقق. عدد القطع: 4. ملاحظات: ساندويش.",
+    description: t('bread_shawarma_description'),
+    detailedDescription: t('bread_shawarma_detailedDescription'),
     images: ["https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//ff1d836db4413360366355d14e6ed8c8_w750_h500.jpg"],
     category: "ساندويش",
     pieces: 4,
     notes: "ساندويش"
   }, {
     id: 5,
-    name: "خبز السكري",
+    name: t('bread_sukari_name'),
     nameAr: "",
     price: 1000,
-    description: "خبز خاص لمرضى السكري، مصنوع بدون سكر وبدقيق صحي منخفض الكربوهيدرات.",
-    detailedDescription: "خبز صحي مخصص لمرضى السكري ولأنماط الغذاء الصحية. مصنوع بدون سكر وبدقيق خاص منخفض الكربوهيدرات. عدد القطع: 4. ملاحظات: صحي / لمرضى السكري.",
+    description: t('bread_sukari_description'),
+    detailedDescription: t('bread_sukari_detailedDescription'),
     images: ["https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//hq720.jpg"],
     category: "صحي",
     pieces: 4,
@@ -160,8 +163,8 @@ const CustomerDashboard = ({
               aria-label="Logo"
             ></span>
             <div>
-              <h1 className="text-2xl font-bold text-amber-800 flex items-center gap-2">خبزك</h1>
-              <p className="text-sm text-amber-600">Fresh Bread Delivery</p>
+              <h1 className="text-2xl font-bold text-amber-800 flex items-center gap-2">{t('appName')}</h1>
+              <p className="text-sm text-amber-600">{t('appSlogan')}</p>
             </div>
           </div>
           <div className="flex items-center space-x-4">
@@ -173,7 +176,7 @@ const CustomerDashboard = ({
             </Button>
             <Button onClick={onLogout} variant="ghost" size="sm">
               <LogOut className="h-4 w-4 mr-2" />
-              Logout
+              {t('logout')}
             </Button>
           </div>
         </div>
@@ -184,8 +187,8 @@ const CustomerDashboard = ({
         {/* Welcome Section */}
         <Card className="mb-8 bg-white/90 backdrop-blur-sm">
           <CardContent className="p-6">
-            <h2 className="text-xl font-semibold text-amber-800 mb-2">Welcome back!</h2>
-            <p className="text-amber-600">Discover our fresh bread selection, baked daily with love.</p>
+            <h2 className="text-xl font-semibold text-amber-800 mb-2">{t('welcomeBack')}</h2>
+            <p className="text-amber-600">{t('discoverOurBread')}</p>
           </CardContent>
         </Card>
 
@@ -194,17 +197,17 @@ const CustomerDashboard = ({
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Button variant="outline" className="h-16 flex items-center justify-center space-x-3" onClick={() => setShowCart(true)}>
+          <Button variant="outline" className="h-16 flex items-center justify-center space-x-3" onClick={() => setShowOrders(true)}>
             <Clock className="h-5 w-5" />
-            <span>My Orders</span>
+            <span>{t('myOrders')}</span>
           </Button>
           <Button variant="outline" className="h-16 flex items-center justify-center space-x-3" onClick={() => setShowProfile(true)}>
             <User className="h-5 w-5" />
-            <span>Profile</span>
+            <span>{t('profile')}</span>
           </Button>
           <Button variant="outline" className="h-16 flex items-center justify-center space-x-3" onClick={() => setContactOpen(true)}>
             <MessageSquare className="h-5 w-5" />
-            <span>Contact Us</span>
+            <span>{t('contactUs')}</span>
           </Button>
         </div>
       </main>

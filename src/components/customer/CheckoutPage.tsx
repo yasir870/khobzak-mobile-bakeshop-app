@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, MapPin, Clock, CreditCard, Banknote } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from '@/context/LanguageContext';
 
 interface CheckoutPageProps {
   onBack: () => void;
@@ -23,6 +23,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   // helper: get customer_phone from localStorage OR ask user for it later if needed
   const getCustomerPhone = () => {
@@ -120,11 +121,11 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center">
           <Button variant="ghost" size="sm" onClick={onBack} className="mr-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            {t('back')}
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-amber-800">Checkout</h1>
-            <p className="text-sm text-amber-600">Complete your order</p>
+            <h1 className="text-2xl font-bold text-amber-800">{t('checkout')}</h1>
+            <p className="text-sm text-amber-600">{t('completeYourOrder')}</p>
           </div>
         </div>
       </header>
@@ -135,7 +136,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
           {/* Order Summary */}
           <Card className="bg-white/90 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-lg text-amber-800">Order Summary</CardTitle>
+              <CardTitle className="text-lg text-amber-800">{t('orderSummary')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -158,14 +159,14 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
             <CardHeader>
               <CardTitle className="text-lg text-amber-800 flex items-center">
                 <MapPin className="mr-2 h-5 w-5" />
-                Delivery Address
+                {t('deliveryAddress')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <Textarea
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                placeholder="Enter your full delivery address"
+                placeholder={t('enterAddressPlaceholder')}
                 className="border-amber-200 focus:border-amber-500"
                 required
               />
@@ -175,7 +176,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
           {/* Payment Method */}
           <Card className="bg-white/90 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-lg text-amber-800">Payment Method</CardTitle>
+              <CardTitle className="text-lg text-amber-800">{t('paymentMethod')}</CardTitle>
             </CardHeader>
             <CardContent>
               <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
@@ -183,14 +184,14 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
                   <RadioGroupItem value="cash" id="cash" />
                   <Label htmlFor="cash" className="flex items-center cursor-pointer">
                     <Banknote className="mr-2 h-4 w-4" />
-                    Cash on Delivery
+                    {t('cashOnDelivery')}
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="online" id="online" />
                   <Label htmlFor="online" className="flex items-center cursor-pointer">
                     <CreditCard className="mr-2 h-4 w-4" />
-                    Online Payment (Stripe)
+                    {t('onlinePayment')}
                   </Label>
                 </div>
               </RadioGroup>
@@ -200,13 +201,13 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
           {/* Additional Notes */}
           <Card className="bg-white/90 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-lg text-amber-800">Additional Notes</CardTitle>
+              <CardTitle className="text-lg text-amber-800">{t('additionalNotes')}</CardTitle>
             </CardHeader>
             <CardContent>
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Any special instructions for delivery (optional)"
+                placeholder={t('specialInstructionsPlaceholder')}
                 className="border-amber-200 focus:border-amber-500"
               />
             </CardContent>
@@ -219,7 +220,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
             size="lg"
             disabled={isLoading}
           >
-            {isLoading ? 'Placing Order...' : `Place Order - ${cartTotal} IQD`}
+            {isLoading ? t('placingOrder') : `${t('placeOrder')} - ${cartTotal} IQD`}
           </Button>
         </form>
       </main>

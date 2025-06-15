@@ -55,7 +55,6 @@ const Index = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-amber-800 mb-2">{t('appName')}</h1>
-          <h2 className="text-2xl font-semibold text-amber-700 mb-1">Khobzak</h2>
           <p className="text-amber-600">{t('appSlogan')}</p>
         </div>
 

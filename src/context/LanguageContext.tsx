@@ -1,4 +1,3 @@
-
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import ar from '@/locales/ar.json';
 import en from '@/locales/en.json';
@@ -11,7 +10,7 @@ type Language = 'ar' | 'en' | 'ku';
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, replacements?: { [key: string]: string | number }) => string;
   dir: 'ltr' | 'rtl';
 }
 
@@ -34,10 +33,15 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     setLanguageState(lang);
   };
 
-  const t = (key: string): string => {
+  const t = (key: string, replacements: { [key: string]: string | number } = {}): string => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    return translations[language][key] || key;
+    let translation = translations[language][key] || key;
+    Object.keys(replacements).forEach(placeholder => {
+      const regex = new RegExp(`\\{${placeholder}\\}`, 'g');
+      translation = translation.replace(regex, String(replacements[placeholder]));
+    });
+    return translation;
   };
 
   return (
