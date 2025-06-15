@@ -3,50 +3,38 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, Plus, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BreadProduct } from './CustomerDashboard';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useTranslation } from '@/context/LanguageContext';
-
 interface ProductDetailModalProps {
   product: BreadProduct;
   onClose: () => void;
   onAddToCart: (quantity: number) => void;
 }
-
-const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModalProps) => {
+const ProductDetailModal = ({
+  product,
+  onClose,
+  onAddToCart
+}: ProductDetailModalProps) => {
   const [quantity, setQuantity] = useState(1);
-  const { t } = useTranslation();
-
+  const {
+    t
+  } = useTranslation();
   const handleQuantityChange = (change: number) => {
     const newQuantity = quantity + change;
     if (newQuantity >= 1) {
       setQuantity(newQuantity);
     }
   };
-
   const handleAddToCart = () => {
     onAddToCart(quantity);
   };
 
   // هل النص رابط صورة؟
-  const isImageUrl = (str: string) =>
-    str.startsWith('http://') || str.startsWith('https://') || str.startsWith('/');
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+  const isImageUrl = (str: string) => str.startsWith('http://') || str.startsWith('https://') || str.startsWith('/');
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white">
         <CardHeader className="relative">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute right-2 top-2"
-            onClick={onClose}
-          >
+          <Button variant="ghost" size="sm" onClick={onClose} className="absolute right-2 top-2 bg-gray-950 hover:bg-gray-800 text-slate-50 font-bold text-9xl">
             <X className="h-4 w-4" />
           </Button>
           
@@ -54,33 +42,19 @@ const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModa
           <div className="text-center mb-4">
             <Carousel>
               <CarouselContent>
-                {product.images.map((img, i) => (
-                  <CarouselItem key={i}>
+                {product.images.map((img, i) => <CarouselItem key={i}>
                     <div className="flex flex-col items-center">
-                      {isImageUrl(img) ? (
-                        <img
-                          src={img}
-                          alt={product.name}
-                          className="h-40 w-40 object-cover rounded-lg mb-2 border shadow"
-                        />
-                      ) : (
-                        <div className="text-6xl mb-2">{img}</div>
-                      )}
+                      {isImageUrl(img) ? <img src={img} alt={product.name} className="h-40 w-40 object-cover rounded-lg mb-2 border shadow" /> : <div className="text-6xl mb-2">{img}</div>}
                     </div>
-                  </CarouselItem>
-                ))}
+                  </CarouselItem>)}
               </CarouselContent>
-              {product.images.length > 1 && (
-                <>
+              {product.images.length > 1 && <>
                   <CarouselPrevious className="left-1 top-1/2 -translate-y-1/2 z-10" />
                   <CarouselNext className="right-1 top-1/2 -translate-y-1/2 z-10" />
-                </>
-              )}
+                </>}
             </Carousel>
             <div className="flex justify-center gap-1 mt-2">
-              {product.images.map((_, idx) => (
-                <span key={idx} className="block w-2 h-2 rounded-full bg-amber-200" />
-              ))}
+              {product.images.map((_, idx) => <span key={idx} className="block w-2 h-2 rounded-full bg-amber-200" />)}
             </div>
           </div>
 
@@ -109,20 +83,11 @@ const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModa
           <div className="flex items-center justify-center space-x-4">
             <span className="font-medium text-amber-800">{t('quantity')}:</span>
             <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleQuantityChange(-1)}
-                disabled={quantity <= 1}
-              >
+              <Button variant="outline" size="sm" onClick={() => handleQuantityChange(-1)} disabled={quantity <= 1}>
                 <Minus className="h-4 w-4" />
               </Button>
               <span className="w-12 text-center font-medium">{quantity}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleQuantityChange(1)}
-              >
+              <Button variant="outline" size="sm" onClick={() => handleQuantityChange(1)}>
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
@@ -136,17 +101,13 @@ const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModa
           </div>
 
           {/* زر إضافة للسلة */}
-          <Button
-            onClick={handleAddToCart}
-            className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium"
-            size="lg"
-          >
-            {t('addQuantityToCart', { quantity })}
+          <Button onClick={handleAddToCart} className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium" size="lg">
+            {t('addQuantityToCart', {
+            quantity
+          })}
           </Button>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
-
 export default ProductDetailModal;
