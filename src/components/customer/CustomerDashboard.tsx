@@ -12,6 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Info } from 'lucide-react';
 import BreadMenuList from "./BreadMenuList";
 import ContactDialog from "./ContactDialog";
+import Footer from "./Footer";
 
 interface CustomerDashboardProps {
   onLogout: () => void;
@@ -182,9 +183,13 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-amber-200">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-amber-800">خبزك</h1>
-            <p className="text-sm text-amber-600">Fresh Bread Delivery</p>
+          <div className="flex items-center gap-2">
+            {/* Icon */}
+            <span className="w-8 h-8 bg-[url('/lovable-uploads/photo-1472396961693-142e6e269027')] bg-cover bg-center rounded-full border-2 border-amber-300 shadow"></span>
+            <div>
+              <h1 className="text-2xl font-bold text-amber-800 flex items-center gap-2">خبزك</h1>
+              <p className="text-sm text-amber-600">Fresh Bread Delivery</p>
+            </div>
           </div>
           <div className="flex items-center space-x-4">
             <Button 

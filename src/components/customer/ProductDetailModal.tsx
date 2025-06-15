@@ -2,8 +2,15 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { X, Plus, Minus } from 'lucide-react';
+import { X, Plus, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BreadProduct } from './CustomerDashboard';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface ProductDetailModalProps {
   product: BreadProduct;
@@ -13,7 +20,6 @@ interface ProductDetailModalProps {
 
 const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModalProps) => {
   const [quantity, setQuantity] = useState(1);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const handleQuantityChange = (change: number) => {
     const newQuantity = quantity + change;
@@ -26,15 +32,7 @@ const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModa
     onAddToCart(quantity);
   };
 
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
-  };
-
-  // دالة لمعرفه هل النص رابط صورة أم لا
+  // هل النص رابط صورة؟
   const isImageUrl = (str: string) =>
     str.startsWith('http://') || str.startsWith('https://') || str.startsWith('/');
 
@@ -51,31 +49,37 @@ const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModa
             <X className="h-4 w-4" />
           </Button>
           
-          {/* Product Images Carousel */}
+          {/* صور المنتج كسلايدر حديث */}
           <div className="text-center mb-4">
-            <div className="relative flex flex-col items-center">
-              {isImageUrl(product.images[currentImageIndex]) ? (
-                <img
-                  src={product.images[currentImageIndex]}
-                  alt={product.name}
-                  className="h-40 w-40 object-cover rounded-lg mb-4 border shadow"
-                />
-              ) : (
-                <div className="text-6xl mb-4">{product.images[currentImageIndex]}</div>
-              )}
+            <Carousel>
+              <CarouselContent>
+                {product.images.map((img, i) => (
+                  <CarouselItem key={i}>
+                    <div className="flex flex-col items-center">
+                      {isImageUrl(img) ? (
+                        <img
+                          src={img}
+                          alt={product.name}
+                          className="h-40 w-40 object-cover rounded-lg mb-2 border shadow"
+                        />
+                      ) : (
+                        <div className="text-6xl mb-2">{img}</div>
+                      )}
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
               {product.images.length > 1 && (
-                <div className="flex justify-center space-x-2 mb-4">
-                  <Button variant="outline" size="sm" onClick={prevImage}>
-                    ‹
-                  </Button>
-                  <span className="text-sm text-gray-500 px-4 py-2">
-                    {currentImageIndex + 1} / {product.images.length}
-                  </span>
-                  <Button variant="outline" size="sm" onClick={nextImage}>
-                    ›
-                  </Button>
-                </div>
+                <>
+                  <CarouselPrevious className="left-1 top-1/2 -translate-y-1/2 z-10" />
+                  <CarouselNext className="right-1 top-1/2 -translate-y-1/2 z-10" />
+                </>
               )}
+            </Carousel>
+            <div className="flex justify-center gap-1 mt-2">
+              {product.images.map((_, idx) => (
+                <span key={idx} className="block w-2 h-2 rounded-full bg-amber-200" />
+              ))}
             </div>
           </div>
 
@@ -89,18 +93,18 @@ const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModa
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Detailed Description */}
+          {/* الوصف التفصيلي */}
           <div>
             <h3 className="font-semibold text-amber-800 mb-2">Description</h3>
             <p className="text-gray-600 leading-relaxed">{product.detailedDescription}</p>
           </div>
 
-          {/* Price */}
+          {/* السعر */}
           <div className="text-center">
             <span className="text-2xl font-bold text-amber-700">{product.price} IQD</span>
           </div>
 
-          {/* Quantity Selector */}
+          {/* اختيار الكمية */}
           <div className="flex items-center justify-center space-x-4">
             <span className="font-medium text-amber-800">Quantity:</span>
             <div className="flex items-center space-x-2">
@@ -123,14 +127,14 @@ const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModa
             </div>
           </div>
 
-          {/* Total Price */}
+          {/* السعر الإجمالي */}
           <div className="text-center">
             <p className="text-amber-600">
               Total: <span className="font-bold text-lg">{product.price * quantity} IQD</span>
             </p>
           </div>
 
-          {/* Add to Cart Button */}
+          {/* زر إضافة للسلة */}
           <Button
             onClick={handleAddToCart}
             className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium"
@@ -145,4 +149,3 @@ const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModa
 };
 
 export default ProductDetailModal;
-
