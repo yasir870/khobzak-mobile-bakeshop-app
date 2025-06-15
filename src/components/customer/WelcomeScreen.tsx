@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,12 +60,9 @@ const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
         completedWelcome: true
       };
       localStorage.setItem('userData', JSON.stringify(userData));
-      
-      setTimeout(() => {
-        // تم إزالة toast رسالة النجاح هنا
-        onComplete();
-        setIsLoading(false);
-      }, 1000);
+      // إزالة أي انتظار أو رسالة
+      onComplete();
+      setIsLoading(false);
     } catch (error) {
       toast({
         title: "Error",
