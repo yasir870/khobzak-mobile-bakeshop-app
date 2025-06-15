@@ -168,11 +168,20 @@ const CustomerDashboard = ({
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <Button variant="outline" size="sm" className="relative" onClick={() => setShowCart(true)}>
-              <ShoppingCart className="h-4 w-4" />
-              {cartItems.length > 0 && <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-amber-600 text-white text-xs flex items-center justify-center">
+            {/* تحسين تصميم السلة لتكون أكثر وضوحاً */}
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="relative bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 shadow-lg" 
+              onClick={() => setShowCart(true)}
+            >
+              <ShoppingCart className="h-5 w-5 mr-2" />
+              <span className="font-medium">السلة</span>
+              {cartItems.length > 0 && (
+                <Badge className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold shadow-lg animate-pulse">
                   {cartItems.reduce((total, item) => total + item.quantity, 0)}
-                </Badge>}
+                </Badge>
+              )}
             </Button>
             <Button onClick={onLogout} variant="ghost" size="sm">
               <LogOut className="h-4 w-4 mr-2" />
