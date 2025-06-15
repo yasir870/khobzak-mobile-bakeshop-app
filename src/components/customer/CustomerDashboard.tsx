@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Info } from 'lucide-react';
+import BreadMenuList from "./BreadMenuList";
 
 interface CustomerDashboardProps {
   onLogout: () => void;
@@ -183,7 +184,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
 
       {/* نافذة عرض الأرقام أيضاً ستختفي لأنه لا يوجد زر يفتحها */}
 
-      {/* Main Content with top padding to account for fixed header */}
+      {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 pt-24 pb-8">
         {/* Welcome Section */}
         <Card className="mb-8 bg-white/90 backdrop-blur-sm">
@@ -193,38 +194,8 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
           </CardContent>
         </Card>
 
-        {/* Bread Menu */}
-        <div className="mb-8">
-          <h3 className="text-2xl font-bold text-amber-800 mb-6">أنواع الخبز المتوفرة</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {breadTypes.map((bread) => (
-              <Card 
-                key={bread.id} 
-                className="bg-white/90 backdrop-blur-sm hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => handleProductClick(bread)}
-              >
-                <CardHeader className="text-center flex flex-col items-center">
-                  <img
-                    src={bread.images[0]}
-                    alt={bread.name}
-                    className="h-32 w-32 object-cover rounded-lg mb-2 border shadow"
-                  />
-                  <CardTitle className="text-lg text-amber-800">{bread.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 mb-3">{bread.description}</p>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-base text-amber-700 font-semibold">السعر: {bread.price} د.ع</span>
-                    <span className="text-base text-amber-700 font-semibold">الكمية: {bread.pieces} {bread.pieces === 1 ? "قطعة" : "قطع"}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-base text-gray-600">ملاحظات: {bread.notes}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+        {/* Bread Menu - الآن تم نقله لمكون منفصل */}
+        <BreadMenuList breadTypes={breadTypes} onProductClick={handleProductClick} />
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
