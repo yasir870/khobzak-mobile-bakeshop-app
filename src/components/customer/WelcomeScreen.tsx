@@ -21,7 +21,6 @@ const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
   const validateIraqiPhone = (phoneNumber: string) => {
     // Remove all spaces and special characters except +
     const cleanPhone = phoneNumber.replace(/[\s-]/g, '');
-    
     // Check for Iraqi format: 07515497130 or +9647515497130
     const iraqiPhoneRegex = /^(07\d{9}|\+9647\d{9})$/;
     return iraqiPhoneRegex.test(cleanPhone);
@@ -64,10 +63,7 @@ const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
       localStorage.setItem('userData', JSON.stringify(userData));
       
       setTimeout(() => {
-        toast({
-          title: "Welcome to Khobzak!",
-          description: "Your profile has been created successfully."
-        });
+        // تم إزالة toast رسالة النجاح هنا
         onComplete();
         setIsLoading(false);
       }, 1000);
