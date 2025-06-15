@@ -34,6 +34,10 @@ const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModa
     setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
   };
 
+  // دالة لمعرفه هل النص رابط صورة أم لا
+  const isImageUrl = (str: string) =>
+    str.startsWith('http://') || str.startsWith('https://') || str.startsWith('/');
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white">
@@ -49,8 +53,16 @@ const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModa
           
           {/* Product Images Carousel */}
           <div className="text-center mb-4">
-            <div className="relative">
-              <div className="text-6xl mb-4">{product.images[currentImageIndex]}</div>
+            <div className="relative flex flex-col items-center">
+              {isImageUrl(product.images[currentImageIndex]) ? (
+                <img
+                  src={product.images[currentImageIndex]}
+                  alt={product.name}
+                  className="h-40 w-40 object-cover rounded-lg mb-4 border shadow"
+                />
+              ) : (
+                <div className="text-6xl mb-4">{product.images[currentImageIndex]}</div>
+              )}
               {product.images.length > 1 && (
                 <div className="flex justify-center space-x-2 mb-4">
                   <Button variant="outline" size="sm" onClick={prevImage}>
@@ -133,3 +145,4 @@ const ProductDetailModal = ({ product, onClose, onAddToCart }: ProductDetailModa
 };
 
 export default ProductDetailModal;
+
