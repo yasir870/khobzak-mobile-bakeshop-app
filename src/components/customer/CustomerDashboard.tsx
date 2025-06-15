@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } f
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Info } from 'lucide-react';
 import BreadMenuList from "./BreadMenuList";
+import ContactDialog from "./ContactDialog";
 
 interface CustomerDashboardProps {
   onLogout: () => void;
@@ -43,6 +44,7 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
   const [showAllPhones, setShowAllPhones] = useState(false);
   const [allPhones, setAllPhones] = useState<string[]>([]);
   const [loadingPhones, setLoadingPhones] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
 
   // عدل صور المنتجات من Emoji إلى روابط الصور الحقيقية التي رفعتها على Supabase
   const breadTypes: BreadProduct[] = [
@@ -237,7 +239,11 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
             <User className="h-5 w-5" />
             <span>Profile</span>
           </Button>
-          <Button variant="outline" className="h-16 flex items-center justify-center space-x-3">
+          <Button 
+            variant="outline"
+            className="h-16 flex items-center justify-center space-x-3"
+            onClick={() => setContactOpen(true)}
+          >
             <MessageSquare className="h-5 w-5" />
             <span>Contact Us</span>
           </Button>
@@ -252,6 +258,9 @@ const CustomerDashboard = ({ onLogout }: CustomerDashboardProps) => {
           onAddToCart={handleAddToCart}
         />
       )}
+
+      {/* Contact Dialog */}
+      <ContactDialog open={contactOpen} onOpenChange={setContactOpen} />
     </div>
   );
 };
