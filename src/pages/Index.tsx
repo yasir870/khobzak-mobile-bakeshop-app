@@ -52,31 +52,31 @@ const Index = () => {
 
   // Default: Show role selection
   return (
-    <div className="min-h-screen bg-warm-gradient flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="mb-4">
             <img
               src="https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//A_logo_on_a_grid-patterned_beige_background_featur.png"
               alt="خبزك Logo"
-              className="mx-auto w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-primary/20 shadow-warm-lg transition-all duration-300 hover:scale-110"
+              className="mx-auto w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-white shadow-lg"
             />
           </div>
-          <h1 className="text-4xl font-bold text-primary mb-2">{t('appName')}</h1>
-          <p className="text-primary/80 text-lg">{t('appSlogan')}</p>
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">{t('appName')}</h1>
+          <p className="text-gray-600 text-lg">{t('appSlogan')}</p>
         </div>
 
-        <Card className="shadow-warm-lg border-0 bg-card/95 backdrop-blur-sm">
+        <Card className="shadow-xl border-0">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl text-primary">{t('chooseYourRole')}</CardTitle>
-            <CardDescription className="text-primary/70 text-base">
+            <CardTitle className="text-2xl text-gray-800">{t('chooseYourRole')}</CardTitle>
+            <CardDescription className="text-gray-600 text-base">
               {t('selectHowToUse')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Button
               onClick={() => handleRoleSelect('customer')}
-              className="w-full h-16 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg shadow-warm transition-all duration-200 hover:shadow-warm-lg hover:scale-[1.02]"
+              className="w-full h-16 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02]"
               size="lg"
             >
               <Users className="mr-3 h-6 w-6" />
@@ -89,7 +89,7 @@ const Index = () => {
             <Button
               onClick={() => handleRoleSelect('driver')}
               variant="outline"
-              className="w-full h-16 border-2 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 font-semibold text-lg transition-all duration-200 hover:scale-[1.02]"
+              className="w-full h-16 border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 font-semibold text-lg transition-all duration-200 hover:scale-[1.02]"
               size="lg"
             >
               <Truck className="mr-3 h-6 w-6" />
