@@ -6,7 +6,6 @@ import { X, Plus, Minus } from 'lucide-react';
 import { BreadProduct } from './CustomerDashboard';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useTranslation } from '@/context/LanguageContext';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ProductDetailModalProps {
   product: BreadProduct;
@@ -39,7 +38,7 @@ const ProductDetailModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-lg max-h-[90vh]">
+      <div className="relative w-full max-w-lg max-h-[90vh] overflow-hidden">
         {/* زر الإغلاق الثابت */}
         <Button 
           variant="ghost" 
@@ -51,7 +50,7 @@ const ProductDetailModal = ({
         </Button>
         
         <Card className="w-full h-full bg-white shadow-2xl border">
-          <ScrollArea className="h-full max-h-[90vh]">
+          <div className="h-full max-h-[90vh] overflow-y-auto">
             <CardHeader className="pt-16 pb-4">
               {/* صور المنتج كسلايدر حديث */}
               <div className="text-center mb-4">
@@ -149,7 +148,7 @@ const ProductDetailModal = ({
                 {t('addQuantityToCart', { quantity })}
               </Button>
             </CardContent>
-          </ScrollArea>
+          </div>
         </Card>
       </div>
     </div>
