@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { X, Plus, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Plus, Minus } from 'lucide-react';
 import { BreadProduct } from './CustomerDashboard';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useTranslation } from '@/context/LanguageContext';
@@ -29,6 +29,7 @@ const ProductDetailModal = ({
   };
 
   const handleAddToCart = () => {
+    console.log('Adding to cart:', { productId: product.id, quantity });
     onAddToCart(quantity);
   };
 
@@ -79,15 +80,15 @@ const ProductDetailModal = ({
               </Carousel>
               <div className="flex justify-center gap-2 mt-3">
                 {product.images.map((_, idx) => (
-                  <span key={idx} className="block w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm" />
+                  <span key={idx} className="block w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm" />
                 ))}
               </div>
             </div>
 
-            <CardTitle className="text-2xl text-gray-800 text-center font-bold">{product.name}</CardTitle>
-            <p className="text-gray-600 font-medium text-center text-lg">{product.nameAr}</p>
+            <CardTitle className="text-2xl text-amber-800 text-center font-bold">{product.name}</CardTitle>
+            <p className="text-amber-600 font-medium text-center text-lg">{product.nameAr}</p>
             <div className="text-center">
-              <span className="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium">
+              <span className="inline-block bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-medium">
                 {product.category}
               </span>
             </div>
@@ -95,35 +96,35 @@ const ProductDetailModal = ({
 
           <CardContent className="space-y-6 px-6 pb-6">
             {/* الوصف التفصيلي */}
-            <div className="bg-gray-50 rounded-xl p-4">
-              <h3 className="font-semibold text-gray-800 mb-3 text-lg">{t('description')}</h3>
-              <p className="text-gray-700 leading-relaxed">{product.detailedDescription}</p>
+            <div className="bg-amber-50 rounded-xl p-4">
+              <h3 className="font-semibold text-amber-800 mb-3 text-lg">{t('description')}</h3>
+              <p className="text-amber-700 leading-relaxed">{product.detailedDescription}</p>
             </div>
 
             {/* السعر */}
-            <div className="text-center bg-blue-50 rounded-xl p-4">
-              <span className="text-3xl font-bold text-blue-600">{product.price} IQD</span>
+            <div className="text-center bg-amber-100 rounded-xl p-4">
+              <span className="text-3xl font-bold text-amber-700">{product.price} IQD</span>
             </div>
 
             {/* اختيار الكمية */}
-            <div className="flex items-center justify-center space-x-4 bg-gray-50 rounded-xl p-4">
-              <span className="font-semibold text-gray-800 text-lg">{t('quantity')}:</span>
+            <div className="flex items-center justify-center space-x-4 bg-amber-50 rounded-xl p-4">
+              <span className="font-semibold text-amber-800 text-lg">{t('quantity')}:</span>
               <div className="flex items-center space-x-3">
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={() => handleQuantityChange(-1)} 
                   disabled={quantity <= 1}
-                  className="h-10 w-10 rounded-full border-gray-300 hover:bg-gray-100"
+                  className="h-10 w-10 rounded-full border-amber-300 hover:bg-amber-100"
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
-                <span className="w-16 text-center font-bold text-xl text-gray-800 bg-white rounded-lg py-2 border">{quantity}</span>
+                <span className="w-16 text-center font-bold text-xl text-amber-800 bg-white rounded-lg py-2 border">{quantity}</span>
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={() => handleQuantityChange(1)}
-                  className="h-10 w-10 rounded-full border-gray-300 hover:bg-gray-100"
+                  className="h-10 w-10 rounded-full border-amber-300 hover:bg-amber-100"
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -140,7 +141,7 @@ const ProductDetailModal = ({
             {/* زر إضافة للسلة */}
             <Button 
               onClick={handleAddToCart} 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]" 
+              className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold text-lg py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]" 
               size="lg"
             >
               {t('addQuantityToCart', { quantity })}

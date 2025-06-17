@@ -110,36 +110,51 @@ const CustomerDashboard = ({
   useEffect(() => {
     const storedCart = localStorage.getItem('cartItems');
     if (storedCart) {
-      setCartItems(JSON.parse(storedCart));
+      const parsedCart = JSON.parse(storedCart);
+      console.log('Loaded cart from localStorage:', parsedCart);
+      setCartItems(parsedCart);
     }
   }, []);
 
   // حفظ cart في localStorage كلما تغيرت
   useEffect(() => {
+    console.log('Saving cart to localStorage:', cartItems);
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
   }, [cartItems]);
+
   const handleProductClick = (product: BreadProduct) => {
+    console.log('Product clicked:', product.name);
     setSelectedProduct(product);
   };
 
   // تعديل دالة إضافة للسلة مع دمج المنتج إذا تكرر
   const handleAddToCart = (quantity: number) => {
-    if (!selectedProduct) return;
+    if (!selectedProduct) {
+      console.log('No product selected');
+      return;
+    }
+    
+    console.log('Adding to cart:', { product: selectedProduct.name, quantity });
+    
     setCartItems(prev => {
       // هل المنتج موجود بالفعل؟
       const exists = prev.find(item => item.id === selectedProduct.id);
       if (exists) {
         // إذا موجود، فقط زيد الكمية
-        return prev.map(item => item.id === selectedProduct.id ? {
+        const updated = prev.map(item => item.id === selectedProduct.id ? {
           ...item,
           quantity: item.quantity + quantity
         } : item);
+        console.log('Updated existing item in cart:', updated);
+        return updated;
       } else {
         // إذا جديد، أضفه مع الكمية المطلوبة
-        return [...prev, {
+        const newCart = [...prev, {
           ...selectedProduct,
           quantity
         }];
+        console.log('Added new item to cart:', newCart);
+        return newCart;
       }
     });
     setSelectedProduct(null);
