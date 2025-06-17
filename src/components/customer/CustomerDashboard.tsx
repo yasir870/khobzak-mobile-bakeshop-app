@@ -14,6 +14,7 @@ import { Info } from 'lucide-react';
 import BreadMenuList from "./BreadMenuList";
 import ContactDialog from "./ContactDialog";
 import Footer from "./Footer";
+import OrdersDialog from "./OrdersDialog";
 import { useTranslation } from '@/context/LanguageContext';
 
 interface CustomerDashboardProps {
@@ -239,6 +240,9 @@ const CustomerDashboard = ({
 
       {/* Product Detail Modal */}
       {selectedProduct && <ProductDetailModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onAddToCart={handleAddToCart} />}
+
+      {/* Orders Dialog */}
+      <OrdersDialog open={showOrders} onOpenChange={setShowOrders} />
 
       {/* Contact Dialog */}
       <ContactDialog open={contactOpen} onOpenChange={setContactOpen} />
