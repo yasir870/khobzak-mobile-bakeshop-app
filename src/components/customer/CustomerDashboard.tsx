@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -172,36 +171,36 @@ const CustomerDashboard = ({
   return <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-amber-200">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+          <div className="flex items-center gap-3">
             {/* Logo Image - متحركة مع hover */}
             <span
-              className="w-16 h-16 md:w-24 md:h-24 bg-[url('https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//A_logo_on_a_grid-patterned_beige_background_featur.png')] bg-cover bg-center rounded-full border-2 border-amber-300 shadow transition-all duration-300 hover:scale-125 hover:w-32 hover:h-32"
+              className="w-12 h-12 md:w-16 md:h-16 bg-[url('https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//A_logo_on_a_grid-patterned_beige_background_featur.png')] bg-cover bg-center rounded-full border-2 border-amber-300 shadow transition-all duration-300 hover:scale-110 hover:w-20 hover:h-20"
               aria-label="Logo"
             ></span>
             <div>
-              <h1 className="text-2xl font-bold text-amber-800 flex items-center gap-2">{t('appName')}</h1>
-              <p className="text-sm text-amber-600">{t('appSlogan')}</p>
+              <h1 className="text-lg md:text-xl font-bold text-amber-800 flex items-center gap-2">{t('appName')}</h1>
+              <p className="text-xs text-amber-600">{t('appSlogan')}</p>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             {/* تحسين تصميم السلة لتكون أكثر وضوحاً */}
             <Button 
               variant="outline" 
-              size="lg" 
-              className="relative bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 shadow-lg" 
+              size="sm" 
+              className="relative bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 shadow-lg px-3 py-2" 
               onClick={() => setShowCart(true)}
             >
-              <ShoppingCart className="h-5 w-5 mr-2" />
-              <span className="font-medium">السلة</span>
+              <ShoppingCart className="h-4 w-4 ml-2" />
+              <span className="font-medium text-sm">السلة</span>
               {cartItems.length > 0 && (
-                <Badge className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold shadow-lg animate-pulse">
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold shadow-lg animate-pulse">
                   {cartItems.reduce((total, item) => total + item.quantity, 0)}
                 </Badge>
               )}
             </Button>
-            <Button onClick={onLogout} variant="ghost" size="sm">
-              <LogOut className="h-4 w-4 mr-2" />
+            <Button onClick={onLogout} variant="ghost" size="sm" className="text-sm px-3">
+              <LogOut className="h-3 w-3 ml-2" />
               {t('logout')}
             </Button>
           </div>
@@ -209,12 +208,12 @@ const CustomerDashboard = ({
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 pt-24 pb-8">
+      <main className="max-w-4xl mx-auto px-4 pt-20 pb-6">
         {/* Welcome Section */}
-        <Card className="mb-8 bg-white/90 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <h2 className="text-xl font-semibold text-amber-800 mb-2">{t('welcomeBack')}</h2>
-            <p className="text-amber-600">{t('discoverOurBread')}</p>
+        <Card className="mb-6 bg-white/90 backdrop-blur-sm">
+          <CardContent className="p-4">
+            <h2 className="text-lg font-semibold text-amber-800 mb-2">{t('welcomeBack')}</h2>
+            <p className="text-sm text-amber-600">{t('discoverOurBread')}</p>
           </CardContent>
         </Card>
 
@@ -222,17 +221,17 @@ const CustomerDashboard = ({
         <BreadMenuList breadTypes={breadTypes} onProductClick={handleProductClick} />
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Button variant="outline" className="h-16 flex items-center justify-center space-x-3" onClick={() => setShowOrders(true)}>
-            <Clock className="h-5 w-5" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-6">
+          <Button variant="outline" className="h-12 flex items-center justify-center space-x-2 text-sm" onClick={() => setShowOrders(true)}>
+            <Clock className="h-4 w-4" />
             <span>{t('myOrders')}</span>
           </Button>
-          <Button variant="outline" className="h-16 flex items-center justify-center space-x-3" onClick={() => setShowProfile(true)}>
-            <User className="h-5 w-5" />
+          <Button variant="outline" className="h-12 flex items-center justify-center space-x-2 text-sm" onClick={() => setShowProfile(true)}>
+            <User className="h-4 w-4" />
             <span>{t('profile')}</span>
           </Button>
-          <Button variant="outline" className="h-16 flex items-center justify-center space-x-3" onClick={() => setContactOpen(true)}>
-            <MessageSquare className="h-5 w-5" />
+          <Button variant="outline" className="h-12 flex items-center justify-center space-x-2 text-sm" onClick={() => setContactOpen(true)}>
+            <MessageSquare className="h-4 w-4" />
             <span>{t('contactUs')}</span>
           </Button>
         </div>
