@@ -60,7 +60,6 @@ const CustomerApp = ({ onLogout }: CustomerAppProps) => {
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-lg text-amber-800 font-semibold">Loading Your Profile</p>
-          <p className="text-sm text-amber-600">Please wait a moment.</p>
         </div>
       </div>
     );
