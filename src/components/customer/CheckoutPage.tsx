@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from '@/context/LanguageContext';
 import GoogleMapPicker from './GoogleMapPicker';
+import MapLocationPicker from './MapLocationPicker';
 
 interface CheckoutPageProps {
   onBack: () => void;
@@ -32,6 +33,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
   const [isLoading, setIsLoading] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [showMap, setShowMap] = useState(false);
+  const [showMapPicker, setShowMapPicker] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
 
@@ -213,22 +215,24 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
               <div className="flex gap-3">
                 <Button
                   type="button"
-                  variant={showMap ? "default" : "outline"}
-                  onClick={() => setShowMap(!showMap)}
-                  className="flex-1"
+                  variant="outline"
+                  onClick={() => setShowMapPicker(true)}
+                  className="flex-1 border-orange-300 text-orange-700 hover:bg-orange-50"
                 >
                   <MapPin className="h-4 w-4 ml-2" />
-                  {showMap ? 'إخفاء الخريطة' : 'تحديد الموقع بالخريطة'}
+                  تحديد الموقع على الخريطة
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={getCurrentLocation}
+                  disabled={isGettingCurrentLocation}
+                  className="border-green-300 text-green-700 hover:bg-green-50"
+                >
+                  <Navigation className={`h-4 w-4 ml-2 ${isGettingCurrentLocation ? 'animate-pulse' : ''}`} />
+                  {isGettingCurrentLocation ? 'جاري...' : 'موقعي'}
                 </Button>
               </div>
-
-              {showMap && (
-                <GoogleMapPicker
-                  onLocationSelect={handleLocationSelect}
-                  initialLocation={selectedLocation}
-                  className="mb-4"
-                />
-              )}
 
               {selectedLocation && (
                 <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
@@ -323,6 +327,14 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
             {isLoading ? t('placingOrder') : `${t('placeOrder')} - ${cartTotal} IQD`}
           </Button>
         </form>
+
+        {/* Map Location Picker Dialog */}
+        <MapLocationPicker
+          isOpen={showMapPicker}
+          onClose={() => setShowMapPicker(false)}
+          onLocationSelect={handleLocationSelect}
+          initialLocation={selectedLocation}
+        />
       </main>
     </div>
   );
