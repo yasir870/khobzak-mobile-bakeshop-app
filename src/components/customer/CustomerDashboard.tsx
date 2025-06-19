@@ -143,6 +143,12 @@ const CustomerDashboard = ({
       return;
     }
 
+    // Show permission request message in Arabic as requested
+    toast({
+      title: "طلب إذن الموقع",
+      description: "يرجى السماح للتطبيق باستخدام موقعك لتحديد عنوان التوصيل بدقة.",
+    });
+
     setIsGettingLocation(true);
     
     navigator.geolocation.getCurrentPosition(
@@ -156,8 +162,8 @@ const CustomerDashboard = ({
         setIsGettingLocation(false);
         
         toast({
-          title: "تم حفظ موقعك",
-          description: "تم تحديد موقعك بنجاح وسيتم استخدامه للتوصيل",
+          title: "تم حفظ موقعك بنجاح",
+          description: "تم تحديد موقعك بنجاح وسيتم استخدامه للتوصيل الدقيق",
         });
       },
       (error) => {
@@ -166,18 +172,18 @@ const CustomerDashboard = ({
         
         switch(error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = "تم رفض إذن الوصول للموقع. يرجى السماح بالوصول للموقع في إعدادات المتصفح";
+            errorMessage = "تم رفض إذن الوصول للموقع. يرجى السماح بالوصول للموقع في إعدادات المتصفح للحصول على توصيل دقيق";
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = "معلومات الموقع غير متوفرة";
+            errorMessage = "معلومات الموقع غير متوفرة. يمكنك إدخال العنوان يدوياً عند الطلب";
             break;
           case error.TIMEOUT:
-            errorMessage = "انتهت مهلة طلب تحديد الموقع";
+            errorMessage = "انتهت مهلة طلب تحديد الموقع. يرجى المحاولة مرة أخرى";
             break;
         }
         
         toast({
-          title: "خطأ في تحديد الموقع",
+          title: "تعذر تحديد الموقع",
           description: errorMessage,
           variant: "destructive"
         });
@@ -235,6 +241,7 @@ const CustomerDashboard = ({
   if (showProfile) {
     return <ProfilePage onBack={() => setShowProfile(false)} />;
   }
+  
   return <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-amber-200">
@@ -251,25 +258,37 @@ const CustomerDashboard = ({
             </div>
           </div>
           <div className="flex items-center space-x-3">
-            {/* Location Button */}
+            {/* Enhanced Location Button like Talabat */}
             <Button 
               variant="outline" 
               size="sm" 
-              className={`relative ${userLocation ? 'bg-green-600 hover:bg-green-700 text-white border-green-600' : 'bg-orange-600 hover:bg-orange-700 text-white border-orange-600'} shadow-lg px-3 py-2`} 
+              className={`relative transition-all duration-300 ${
+                userLocation 
+                  ? 'bg-green-600 hover:bg-green-700 text-white border-green-600 shadow-lg transform hover:scale-105' 
+                  : 'bg-red-500 hover:bg-red-600 text-white border-red-500 shadow-lg animate-pulse'
+              } px-4 py-2 rounded-full`} 
               onClick={handleGetLocation}
               disabled={isGettingLocation}
             >
-              <MapPin className={`h-4 w-4 ml-2 ${isGettingLocation ? 'animate-pulse' : ''}`} />
+              <MapPin className={`h-4 w-4 ml-2 ${isGettingLocation ? 'animate-spin' : userLocation ? '' : 'animate-bounce'}`} />
               <span className="font-medium text-sm">
-                {isGettingLocation ? 'جاري التحديد...' : userLocation ? 'تم تحديد الموقع' : 'موقع'}
+                {isGettingLocation 
+                  ? 'جاري التحديد...' 
+                  : userLocation 
+                    ? 'تم تحديد الموقع ✓' 
+                    : 'حدد موقعك'
+                }
               </span>
+              {!userLocation && !isGettingLocation && (
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full animate-ping"></div>
+              )}
             </Button>
             
             {/* Cart Button */}
             <Button 
               variant="outline" 
               size="sm" 
-              className="relative bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 shadow-lg px-3 py-2" 
+              className="relative bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 shadow-lg px-3 py-2 rounded-full transition-all duration-300 hover:scale-105" 
               onClick={() => setShowCart(true)}
             >
               <ShoppingCart className="h-4 w-4 ml-2" />
@@ -295,11 +314,16 @@ const CustomerDashboard = ({
           <CardContent className="p-4">
             <h2 className="text-lg font-semibold text-amber-800 mb-2">{t('welcomeBack')}</h2>
             <p className="text-sm text-amber-600">{t('discoverOurBread')}</p>
-            {userLocation && (
-              <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
-                <MapPin className="h-3 w-3" />
-                تم تحديد موقعك للتوصيل
-              </p>
+            {userLocation ? (
+              <div className="flex items-center gap-2 mt-2 p-2 bg-green-50 rounded-lg border border-green-200">
+                <MapPin className="h-4 w-4 text-green-600" />
+                <span className="text-sm text-green-700 font-medium">تم تحديد موقعك للتوصيل الدقيق</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 mt-2 p-2 bg-orange-50 rounded-lg border border-orange-200">
+                <MapPin className="h-4 w-4 text-orange-600" />
+                <span className="text-sm text-orange-700">اضغط على "حدد موقعك" للحصول على توصيل دقيق</span>
+              </div>
             )}
           </CardContent>
         </Card>

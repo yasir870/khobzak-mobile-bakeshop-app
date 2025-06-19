@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, MapPin, Clock, CreditCard, Banknote } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, CreditCard, Banknote, Navigation } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from '@/context/LanguageContext';
@@ -20,11 +20,14 @@ interface CheckoutPageProps {
 
 const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: CheckoutPageProps) => {
   const [address, setAddress] = useState('');
+  const [locationDetails, setLocationDetails] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [gpsAddress, setGpsAddress] = useState('');
   const [isLoadingAddress, setIsLoadingAddress] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const { toast } = useToast();
   const { t } = useTranslation();
 
@@ -36,6 +39,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
         setIsLoadingAddress(true);
         try {
           const location = JSON.parse(savedLocation);
+          setUserLocation(location);
           // Convert coordinates to readable address
           const addressText = `موقع GPS: خط العرض ${location.lat.toFixed(6)}, خط الطول ${location.lng.toFixed(6)}`;
           setGpsAddress(addressText);
@@ -49,6 +53,73 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
 
     loadGpsAddress();
   }, []);
+
+  const handleGetLocationPermission = () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: "خطأ في الموقع",
+        description: "متصفحك لا يدعم خدمة تحديد الموقع",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Show permission request message
+    toast({
+      title: "طلب إذن الموقع",
+      description: "يرجى السماح للتطبيق باستخدام موقعك لتحديد عنوان التوصيل بدقة.",
+    });
+
+    setIsGettingLocation(true);
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const location = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        setUserLocation(location);
+        localStorage.setItem('userLocation', JSON.stringify(location));
+        
+        const addressText = `موقع GPS: خط العرض ${location.lat.toFixed(6)}, خط الطول ${location.lng.toFixed(6)}`;
+        setGpsAddress(addressText);
+        setAddress(addressText);
+        setIsGettingLocation(false);
+        
+        toast({
+          title: "تم تحديد موقعك بنجاح",
+          description: "يمكنك الآن إضافة تفاصيل إضافية للموقع إذا رغبت",
+        });
+      },
+      (error) => {
+        setIsGettingLocation(false);
+        let errorMessage = "حدث خطأ في تحديد الموقع";
+        
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "تم رفض إذن الوصول للموقع. يمكنك إدخال العنوان يدوياً";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "معلومات الموقع غير متوفرة. يمكنك إدخال العنوان يدوياً";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "انتهت مهلة طلب تحديد الموقع. يمكنك إدخال العنوان يدوياً";
+            break;
+        }
+        
+        toast({
+          title: "تعذر تحديد الموقع",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000 // 5 minutes
+      }
+    );
+  };
 
   // helper: get customer_phone from localStorage OR ask user for it later if needed
   const getCustomerPhone = () => {
@@ -74,7 +145,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
       toast({
         title: t('toastMissingInfoTitle'),
         description: !address
-          ? t('toastAddressMissing')
+          ? 'يرجى تحديد عنوان التوصيل أو إدخاله يدوياً'
           : t('toastUserError'),
         variant: "destructive"
       });
@@ -87,6 +158,11 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
       // Note: "type" will be a string من أنواع الخبز المطلوبة، آسهل شيء نفصلها بفارزة (CSV)
       const typeString = cartItems.map(item => `${item.name} x${item.quantity}`).join(", ");
 
+      // Combine main address with location details if provided
+      const fullAddress = locationDetails 
+        ? `${address}\nتفاصيل إضافية: ${locationDetails}`
+        : address;
+
       const { data, error } = await supabase.from("orders").insert([
         {
           customer_id: customerId,
@@ -96,7 +172,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
           total_price: cartTotal,
           notes,
           status: 'pending',
-          address,
+          address: fullAddress,
           customer_phone: getCustomerPhone() || t('unknown'),
         }
       ]).select().single();
@@ -112,7 +188,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
         status: data?.status || 'pending',
         items: cartItems.map(item => `${item.name} x${item.quantity}`),
         total: cartTotal,
-        address,
+        address: fullAddress,
         paymentMethod,
         notes,
         createdAt: data?.created_at || new Date().toISOString()
@@ -187,7 +263,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
                 {t('deliveryAddress')}
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               {isLoadingAddress ? (
                 <div className="flex items-center justify-center py-4">
                   <div className="text-amber-600">جاري تحميل العنوان من GPS...</div>
@@ -208,23 +284,74 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
                     className="border-amber-200 focus:border-amber-500"
                     required
                   />
+                  
+                  {/* Optional Location Details */}
+                  <div className="space-y-2">
+                    <Label htmlFor="locationDetails" className="text-sm font-medium text-amber-800">
+                      تفاصيل الموقع (اختياري)
+                    </Label>
+                    <Input
+                      id="locationDetails"
+                      value={locationDetails}
+                      onChange={(e) => setLocationDetails(e.target.value)}
+                      placeholder="مثل: الطابق الثاني، شقة 5، بجانب الصيدلية"
+                      className="border-amber-200 focus:border-amber-500"
+                    />
+                    <p className="text-xs text-amber-600">
+                      أضف معلومات إضافية لمساعدة السائق في الوصول إليك
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3">
                   <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
                     <div className="flex items-center gap-2 text-orange-700 mb-2">
-                      <MapPin className="h-4 w-4" />
+                      <Navigation className="h-4 w-4" />
                       <span className="text-sm font-medium">لم يتم تحديد الموقع بواسطة GPS</span>
                     </div>
-                    <p className="text-xs text-orange-600">يرجى العودة للصفحة الرئيسية وتحديد موقعك أولاً</p>
+                    <p className="text-xs text-orange-600 mb-3">
+                      للحصول على توصيل دقيق، ننصح بتحديد موقعك باستخدام GPS
+                    </p>
+                    <Button 
+                      type="button"
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleGetLocationPermission}
+                      disabled={isGettingLocation}
+                      className="w-full border-orange-300 text-orange-700 hover:bg-orange-100"
+                    >
+                      <Navigation className={`h-4 w-4 ml-2 ${isGettingLocation ? 'animate-pulse' : ''}`} />
+                      {isGettingLocation ? 'جاري تحديد الموقع...' : 'تحديد موقعي الحالي'}
+                    </Button>
                   </div>
-                  <Textarea
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder={t('enterAddressPlaceholder')}
-                    className="border-amber-200 focus:border-amber-500"
-                    required
-                  />
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="manualAddress" className="text-sm font-medium text-amber-800">
+                      أو أدخل العنوان يدوياً
+                    </Label>
+                    <Textarea
+                      id="manualAddress"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder={t('enterAddressPlaceholder')}
+                      className="border-amber-200 focus:border-amber-500"
+                      required
+                    />
+                  </div>
+                  
+                  {/* Optional Location Details for manual entry */}
+                  <div className="space-y-2">
+                    <Label htmlFor="locationDetailsManual" className="text-sm font-medium text-amber-800">
+                      تفاصيل الموقع (اختياري)
+                    </Label>
+                    <Input
+                      id="locationDetailsManual"
+                      value={locationDetails}
+                      onChange={(e) => setLocationDetails(e.target.value)}
+                      placeholder="مثل: الطابق الثاني، شقة 5، بجانب الصيدلية"
+                      className="border-amber-200 focus:border-amber-500"
+                    />
+                  </div>
                 </div>
               )}
             </CardContent>
