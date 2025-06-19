@@ -39,7 +39,7 @@ const GoogleMapPicker = ({ onLocationSelect, initialLocation, className }: Googl
           libraries: ['places']
         });
 
-        const google = await loader.load();
+        await loader.load();
         
         if (!mapRef.current) return;
 
