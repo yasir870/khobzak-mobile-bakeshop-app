@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -23,8 +23,32 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [gpsAddress, setGpsAddress] = useState('');
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
+
+  // Load GPS location and convert to address on component mount
+  useEffect(() => {
+    const loadGpsAddress = async () => {
+      const savedLocation = localStorage.getItem('userLocation');
+      if (savedLocation) {
+        setIsLoadingAddress(true);
+        try {
+          const location = JSON.parse(savedLocation);
+          // Convert coordinates to readable address
+          const addressText = `موقع GPS: خط العرض ${location.lat.toFixed(6)}, خط الطول ${location.lng.toFixed(6)}`;
+          setGpsAddress(addressText);
+          setAddress(addressText);
+        } catch (error) {
+          console.error('Error loading GPS address:', error);
+        }
+        setIsLoadingAddress(false);
+      }
+    };
+
+    loadGpsAddress();
+  }, []);
 
   // helper: get customer_phone from localStorage OR ask user for it later if needed
   const getCustomerPhone = () => {
@@ -164,13 +188,45 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Textarea
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder={t('enterAddressPlaceholder')}
-                className="border-amber-200 focus:border-amber-500"
-                required
-              />
+              {isLoadingAddress ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="text-amber-600">جاري تحميل العنوان من GPS...</div>
+                </div>
+              ) : gpsAddress ? (
+                <div className="space-y-3">
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-green-700 mb-2">
+                      <MapPin className="h-4 w-4" />
+                      <span className="text-sm font-medium">عنوان GPS المحدد:</span>
+                    </div>
+                    <p className="text-sm text-green-600">{gpsAddress}</p>
+                  </div>
+                  <Textarea
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="يمكنك تعديل العنوان أو إضافة تفاصيل إضافية"
+                    className="border-amber-200 focus:border-amber-500"
+                    required
+                  />
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-orange-700 mb-2">
+                      <MapPin className="h-4 w-4" />
+                      <span className="text-sm font-medium">لم يتم تحديد الموقع بواسطة GPS</span>
+                    </div>
+                    <p className="text-xs text-orange-600">يرجى العودة للصفحة الرئيسية وتحديد موقعك أولاً</p>
+                  </div>
+                  <Textarea
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder={t('enterAddressPlaceholder')}
+                    className="border-amber-200 focus:border-amber-500"
+                    required
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
 
