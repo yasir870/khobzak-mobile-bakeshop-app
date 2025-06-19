@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, User, Clock, MessageSquare, LogOut } from 'lucide-react';
+import { ShoppingCart, User, Clock, MessageSquare, LogOut, MapPin } from 'lucide-react';
 import ProductDetailModal from './ProductDetailModal';
 import CartPage from './CartPage';
 import ProfilePage from './ProfilePage';
@@ -15,6 +15,7 @@ import ContactDialog from "./ContactDialog";
 import Footer from "./Footer";
 import OrdersDialog from "./OrdersDialog";
 import { useTranslation } from '@/context/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface CustomerDashboardProps {
   onLogout: () => void;
@@ -38,6 +39,7 @@ const CustomerDashboard = ({
   onLogout
 }: CustomerDashboardProps) => {
   const { t } = useTranslation();
+  const { toast } = useToast();
   // سنستخدم array من المنتجات مع quantity
   const [cartItems, setCartItems] = useState<CartProduct[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<BreadProduct | null>(null);
@@ -48,6 +50,8 @@ const CustomerDashboard = ({
   const [allPhones, setAllPhones] = useState<string[]>([]);
   const [loadingPhones, setLoadingPhones] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   // عدل صور المنتجات من Emoji إلى روابط الصور الحقيقية التي رفعتها على Supabase
   const breadTypes: BreadProduct[] = [{
@@ -115,6 +119,12 @@ const CustomerDashboard = ({
       console.log('Loaded cart from localStorage:', parsedCart);
       setCartItems(parsedCart);
     }
+    
+    // Load saved location
+    const savedLocation = localStorage.getItem('userLocation');
+    if (savedLocation) {
+      setUserLocation(JSON.parse(savedLocation));
+    }
   }, []);
 
   // حفظ cart في localStorage كلما تغيرت
@@ -122,6 +132,63 @@ const CustomerDashboard = ({
     console.log('Saving cart to localStorage:', cartItems);
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
   }, [cartItems]);
+
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: "خطأ في الموقع",
+        description: "متصفحك لا يدعم خدمة تحديد الموقع",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGettingLocation(true);
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const location = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        setUserLocation(location);
+        localStorage.setItem('userLocation', JSON.stringify(location));
+        setIsGettingLocation(false);
+        
+        toast({
+          title: "تم حفظ موقعك",
+          description: "تم تحديد موقعك بنجاح وسيتم استخدامه للتوصيل",
+        });
+      },
+      (error) => {
+        setIsGettingLocation(false);
+        let errorMessage = "حدث خطأ في تحديد الموقع";
+        
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "تم رفض إذن الوصول للموقع. يرجى السماح بالوصول للموقع في إعدادات المتصفح";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "معلومات الموقع غير متوفرة";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "انتهت مهلة طلب تحديد الموقع";
+            break;
+        }
+        
+        toast({
+          title: "خطأ في تحديد الموقع",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000 // 5 minutes
+      }
+    );
+  };
 
   const handleProductClick = (product: BreadProduct) => {
     console.log('Product clicked:', product.name);
@@ -184,7 +251,21 @@ const CustomerDashboard = ({
             </div>
           </div>
           <div className="flex items-center space-x-3">
-            {/* تحسين تصميم السلة لتكون أكثر وضوحاً */}
+            {/* Location Button */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className={`relative ${userLocation ? 'bg-green-600 hover:bg-green-700 text-white border-green-600' : 'bg-orange-600 hover:bg-orange-700 text-white border-orange-600'} shadow-lg px-3 py-2`} 
+              onClick={handleGetLocation}
+              disabled={isGettingLocation}
+            >
+              <MapPin className={`h-4 w-4 ml-2 ${isGettingLocation ? 'animate-pulse' : ''}`} />
+              <span className="font-medium text-sm">
+                {isGettingLocation ? 'جاري التحديد...' : userLocation ? 'تم تحديد الموقع' : 'موقع'}
+              </span>
+            </Button>
+            
+            {/* Cart Button */}
             <Button 
               variant="outline" 
               size="sm" 
@@ -214,6 +295,12 @@ const CustomerDashboard = ({
           <CardContent className="p-4">
             <h2 className="text-lg font-semibold text-amber-800 mb-2">{t('welcomeBack')}</h2>
             <p className="text-sm text-amber-600">{t('discoverOurBread')}</p>
+            {userLocation && (
+              <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                تم تحديد موقعك للتوصيل
+              </p>
+            )}
           </CardContent>
         </Card>
 
