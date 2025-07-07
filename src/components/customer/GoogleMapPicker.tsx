@@ -4,6 +4,7 @@ import { Loader } from '@googlemaps/js-api-loader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Navigation, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface Location {
@@ -31,20 +32,23 @@ const GoogleMapPicker = ({ onLocationSelect, initialLocation, className }: Googl
   const defaultLocation = { lat: 33.3128, lng: 44.3615 };
 
   useEffect(() => {
-    const initMap = async () => {
+  const initMap = async () => {
       try {
-        // Get API key from environment or use a placeholder
-        const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'YOUR_GOOGLE_MAPS_API_KEY';
+        // Get API key from Supabase Edge Function
+        const response = await fetch(`https://lakvfrohnlinfcqfwkqq.supabase.co/functions/v1/get-google-maps-key`, {
+          headers: {
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxha3Zmcm9obmxpbmZjcWZ3a3FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1ODQyNDcsImV4cCI6MjA2NTE2MDI0N30.Cohs36ZVp5vb-CfxsLkF51GyuMf_nhBDTjKqYKgi9b0`,
+          }
+        });
         
-        if (apiKey === 'YOUR_GOOGLE_MAPS_API_KEY') {
-          console.error('Google Maps API key is not configured. Please add VITE_GOOGLE_MAPS_API_KEY to your environment.');
-          toast({
-            title: "خطأ في إعداد الخريطة",
-            description: "مفتاح Google Maps غير مُعيّن. يرجى إضافة المفتاح في إعدادات المشروع.",
-            variant: "destructive"
-          });
-          setIsLoading(false);
-          return;
+        if (!response.ok) {
+          throw new Error('Failed to get Google Maps API key');
+        }
+        
+        const { apiKey } = await response.json();
+        
+        if (!apiKey) {
+          throw new Error('Google Maps API key not configured');
         }
 
         const loader = new Loader({
@@ -110,7 +114,9 @@ const GoogleMapPicker = ({ onLocationSelect, initialLocation, className }: Googl
         console.error('Error loading Google Maps:', error);
         toast({
           title: "خطأ في تحميل الخريطة",
-          description: "تعذر تحميل خريطة Google. تأكد من إعداد مفتاح API بشكل صحيح.",
+          description: error.message === 'Google Maps API key not configured' 
+            ? "مفتاح Google Maps غير مُعيّن. يرجى إضافة المفتاح في إعدادات المشروع."
+            : "تعذر تحميل خريطة Google. تأكد من إعداد مفتاح API بشكل صحيح.",
           variant: "destructive"
         });
         setIsLoading(false);
