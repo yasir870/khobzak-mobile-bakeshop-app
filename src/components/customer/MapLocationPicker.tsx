@@ -37,8 +37,22 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
 
     const initMap = async () => {
       try {
+        // Get API key from environment or use a placeholder
+        const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'YOUR_GOOGLE_MAPS_API_KEY';
+        
+        if (apiKey === 'YOUR_GOOGLE_MAPS_API_KEY') {
+          console.error('Google Maps API key is not configured. Please add VITE_GOOGLE_MAPS_API_KEY to your environment.');
+          toast({
+            title: "خطأ في إعداد الخريطة",
+            description: "مفتاح Google Maps غير مُعيّن. يرجى إضافة المفتاح في إعدادات المشروع.",
+            variant: "destructive"
+          });
+          setIsLoading(false);
+          return;
+        }
+
         const loader = new Loader({
-          apiKey: 'YOUR_GOOGLE_MAPS_API_KEY',
+          apiKey: apiKey,
           version: 'weekly',
           libraries: ['places']
         });
