@@ -34,6 +34,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [showMap, setShowMap] = useState(false);
   const [showMapPicker, setShowMapPicker] = useState(false);
+  const [isGettingCurrentLocation, setIsGettingCurrentLocation] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
 
@@ -63,6 +64,49 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
       title: "تم تحديد الموقع بنجاح",
       description: "تم حفظ موقعك المحدد من الخريطة",
     });
+  };
+
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: "خطأ في الموقع",
+        description: "متصفحك لا يدعم خدمة تحديد الموقع",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGettingCurrentLocation(true);
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const location = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        
+        handleLocationSelect(location);
+        setIsGettingCurrentLocation(false);
+        
+        toast({
+          title: "تم تحديد موقعك",
+          description: "تم تحديد موقعك الحالي بنجاح",
+        });
+      },
+      (error) => {
+        setIsGettingCurrentLocation(false);
+        toast({
+          title: "تعذر تحديد الموقع",
+          description: "تعذر الوصول إلى موقعك الحالي",
+          variant: "destructive"
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000
+      }
+    );
   };
 
   // helper: get customer_phone from localStorage OR ask user for it later if needed
