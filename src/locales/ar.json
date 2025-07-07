@@ -58,5 +58,21 @@
   "toastOrderSuccessDesc": "تم استلام طلبك رقم #{orderId} وسيتم تحضيره قريبًا.",
   "toastOrderErrorTitle": "خطأ في الطلب",
   "toastOrderErrorDesc": "فشل إتمام طلبك. يرجى المحاولة مرة أخرى.",
-  "unknown": "غير معروف"
+"unknown": "غير معروف",
+  "locationPermissionTitle": "إذن الموقع مطلوب",
+  "locationPermissionMessage": "يرجى السماح للتطبيق باستخدام موقعك لتحديد عنوان التوصيل بدقة.",
+  "locationDetectedSuccess": "تم حفظ موقعك بنجاح",
+  "locationDetectedDesc": "تم تحديد موقعك بنجاح وسيتم استخدامه للتوصيل الدقيق",
+  "locationError": "تعذر تحديد الموقع",
+  "locationPermissionDenied": "تم رفض إذن الوصول للموقع. يرجى السماح بالوصول للموقع في إعدادات المتصفح للحصول على توصيل دقيق",
+  "locationUnavailable": "معلومات الموقع غير متوفرة. يمكنك إدخال العنوان يدوياً عند الطلب",
+  "locationTimeout": "انتهت مهلة طلب تحديد الموقع. يرجى المحاولة مرة أخرى",
+  "locationRequired": "الموقع مطلوب للتوصيل",
+  "gettingLocation": "جاري التحديد...",
+  "locationDetected": "تم تحديد الموقع ✓",
+  "setLocation": "حدد موقعك",
+  "locationSetForDelivery": "تم تحديد موقعك للتوصيل الدقيق",
+  "clickToSetLocation": "اضغط على \"حدد موقعك\" للحصول على توصيل دقيق",
+  "locationRequiredWarning": "لم نتمكن من تحديد موقعك، يرجى إدخال العنوان يدويًا.",
+  "allowLocationAccess": "السماح بالوصول للموقع"
 }

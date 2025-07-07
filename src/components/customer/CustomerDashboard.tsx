@@ -145,8 +145,8 @@ const CustomerDashboard = ({
 
     // Show permission request message in Arabic as requested
     toast({
-      title: "طلب إذن الموقع",
-      description: "يرجى السماح للتطبيق باستخدام موقعك لتحديد عنوان التوصيل بدقة.",
+      title: t('locationPermissionTitle'),
+      description: t('locationPermissionMessage'),
     });
 
     setIsGettingLocation(true);
@@ -162,8 +162,8 @@ const CustomerDashboard = ({
         setIsGettingLocation(false);
         
         toast({
-          title: "تم حفظ موقعك بنجاح",
-          description: "تم تحديد موقعك بنجاح وسيتم استخدامه للتوصيل الدقيق",
+          title: t('locationDetectedSuccess'),
+          description: t('locationDetectedDesc'),
         });
       },
       (error) => {
@@ -172,18 +172,18 @@ const CustomerDashboard = ({
         
         switch(error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = "تم رفض إذن الوصول للموقع. يرجى السماح بالوصول للموقع في إعدادات المتصفح للحصول على توصيل دقيق";
+            errorMessage = t('locationPermissionDenied');
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = "معلومات الموقع غير متوفرة. يمكنك إدخال العنوان يدوياً عند الطلب";
+            errorMessage = t('locationUnavailable');
             break;
           case error.TIMEOUT:
-            errorMessage = "انتهت مهلة طلب تحديد الموقع. يرجى المحاولة مرة أخرى";
+            errorMessage = t('locationTimeout');
             break;
         }
         
         toast({
-          title: "تعذر تحديد الموقع",
+          title: t('locationError'),
           description: errorMessage,
           variant: "destructive"
         });
@@ -273,10 +273,10 @@ const CustomerDashboard = ({
               <MapPin className={`h-4 w-4 ml-2 ${isGettingLocation ? 'animate-spin' : userLocation ? '' : 'animate-bounce'}`} />
               <span className="font-medium text-sm">
                 {isGettingLocation 
-                  ? 'جاري التحديد...' 
+                  ? t('gettingLocation')
                   : userLocation 
-                    ? 'تم تحديد الموقع ✓' 
-                    : 'حدد موقعك'
+                    ? t('locationDetected')
+                    : t('setLocation')
                 }
               </span>
               {!userLocation && !isGettingLocation && (
@@ -317,12 +317,12 @@ const CustomerDashboard = ({
             {userLocation ? (
               <div className="flex items-center gap-2 mt-2 p-2 bg-green-50 rounded-lg border border-green-200">
                 <MapPin className="h-4 w-4 text-green-600" />
-                <span className="text-sm text-green-700 font-medium">تم تحديد موقعك للتوصيل الدقيق</span>
+                <span className="text-sm text-green-700 font-medium">{t('locationSetForDelivery')}</span>
               </div>
             ) : (
               <div className="flex items-center gap-2 mt-2 p-2 bg-orange-50 rounded-lg border border-orange-200">
                 <MapPin className="h-4 w-4 text-orange-600" />
-                <span className="text-sm text-orange-700">اضغط على "حدد موقعك" للحصول على توصيل دقيق</span>
+                <span className="text-sm text-orange-700">{t('clickToSetLocation')}</span>
               </div>
             )}
           </CardContent>

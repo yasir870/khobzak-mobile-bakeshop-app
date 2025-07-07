@@ -133,7 +133,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
       toast({
         title: t('toastMissingInfoTitle'),
         description: !address
-          ? 'يرجى تحديد عنوان التوصيل أو إدخاله يدوياً'
+          ? t('locationRequiredWarning')
           : t('toastUserError'),
         variant: "destructive"
       });
