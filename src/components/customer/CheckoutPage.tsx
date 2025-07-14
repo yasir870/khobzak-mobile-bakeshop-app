@@ -9,8 +9,7 @@ import { ArrowLeft, MapPin, Clock, CreditCard, Banknote, Navigation } from 'luci
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from '@/context/LanguageContext';
-import MapboxLocationPicker from './MapboxLocationPicker';
-import MapLocationPicker from './MapLocationPicker';
+import LeafletLocationPicker from './LeafletLocationPicker';
 
 interface CheckoutPageProps {
   onBack: () => void;
@@ -373,7 +372,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
         </form>
 
         {/* Map Location Picker Dialog */}
-        <MapLocationPicker
+        <LeafletLocationPicker
           isOpen={showMapPicker}
           onClose={() => setShowMapPicker(false)}
           onLocationSelect={handleLocationSelect}
