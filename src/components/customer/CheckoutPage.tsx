@@ -9,7 +9,7 @@ import { ArrowLeft, MapPin, Clock, CreditCard, Banknote, Navigation } from 'luci
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from '@/context/LanguageContext';
-import GoogleMapPicker from './GoogleMapPicker';
+import MapboxLocationPicker from './MapboxLocationPicker';
 import MapLocationPicker from './MapLocationPicker';
 
 interface CheckoutPageProps {

@@ -1,10 +1,9 @@
-
 import React, { useEffect, useRef, useState } from 'react';
-import { Loader } from '@googlemaps/js-api-loader';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Navigation, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface Location {
@@ -13,16 +12,16 @@ interface Location {
   address?: string;
 }
 
-interface GoogleMapPickerProps {
+interface MapboxLocationPickerProps {
   onLocationSelect: (location: Location) => void;
   initialLocation?: Location;
   className?: string;
 }
 
-const GoogleMapPicker = ({ onLocationSelect, initialLocation, className }: GoogleMapPickerProps) => {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [marker, setMarker] = useState<google.maps.Marker | null>(null);
+const MapboxLocationPicker = ({ onLocationSelect, initialLocation, className }: MapboxLocationPickerProps) => {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const marker = useRef<mapboxgl.Marker | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(initialLocation || null);
   const [isGettingCurrentLocation, setIsGettingCurrentLocation] = useState(false);
@@ -32,77 +31,68 @@ const GoogleMapPicker = ({ onLocationSelect, initialLocation, className }: Googl
   const defaultLocation = { lat: 33.3128, lng: 44.3615 };
 
   useEffect(() => {
-  const initMap = async () => {
+    const initMap = async () => {
       try {
-        // Get API key from Supabase Edge Function
-        const response = await fetch(`https://lakvfrohnlinfcqfwkqq.supabase.co/functions/v1/get-google-maps-key`, {
+        if (!mapContainer.current) return;
+
+        // Get Mapbox API key from Supabase Edge Function
+        const response = await fetch(`https://lakvfrohnlinfcqfwkqq.supabase.co/functions/v1/get-mapbox-key`, {
           headers: {
             'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxha3Zmcm9obmxpbmZjcWZ3a3FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1ODQyNDcsImV4cCI6MjA2NTE2MDI0N30.Cohs36ZVp5vb-CfxsLkF51GyuMf_nhBDTjKqYKgi9b0`,
           }
         });
         
         if (!response.ok) {
-          throw new Error('Failed to get Google Maps API key');
+          throw new Error('Failed to get Mapbox API key');
         }
         
         const { apiKey } = await response.json();
         
         if (!apiKey) {
-          throw new Error('Google Maps API key not configured');
+          throw new Error('Mapbox API key not configured');
         }
 
-        const loader = new Loader({
-          apiKey: apiKey,
-          version: 'weekly',
-          libraries: ['places']
-        });
+        // Set Mapbox access token
+        mapboxgl.accessToken = apiKey;
 
-        await loader.load();
-        
-        if (!mapRef.current) return;
-
-        const mapInstance = new google.maps.Map(mapRef.current, {
-          center: selectedLocation || defaultLocation,
+        // Initialize map
+        const mapInstance = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/streets-v12',
+          center: [selectedLocation?.lng || defaultLocation.lng, selectedLocation?.lat || defaultLocation.lat],
           zoom: 15,
-          mapTypeId: google.maps.MapTypeId.ROADMAP,
-          streetViewControl: false,
-          mapTypeControl: false,
-          fullscreenControl: false,
+          language: 'ar'
         });
 
-        // Create marker
-        const markerInstance = new google.maps.Marker({
-          position: selectedLocation || defaultLocation,
-          map: mapInstance,
+        // Create draggable marker
+        const markerInstance = new mapboxgl.Marker({
           draggable: true,
-          title: 'اسحب لتحديد الموقع'
+          color: '#f97316'
+        })
+        .setLngLat([selectedLocation?.lng || defaultLocation.lng, selectedLocation?.lat || defaultLocation.lat])
+        .addTo(mapInstance);
+
+        // Add map click handler
+        mapInstance.on('click', (e) => {
+          const location = {
+            lat: e.lngLat.lat,
+            lng: e.lngLat.lng
+          };
+          updateLocation(location, mapInstance, markerInstance);
         });
 
-        // Add click listener to map
-        mapInstance.addListener('click', (event: google.maps.MapMouseEvent) => {
-          if (event.latLng) {
-            const location = {
-              lat: event.latLng.lat(),
-              lng: event.latLng.lng()
-            };
-            updateLocation(location, mapInstance, markerInstance);
-          }
+        // Add marker drag handler
+        markerInstance.on('dragend', () => {
+          const lngLat = markerInstance.getLngLat();
+          const location = {
+            lat: lngLat.lat,
+            lng: lngLat.lng
+          };
+          updateLocation(location, mapInstance, markerInstance);
         });
 
-        // Add drag listener to marker
-        markerInstance.addListener('dragend', () => {
-          const position = markerInstance.getPosition();
-          if (position) {
-            const location = {
-              lat: position.lat(),
-              lng: position.lng()
-            };
-            updateLocation(location, mapInstance, markerInstance);
-          }
-        });
-
-        setMap(mapInstance);
-        setMarker(markerInstance);
+        map.current = mapInstance;
+        marker.current = markerInstance;
         setIsLoading(false);
 
         // If we have an initial location, use it
@@ -111,12 +101,12 @@ const GoogleMapPicker = ({ onLocationSelect, initialLocation, className }: Googl
         }
 
       } catch (error) {
-        console.error('Error loading Google Maps:', error);
+        console.error('Error loading Mapbox:', error);
         toast({
           title: "خطأ في تحميل الخريطة",
-          description: error.message === 'Google Maps API key not configured' 
-            ? "مفتاح Google Maps غير مُعيّن. يرجى إضافة المفتاح في إعدادات المشروع."
-            : "تعذر تحميل خريطة Google. تأكد من إعداد مفتاح API بشكل صحيح.",
+          description: error.message === 'Mapbox API key not configured' 
+            ? "مفتاح Mapbox غير مُعيّن. يرجى إضافة المفتاح في إعدادات المشروع."
+            : "تعذر تحميل الخريطة. تأكد من إعداد مفتاح API بشكل صحيح.",
           variant: "destructive"
         });
         setIsLoading(false);
@@ -124,27 +114,45 @@ const GoogleMapPicker = ({ onLocationSelect, initialLocation, className }: Googl
     };
 
     initMap();
+
+    // Cleanup
+    return () => {
+      if (map.current) {
+        map.current.remove();
+      }
+    };
   }, []);
 
-  const updateLocation = async (location: Location, mapInstance: google.maps.Map, markerInstance: google.maps.Marker) => {
+  const updateLocation = async (location: Location, mapInstance: mapboxgl.Map, markerInstance: mapboxgl.Marker) => {
     try {
       // Update marker position
-      markerInstance.setPosition(location);
-      mapInstance.panTo(location);
+      markerInstance.setLngLat([location.lng, location.lat]);
+      mapInstance.panTo([location.lng, location.lat]);
 
-      // Try to get address from coordinates (reverse geocoding)
-      const geocoder = new google.maps.Geocoder();
-      geocoder.geocode({ location }, (results, status) => {
-        if (status === 'OK' && results && results[0]) {
-          const address = results[0].formatted_address;
-          const locationWithAddress = { ...location, address };
-          setSelectedLocation(locationWithAddress);
-          onLocationSelect(locationWithAddress);
-        } else {
-          setSelectedLocation(location);
-          onLocationSelect(location);
+      // Reverse geocoding to get address
+      try {
+        const geocodingResponse = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${location.lng},${location.lat}.json?access_token=${mapboxgl.accessToken}&language=ar`
+        );
+        
+        if (geocodingResponse.ok) {
+          const geocodingData = await geocodingResponse.json();
+          if (geocodingData.features && geocodingData.features.length > 0) {
+            const address = geocodingData.features[0].place_name;
+            const locationWithAddress = { ...location, address };
+            setSelectedLocation(locationWithAddress);
+            onLocationSelect(locationWithAddress);
+            return;
+          }
         }
-      });
+      } catch (geocodingError) {
+        console.warn('Geocoding failed:', geocodingError);
+      }
+      
+      // Fallback without address
+      setSelectedLocation(location);
+      onLocationSelect(location);
+      
     } catch (error) {
       console.error('Error updating location:', error);
       setSelectedLocation(location);
@@ -171,8 +179,8 @@ const GoogleMapPicker = ({ onLocationSelect, initialLocation, className }: Googl
           lng: position.coords.longitude
         };
         
-        if (map && marker) {
-          updateLocation(location, map, marker);
+        if (map.current && marker.current) {
+          updateLocation(location, map.current, marker.current);
         }
         
         setIsGettingCurrentLocation(false);
@@ -216,7 +224,7 @@ const GoogleMapPicker = ({ onLocationSelect, initialLocation, className }: Googl
       <CardHeader className="pb-3">
         <CardTitle className="text-lg text-amber-800 flex items-center gap-2">
           <MapPin className="h-5 w-5" />
-          حدد موقع التوصيل على الخريطة
+          يرجى تحديد موقع التوصيل
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -230,7 +238,7 @@ const GoogleMapPicker = ({ onLocationSelect, initialLocation, className }: Googl
         ) : (
           <>
             <div 
-              ref={mapRef} 
+              ref={mapContainer} 
               className="h-80 w-full rounded-lg border border-amber-200"
               style={{ minHeight: '320px' }}
             />
@@ -274,4 +282,4 @@ const GoogleMapPicker = ({ onLocationSelect, initialLocation, className }: Googl
   );
 };
 
-export default GoogleMapPicker;
+export default MapboxLocationPicker;
