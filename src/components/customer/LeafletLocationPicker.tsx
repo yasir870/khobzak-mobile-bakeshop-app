@@ -45,17 +45,26 @@ const LeafletLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocat
 
     const initMap = () => {
       try {
+        // Cleanup any existing map
+        if (map.current) {
+          map.current.remove();
+          map.current = null;
+        }
+
         // Initialize map
         const mapInstance = L.map(mapContainer.current!).setView(
           [selectedLocation?.lat || defaultLocation.lat, selectedLocation?.lng || defaultLocation.lng], 
           16
         );
 
-        // Add OpenStreetMap tiles
+        // Add OpenStreetMap tiles with better error handling
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© OpenStreetMap contributors',
           maxZoom: 19,
-        }).addTo(mapInstance);
+          errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+        }).addTo(mapInstance).on('tileerror', function(error) {
+          console.warn('خطأ في تحميل البلاط:', error);
+        });
 
         // Create custom marker icon
         const customIcon = L.divIcon({
@@ -104,12 +113,12 @@ const LeafletLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocat
 
       } catch (error) {
         console.error('Error loading map:', error);
+        setIsLoading(false);
         toast({
           title: "خطأ في تحميل الخريطة",
-          description: "تعذر تحميل الخريطة. يرجى المحاولة مرة أخرى.",
+          description: "تعذر تحميل الخريطة. يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى.",
           variant: "destructive"
         });
-        setIsLoading(false);
       }
     };
 

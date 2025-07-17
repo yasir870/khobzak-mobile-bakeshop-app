@@ -277,15 +277,6 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
                 </Button>
               </div>
 
-              {selectedLocation && (
-                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-green-700 mb-2">
-                    <MapPin className="h-4 w-4" />
-                    <span className="text-sm font-medium">الموقع المحدد من الخريطة:</span>
-                  </div>
-                  <p className="text-sm text-green-600">{selectedLocation.address || `خط العرض: ${selectedLocation.lat.toFixed(6)}, خط الطول: ${selectedLocation.lng.toFixed(6)}`}</p>
-                </div>
-              )}
 
               <div className="space-y-2">
                 <Label htmlFor="address" className="text-sm font-medium text-amber-800">
