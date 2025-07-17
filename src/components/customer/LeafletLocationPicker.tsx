@@ -43,7 +43,7 @@ const LeafletLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocat
   useEffect(() => {
     if (!isOpen || !mapContainer.current) return;
 
-    const initMap = () => {
+    const initMap = async () => {
       try {
         // Cleanup any existing map
         if (map.current) {
@@ -51,20 +51,52 @@ const LeafletLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocat
           map.current = null;
         }
 
+        // Small delay to ensure DOM is ready
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        if (!mapContainer.current) {
+          console.error('Map container not found');
+          setIsLoading(false);
+          return;
+        }
+
+        console.log('Initializing Leaflet map...');
+
         // Initialize map
-        const mapInstance = L.map(mapContainer.current!).setView(
+        const mapInstance = L.map(mapContainer.current, {
+          zoomControl: true,
+          scrollWheelZoom: true,
+          doubleClickZoom: true,
+          touchZoom: true
+        }).setView(
           [selectedLocation?.lat || defaultLocation.lat, selectedLocation?.lng || defaultLocation.lng], 
           16
         );
 
+        console.log('Map instance created, adding tiles...');
+
         // Add OpenStreetMap tiles with better error handling
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© OpenStreetMap contributors',
           maxZoom: 19,
-          errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
-        }).addTo(mapInstance).on('tileerror', function(error) {
-          console.warn('خطأ في تحميل البلاط:', error);
+          minZoom: 1,
+          crossOrigin: true
         });
+
+        tileLayer.on('loading', () => {
+          console.log('Tiles loading...');
+        });
+
+        tileLayer.on('load', () => {
+          console.log('Tiles loaded successfully');
+          setIsLoading(false);
+        });
+
+        tileLayer.on('tileerror', (error) => {
+          console.warn('Tile error:', error);
+        });
+
+        tileLayer.addTo(mapInstance);
 
         // Create custom marker icon
         const customIcon = L.divIcon({
@@ -105,11 +137,17 @@ const LeafletLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocat
 
         map.current = mapInstance;
         marker.current = markerInstance;
-        setIsLoading(false);
+
+        // Set loading to false after a short delay to ensure everything is rendered
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 500);
 
         if (selectedLocation) {
           updateLocation(selectedLocation, mapInstance, markerInstance);
         }
+
+        console.log('Map initialization completed');
 
       } catch (error) {
         console.error('Error loading map:', error);
@@ -127,6 +165,7 @@ const LeafletLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocat
     // Cleanup
     return () => {
       if (map.current) {
+        console.log('Cleaning up map...');
         map.current.remove();
         map.current = null;
       }
@@ -250,15 +289,14 @@ const LeafletLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocat
 
           {/* Map Container */}
           <div className="flex-1 relative">
-            {isLoading ? (
+            <div ref={mapContainer} className="w-full h-full" style={{ minHeight: '400px' }} />
+            {isLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
                   <p className="text-gray-600">جاري تحميل الخريطة...</p>
                 </div>
               </div>
-            ) : (
-              <div ref={mapContainer} className="w-full h-full" />
             )}
 
             {/* Current Location Button */}
