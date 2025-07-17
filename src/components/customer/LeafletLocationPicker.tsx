@@ -35,13 +35,18 @@ const LeafletLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocat
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(initialLocation || null);
   const [isGettingCurrentLocation, setIsGettingCurrentLocation] = useState(false);
   const [addressText, setAddressText] = useState('');
+  const [mapError, setMapError] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Default location (Dohuk, Iraq)
   const defaultLocation = { lat: 36.8619, lng: 42.9788 };
 
   useEffect(() => {
-    if (!isOpen || !mapContainer.current) return;
+    if (!isOpen) return;
+
+    // Reset states when dialog opens
+    setIsLoading(true);
+    setMapError(null);
 
     const initMap = async () => {
       try {
@@ -51,11 +56,13 @@ const LeafletLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocat
           map.current = null;
         }
 
-        // Small delay to ensure DOM is ready
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Wait for DOM to be ready
+        await new Promise(resolve => setTimeout(resolve, 200));
 
         if (!mapContainer.current) {
+          const error = 'عنصر الخريطة غير موجود';
           console.error('Map container not found');
+          setMapError(error);
           setIsLoading(false);
           return;
         }
@@ -83,18 +90,40 @@ const LeafletLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocat
           crossOrigin: true
         });
 
+        let tilesLoaded = false;
+        let tileErrorCount = 0;
+
         tileLayer.on('loading', () => {
           console.log('Tiles loading...');
         });
 
         tileLayer.on('load', () => {
           console.log('Tiles loaded successfully');
-          setIsLoading(false);
+          tilesLoaded = true;
+          setTimeout(() => {
+            if (tilesLoaded) {
+              setIsLoading(false);
+              setMapError(null);
+            }
+          }, 1000);
         });
 
         tileLayer.on('tileerror', (error) => {
           console.warn('Tile error:', error);
+          tileErrorCount++;
+          if (tileErrorCount > 5) {
+            setMapError('فشل في تحميل بلاطات الخريطة. تحقق من اتصالك بالإنترنت.');
+            setIsLoading(false);
+          }
         });
+
+        // Timeout for loading
+        setTimeout(() => {
+          if (!tilesLoaded) {
+            setMapError('انتهت مهلة تحميل الخريطة. يرجى المحاولة مرة أخرى.');
+            setIsLoading(false);
+          }
+        }, 15000);
 
         tileLayer.addTo(mapInstance);
 
@@ -138,11 +167,6 @@ const LeafletLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocat
         map.current = mapInstance;
         marker.current = markerInstance;
 
-        // Set loading to false after a short delay to ensure everything is rendered
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 500);
-
         if (selectedLocation) {
           updateLocation(selectedLocation, mapInstance, markerInstance);
         }
@@ -151,12 +175,9 @@ const LeafletLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocat
 
       } catch (error) {
         console.error('Error loading map:', error);
+        const errorMessage = error instanceof Error ? error.message : 'خطأ غير معروف في تحميل الخريطة';
+        setMapError(`خطأ في الخريطة: ${errorMessage}`);
         setIsLoading(false);
-        toast({
-          title: "خطأ في تحميل الخريطة",
-          description: "تعذر تحميل الخريطة. يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى.",
-          variant: "destructive"
-        });
       }
     };
 
@@ -290,11 +311,37 @@ const LeafletLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocat
           {/* Map Container */}
           <div className="flex-1 relative">
             <div ref={mapContainer} className="w-full h-full" style={{ minHeight: '400px' }} />
-            {isLoading && (
+            {isLoading && !mapError && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
                   <p className="text-gray-600">جاري تحميل الخريطة...</p>
+                </div>
+              </div>
+            )}
+
+            {mapError && (
+              <div className="absolute inset-0 flex items-center justify-center bg-red-50">
+                <div className="text-center p-6 max-w-md">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                    <X className="h-8 w-8 text-red-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-red-800 mb-2">خطأ في تحميل الخريطة</h3>
+                  <p className="text-red-600 mb-4">{mapError}</p>
+                  <Button 
+                    onClick={() => {
+                      setMapError(null);
+                      setIsLoading(true);
+                      // Re-trigger map initialization
+                      setTimeout(() => {
+                        const event = new CustomEvent('retry-map');
+                        window.dispatchEvent(event);
+                      }, 100);
+                    }}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    إعادة المحاولة
+                  </Button>
                 </div>
               </div>
             )}
