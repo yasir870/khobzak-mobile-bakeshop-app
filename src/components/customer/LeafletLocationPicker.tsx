@@ -346,71 +346,60 @@ const LeafletLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocat
               </div>
             )}
 
-            {/* Current Location Button */}
-            <Button
-              onClick={getCurrentLocation}
-              disabled={isGettingCurrentLocation}
-              className="absolute bottom-32 right-4 h-12 w-12 rounded-full bg-white shadow-lg border border-gray-300 hover:bg-gray-50"
-              variant="ghost"
-              size="icon"
-            >
-              <Navigation className={`h-6 w-6 text-gray-700 ${isGettingCurrentLocation ? 'animate-pulse' : ''}`} />
-            </Button>
+            {/* Control Buttons - Top Right */}
+            <div className="absolute top-20 right-4 z-10 flex flex-col gap-2">
+              {/* Current Location Button */}
+              <Button
+                onClick={getCurrentLocation}
+                disabled={isGettingCurrentLocation}
+                className="h-12 w-12 rounded-full bg-white shadow-lg border border-gray-300 hover:bg-gray-50"
+                variant="ghost"
+                size="icon"
+                title="تحديد موقعي الحالي"
+              >
+                <Navigation className={`h-6 w-6 text-gray-700 ${isGettingCurrentLocation ? 'animate-pulse' : ''}`} />
+              </Button>
+              
+              {/* Confirm Location Button */}
+              <Button
+                onClick={handleConfirmLocation}
+                disabled={!selectedLocation}
+                className="h-12 px-4 bg-orange-500 hover:bg-orange-600 text-white shadow-lg rounded-lg font-medium"
+                title="تأكيد الموقع"
+              >
+                <MapPin className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
 
-          {/* Location Info Tooltip */}
+          {/* Instruction Text */}
+          <div className="absolute top-20 left-4 right-20 z-10">
+            <div className="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-orange-500" />
+                <span className="text-sm">اختر موقعاً على الخريطة</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Status Panel */}
           {selectedLocation && addressText && (
-            <div className="absolute top-20 left-4 right-4 z-10">
-              <div className="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg max-w-sm mx-auto">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-orange-500" />
-                  <span className="text-sm">سيتم توصيل طلبك هنا</span>
+            <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
+              <div className="flex items-start gap-3">
+                <div className="h-6 w-6 rounded-full bg-orange-500 flex items-center justify-center mt-1">
+                  <div className="h-2 w-2 rounded-full bg-white"></div>
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">
+                    {addressText}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    سيتم توصيل طلبك إلى هذا الموقع
+                  </p>
                 </div>
               </div>
             </div>
           )}
-
-          {/* Bottom Panel */}
-          <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
-            <div className="space-y-4">
-              {/* Location Display */}
-              <div className="flex items-start gap-3">
-                <div className="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center mt-1">
-                  <div className="h-2 w-2 rounded-full bg-gray-600"></div>
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">
-                    {addressText || 'اختر موقعاً على الخريطة'}
-                  </p>
-                  {selectedLocation && (
-                    <p className="text-sm text-gray-500 mt-1">
-                      خط العرض: {selectedLocation.lat.toFixed(6)}, خط الطول: {selectedLocation.lng.toFixed(6)}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="space-y-2">
-                <Button
-                  onClick={getCurrentLocation}
-                  disabled={isGettingCurrentLocation}
-                  variant="outline"
-                  className="w-full h-12 text-base font-medium"
-                >
-                  {isGettingCurrentLocation ? 'جاري تحديد الموقع...' : 'تحديد موقعي الحالي'}
-                </Button>
-                
-                <Button
-                  onClick={handleConfirmLocation}
-                  disabled={!selectedLocation}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white h-12 text-lg font-medium rounded-lg"
-                >
-                  تأكيد الموقع
-                </Button>
-              </div>
-            </div>
-          </div>
         </div>
       </DialogContent>
     </Dialog>
