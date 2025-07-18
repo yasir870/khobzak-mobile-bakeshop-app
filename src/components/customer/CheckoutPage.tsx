@@ -145,13 +145,13 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
       // Note: "type" will be a string من أنواع الخبز المطلوبة، آسهل شيء نفصلها بفارزة (CSV)
       const typeString = cartItems.map(item => `${item.name} x${item.quantity}`).join(", ");
 
-      // Combine main address with location details and GPS coordinates if available
+      // Combine main address with location details and GPS coordinates for driver
       let fullAddress = address;
       if (locationDetails) {
         fullAddress += `\nتفاصيل إضافية: ${locationDetails}`;
       }
       if (selectedLocation) {
-        fullAddress += `\nإحداثيات GPS: ${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)}`;
+        fullAddress += `\nإحداثيات GPS للسائق: ${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)}`;
       }
 
       const { data, error } = await supabase.from("orders").insert([
@@ -280,16 +280,21 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
 
               <div className="space-y-2">
                 <Label htmlFor="address" className="text-sm font-medium text-amber-800">
-                  العنوان {selectedLocation ? '(يمكنك تعديله)' : ''}
+                  العنوان {selectedLocation ? '(تم تحديد الموقع - يمكنك تعديله)' : ''}
                 </Label>
                 <Textarea
                   id="address"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder={selectedLocation ? "يمكنك تعديل العنوان أو إضافة تفاصيل إضافية" : t('enterAddressPlaceholder')}
+                  placeholder={selectedLocation ? "يمكنك إضافة وصف إضافي للعنوان هنا" : t('enterAddressPlaceholder')}
                   className="border-amber-200 focus:border-amber-500"
                   required
                 />
+                {selectedLocation && (
+                  <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
+                    ✓ تم تحديد موقع GPS - سيتمكن السائق من الوصول إليك بسهولة
+                  </div>
+                )}
               </div>
               
               {/* Optional Location Details */}
