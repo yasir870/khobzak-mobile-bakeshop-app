@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, MapPin, Phone, Clock, Archive, Truck, RefreshCw } from 'lucide-react';
+import { LogOut, MapPin, Phone, Clock, Archive, Truck, RefreshCw, Map } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Info } from 'lucide-react';
+import DriverMapModal from './DriverMapModal';
 
 type OrderStatus = 'pending' | 'accepted' | 'in-transit' | 'delivered' | 'rejected';
 
@@ -137,6 +138,10 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
   const [allPhones, setAllPhones] = useState<string[]>([]);
   const [loadingPhones, setLoadingPhones] = useState(false);
 
+  // إضافة حالة خريطة السائق
+  const [showDriverMap, setShowDriverMap] = useState(false);
+  const [selectedOrderForMap, setSelectedOrderForMap] = useState<Order | null>(null);
+
   // دالة جلب الأرقام من قاعدة البيانات
   const handleShowAllPhones = async () => {
     setLoadingPhones(true);
@@ -147,6 +152,22 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
       setAllPhones(data.map((e: any) => e.phone));
     } else {
       setAllPhones(['حدث خطأ في جلب الأرقام!']);
+    }
+  };
+
+  // دالة فتح خريطة السائق
+  const handleShowMap = (order: Order) => {
+    // استخراج إحداثيات GPS من العنوان إذا كانت موجودة
+    const gpsMatch = order.address.match(/GPS:\s*([+-]?\d*\.?\d+),\s*([+-]?\d*\.?\d+)/);
+    if (gpsMatch) {
+      setSelectedOrderForMap(order);
+      setShowDriverMap(true);
+    } else {
+      toast({
+        title: "لا يوجد موقع GPS",
+        description: "هذا الطلب لا يحتوي على إحداثيات GPS",
+        variant: "destructive"
+      });
     }
   };
 
@@ -208,6 +229,29 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
           </ScrollArea>
         </DialogContent>
       </Dialog>
+
+      {/* خريطة السائق */}
+      {selectedOrderForMap && (
+        <DriverMapModal
+          isOpen={showDriverMap}
+          onClose={() => {
+            setShowDriverMap(false);
+            setSelectedOrderForMap(null);
+          }}
+          customerLocation={{
+            lat: parseFloat(selectedOrderForMap.address.match(/GPS:\s*([+-]?\d*\.?\d+),\s*([+-]?\d*\.?\d+)/)?.[1] || '0'),
+            lng: parseFloat(selectedOrderForMap.address.match(/GPS:\s*([+-]?\d*\.?\d+),\s*([+-]?\d*\.?\d+)/)?.[2] || '0'),
+            address: selectedOrderForMap.address
+          }}
+          customerName={customers[selectedOrderForMap.customer_id]?.name || "عميل مجهول"}
+          orderInfo={{
+            id: selectedOrderForMap.id,
+            type: selectedOrderForMap.type,
+            quantity: selectedOrderForMap.quantity,
+            address: selectedOrderForMap.address
+          }}
+        />
+      )}
 
       {/* Tabs */}
       <main className="max-w-4xl mx-auto px-4 pt-8 pb-16">
@@ -307,6 +351,15 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
                               <a href={`tel:${cust?.phone ?? order.customer_phone}`}>
                                 <Phone className="h-4 w-4 mr-1" /> اتصل بالعميل
                               </a>
+                            </Button>
+                            {/* خريطة التوجه */}
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleShowMap(order)}
+                              className="border-blue-600 text-blue-700 hover:bg-blue-50"
+                            >
+                              <Map className="h-4 w-4 mr-1" /> خريطة التوجه
                             </Button>
                           </div>
                         </CardContent>

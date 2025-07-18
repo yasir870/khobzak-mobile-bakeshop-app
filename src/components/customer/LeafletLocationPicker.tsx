@@ -346,16 +346,17 @@ const LeafletLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocat
               </div>
             )}
 
-            {/* Control Buttons - Top Right */}
-            <div className="absolute top-4 right-4 z-30 flex flex-col gap-2">
+            {/* Control Buttons - Top Right with higher z-index */}
+            <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
               {/* Current Location Button */}
               <Button
                 onClick={getCurrentLocation}
                 disabled={isGettingCurrentLocation}
-                className="h-12 w-12 rounded-full bg-white shadow-lg border border-gray-300 hover:bg-gray-50"
+                className="h-12 w-12 rounded-full bg-white shadow-xl border-2 border-gray-300 hover:bg-gray-50 hover:shadow-2xl transition-all duration-200"
                 variant="ghost"
                 size="icon"
                 title="تحديد موقعي الحالي"
+                style={{ zIndex: 1001 }}
               >
                 <Navigation className={`h-6 w-6 text-gray-700 ${isGettingCurrentLocation ? 'animate-pulse' : ''}`} />
               </Button>
@@ -364,8 +365,9 @@ const LeafletLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocat
               <Button
                 onClick={handleConfirmLocation}
                 disabled={!selectedLocation}
-                className="h-12 px-4 bg-orange-500 hover:bg-orange-600 text-white shadow-lg rounded-lg font-medium whitespace-nowrap"
+                className="h-12 px-4 bg-orange-500 hover:bg-orange-600 text-white shadow-xl rounded-lg font-medium whitespace-nowrap hover:shadow-2xl transition-all duration-200"
                 title="تأكيد الموقع"
+                style={{ zIndex: 1001 }}
               >
                 <MapPin className="h-5 w-5 ml-1" />
                 تأكيد
@@ -374,8 +376,8 @@ const LeafletLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocat
 
             {/* Instruction Text - Only show if no location selected */}
             {!selectedLocation && (
-              <div className="absolute top-4 left-4 right-32 z-30">
-                <div className="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg">
+              <div className="absolute top-4 left-4 right-32 z-[999]">
+                <div className="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-xl">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-orange-500" />
                     <span className="text-sm">اختر موقعاً على الخريطة</span>
@@ -384,19 +386,16 @@ const LeafletLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocat
               </div>
             )}
 
-            {/* Bottom Status Panel */}
+            {/* Bottom Status Panel - Only show address, no confirmation message */}
             {selectedLocation && addressText && (
               <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 p-4 z-30">
                 <div className="flex items-start gap-3">
-                  <div className="h-6 w-6 rounded-full bg-green-500 flex items-center justify-center mt-1">
-                    <div className="h-2 w-2 rounded-full bg-white"></div>
+                  <div className="h-6 w-6 rounded-full bg-orange-500 flex items-center justify-center mt-1">
+                    <MapPin className="h-3 w-3 text-white" />
                   </div>
                   <div className="flex-1">
                     <p className="font-medium text-gray-900 text-sm">
                       {addressText}
-                    </p>
-                    <p className="text-xs text-green-600 mt-1">
-                      ✓ تم تحديد الموقع - سيتم توصيل طلبك إلى هنا
                     </p>
                   </div>
                 </div>
