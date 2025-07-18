@@ -244,11 +244,13 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
             address: selectedOrderForMap.address
           }}
           customerName={customers[selectedOrderForMap.customer_id]?.name || "عميل مجهول"}
+          customerPhone={customers[selectedOrderForMap.customer_id]?.phone || selectedOrderForMap.customer_phone}
           orderInfo={{
             id: selectedOrderForMap.id,
             type: selectedOrderForMap.type,
             quantity: selectedOrderForMap.quantity,
-            address: selectedOrderForMap.address
+            address: selectedOrderForMap.address,
+            totalPrice: selectedOrderForMap.total_price
           }}
         />
       )}
@@ -355,9 +357,8 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
                             {/* خريطة التوجه */}
                             <Button 
                               size="sm" 
-                              variant="outline"
                               onClick={() => handleShowMap(order)}
-                              className="border-blue-600 text-blue-700 hover:bg-blue-50"
+                              className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
                             >
                               <Map className="h-4 w-4 mr-1" /> خريطة التوجه
                             </Button>

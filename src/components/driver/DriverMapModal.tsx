@@ -3,7 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { X, Navigation, MapPin, ExternalLink } from 'lucide-react';
+import { X, Navigation, MapPin, ExternalLink, Copy, Share2, Phone, Car } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // Fix for default markers in Leaflet
@@ -25,15 +25,17 @@ interface DriverMapModalProps {
   onClose: () => void;
   customerLocation: Location;
   customerName: string;
+  customerPhone?: string;
   orderInfo: {
     id: number;
     type: string;
     quantity: number;
     address: string;
+    totalPrice: number;
   };
 }
 
-const DriverMapModal = ({ isOpen, onClose, customerLocation, customerName, orderInfo }: DriverMapModalProps) => {
+const DriverMapModal = ({ isOpen, onClose, customerLocation, customerName, customerPhone, orderInfo }: DriverMapModalProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -101,10 +103,15 @@ const DriverMapModal = ({ isOpen, onClose, customerLocation, customerName, order
         L.marker([customerLocation.lat, customerLocation.lng], { icon: customerIcon })
           .addTo(mapInstance)
           .bindPopup(`
-            <div style="text-align: center; font-family: Arial;">
-              <strong>${customerName}</strong><br/>
-              <small>${orderInfo.type} × ${orderInfo.quantity}</small><br/>
-              <small>${orderInfo.address}</small>
+            <div style="text-align: center; font-family: Arial; padding: 8px;">
+              <strong style="color: #1f2937;">${customerName}</strong><br/>
+              <div style="margin: 4px 0; color: #6b7280;">
+                ${orderInfo.type} × ${orderInfo.quantity}<br/>
+                المبلغ: ${orderInfo.totalPrice} د.ع
+              </div>
+              <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">
+                ${orderInfo.address.replace(/GPS:.*/, '').trim()}
+              </div>
             </div>
           `);
 
@@ -180,13 +187,55 @@ const DriverMapModal = ({ isOpen, onClose, customerLocation, customerName, order
   };
 
   const openInGoogleMaps = () => {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${customerLocation.lat},${customerLocation.lng}`;
-    window.open(url, '_blank');
+    if (currentLocation) {
+      // إذا كان موقع السائق متوفراً، أضف نقطة البداية
+      const url = `https://www.google.com/maps/dir/${currentLocation.lat},${currentLocation.lng}/${customerLocation.lat},${customerLocation.lng}`;
+      window.open(url, '_blank');
+    } else {
+      // إذا لم يكن موقع السائق متوفراً، فقط الوجهة
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${customerLocation.lat},${customerLocation.lng}`;
+      window.open(url, '_blank');
+    }
+    toast({
+      title: "تم فتح خرائط جوجل",
+      description: "سيتم توجيهك إلى العميل عبر خرائط جوجل"
+    });
   };
 
   const openInOpenStreetMap = () => {
-    const url = `https://www.openstreetmap.org/directions?from=&to=${customerLocation.lat}%2C${customerLocation.lng}#map=16/${customerLocation.lat}/${customerLocation.lng}`;
-    window.open(url, '_blank');
+    if (currentLocation) {
+      const url = `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=${currentLocation.lat}%2C${currentLocation.lng}%3B${customerLocation.lat}%2C${customerLocation.lng}#map=15/${customerLocation.lat}/${customerLocation.lng}`;
+      window.open(url, '_blank');
+    } else {
+      const url = `https://www.openstreetmap.org/directions?from=&to=${customerLocation.lat}%2C${customerLocation.lng}#map=16/${customerLocation.lat}/${customerLocation.lng}`;
+      window.open(url, '_blank');
+    }
+    toast({
+      title: "تم فتح OpenStreetMap",
+      description: "سيتم توجيهك إلى العميل عبر خريطة الشارع المفتوحة"
+    });
+  };
+
+  const copyCoordinates = () => {
+    const coordinates = `${customerLocation.lat}, ${customerLocation.lng}`;
+    navigator.clipboard.writeText(coordinates).then(() => {
+      toast({
+        title: "تم نسخ الإحداثيات",
+        description: `${coordinates} - يمكنك استخدامها في أي تطبيق خرائط`
+      });
+    });
+  };
+
+  const shareLocation = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: `موقع العميل - طلب #${orderInfo.id}`,
+        text: `${customerName} - ${orderInfo.address}`,
+        url: `https://maps.google.com/?q=${customerLocation.lat},${customerLocation.lng}`
+      });
+    } else {
+      copyCoordinates();
+    }
   };
 
   return (
@@ -236,25 +285,45 @@ const DriverMapModal = ({ isOpen, onClose, customerLocation, customerName, order
               </div>
             )}
 
-            {/* Navigation Buttons */}
+            {/* Action Buttons */}
             <div className="absolute top-4 right-4 z-30 flex flex-col gap-2">
               <Button
                 onClick={openInGoogleMaps}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm"
+                className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium"
                 size="sm"
               >
-                <ExternalLink className="h-4 w-4 ml-1" />
-                فتح في خرائط جوجل
+                <Car className="h-4 w-4 ml-1" />
+                توجه عبر جوجل
               </Button>
               
               <Button
                 onClick={openInOpenStreetMap}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium"
                 size="sm"
               >
-                <ExternalLink className="h-4 w-4 ml-1" />
-                فتح في OpenStreetMap
+                <MapPin className="h-4 w-4 ml-1" />
+                توجه عبر OSM
               </Button>
+
+              <Button
+                onClick={copyCoordinates}
+                className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium"
+                size="sm"
+              >
+                <Copy className="h-4 w-4 ml-1" />
+                نسخ الإحداثيات
+              </Button>
+
+              {customerPhone && (
+                <Button
+                  onClick={() => window.open(`tel:${customerPhone}`, '_self')}
+                  className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium"
+                  size="sm"
+                >
+                  <Phone className="h-4 w-4 ml-1" />
+                  اتصل بالعميل
+                </Button>
+              )}
             </div>
 
             {/* Legend */}
@@ -273,6 +342,22 @@ const DriverMapModal = ({ isOpen, onClose, customerLocation, customerName, order
                   <div className="w-4 h-1 bg-orange-500 rounded" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #f97316 0, #f97316 6px, transparent 6px, transparent 12px)' }}></div>
                   <span>المسار المقترح</span>
                 </div>
+              </div>
+            </div>
+
+            {/* Customer Info Panel */}
+            <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg p-3 z-30 max-w-xs">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                <div className="font-medium text-gray-900 text-sm">معلومات العميل</div>
+              </div>
+              <div className="text-xs space-y-1">
+                <div><strong>الاسم:</strong> {customerName}</div>
+                <div><strong>الطلب:</strong> {orderInfo.type} × {orderInfo.quantity}</div>
+                <div><strong>المبلغ:</strong> {orderInfo.totalPrice} د.ع</div>
+                {customerPhone && (
+                  <div><strong>الهاتف:</strong> {customerPhone}</div>
+                )}
               </div>
             </div>
           </div>
