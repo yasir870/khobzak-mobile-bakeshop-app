@@ -287,27 +287,48 @@ const DriverMapModal = ({ isOpen, onClose, customerLocation, customerName, custo
 
             {/* Action Buttons */}
             <div className="absolute top-4 right-4 z-30 flex flex-col gap-2">
+              {/* زر توسيط الخريطة */}
               <Button
-                onClick={openInGoogleMaps}
-                className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium"
+                onClick={() => {
+                  if (map.current && currentLocation) {
+                    const group = new L.FeatureGroup([
+                      L.marker([currentLocation.lat, currentLocation.lng]),
+                      L.marker([customerLocation.lat, customerLocation.lng])
+                    ]);
+                    map.current.fitBounds(group.getBounds().pad(0.15));
+                  }
+                }}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium"
                 size="sm"
               >
-                <Car className="h-4 w-4 ml-1" />
-                توجه عبر جوجل
+                <Navigation className="h-4 w-4 ml-1" />
+                عرض المسار كاملاً
+              </Button>
+
+              <Button
+                onClick={openInGoogleMaps}
+                variant="outline"
+                className="bg-white/90 hover:bg-white border-green-600 text-green-700 px-3 py-2 rounded-lg shadow-lg text-sm font-medium"
+                size="sm"
+              >
+                <ExternalLink className="h-4 w-4 ml-1" />
+                جوجل ماب خارجي
               </Button>
               
               <Button
                 onClick={openInOpenStreetMap}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium"
+                variant="outline"
+                className="bg-white/90 hover:bg-white border-blue-600 text-blue-700 px-3 py-2 rounded-lg shadow-lg text-sm font-medium"
                 size="sm"
               >
-                <MapPin className="h-4 w-4 ml-1" />
-                توجه عبر OSM
+                <ExternalLink className="h-4 w-4 ml-1" />
+                خريطة خارجية
               </Button>
 
               <Button
                 onClick={copyCoordinates}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium"
+                variant="outline"
+                className="bg-white/90 hover:bg-white border-gray-600 text-gray-700 px-3 py-2 rounded-lg shadow-lg text-sm font-medium"
                 size="sm"
               >
                 <Copy className="h-4 w-4 ml-1" />
@@ -317,7 +338,7 @@ const DriverMapModal = ({ isOpen, onClose, customerLocation, customerName, custo
               {customerPhone && (
                 <Button
                   onClick={() => window.open(`tel:${customerPhone}`, '_self')}
-                  className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium"
+                  className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium"
                   size="sm"
                 >
                   <Phone className="h-4 w-4 ml-1" />
