@@ -157,15 +157,28 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
 
   // دالة فتح خريطة السائق
   const handleShowMap = (order: Order) => {
-    // استخراج إحداثيات GPS من العنوان إذا كانت موجودة
-    const gpsMatch = order.address.match(/GPS:\s*([+-]?\d*\.?\d+),\s*([+-]?\d*\.?\d+)/);
-    if (gpsMatch) {
+    // استخراج إحداثيات GPS من العنوان إذا كانت موجودة - أنماط متعددة
+    const gpsPatterns = [
+      /GPS:\s*([+-]?\d*\.?\d+),\s*([+-]?\d*\.?\d+)/,
+      /إحداثيات GPS:\s*([+-]?\d*\.?\d+),\s*([+-]?\d*\.?\d+)/,
+      /خط العرض\s*([+-]?\d*\.?\d+),\s*خط الطول\s*([+-]?\d*\.?\d+)/,
+      /إحداثيات GPS للسائق:\s*([+-]?\d*\.?\d+),\s*([+-]?\d*\.?\d+)/,
+      /([+-]?\d*\.?\d+),\s*([+-]?\d*\.?\d+)/
+    ];
+    
+    let gpsMatch = null;
+    for (const pattern of gpsPatterns) {
+      gpsMatch = order.address.match(pattern);
+      if (gpsMatch) break;
+    }
+    
+    if (gpsMatch && gpsMatch[1] && gpsMatch[2]) {
       setSelectedOrderForMap(order);
       setShowDriverMap(true);
     } else {
       toast({
         title: "لا يوجد موقع GPS",
-        description: "هذا الطلب لا يحتوي على إحداثيات GPS",
+        description: "هذا الطلب لا يحتوي على إحداثيات GPS صحيحة",
         variant: "destructive"
       });
     }
@@ -239,8 +252,34 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
             setSelectedOrderForMap(null);
           }}
           customerLocation={{
-            lat: parseFloat(selectedOrderForMap.address.match(/GPS:\s*([+-]?\d*\.?\d+),\s*([+-]?\d*\.?\d+)/)?.[1] || '0'),
-            lng: parseFloat(selectedOrderForMap.address.match(/GPS:\s*([+-]?\d*\.?\d+),\s*([+-]?\d*\.?\d+)/)?.[2] || '0'),
+            lat: (() => {
+              const gpsPatterns = [
+                /GPS:\s*([+-]?\d*\.?\d+),\s*([+-]?\d*\.?\d+)/,
+                /إحداثيات GPS:\s*([+-]?\d*\.?\d+),\s*([+-]?\d*\.?\d+)/,
+                /خط العرض\s*([+-]?\d*\.?\d+),\s*خط الطول\s*([+-]?\d*\.?\d+)/,
+                /إحداثيات GPS للسائق:\s*([+-]?\d*\.?\d+),\s*([+-]?\d*\.?\d+)/,
+                /([+-]?\d*\.?\d+),\s*([+-]?\d*\.?\d+)/
+              ];
+              for (const pattern of gpsPatterns) {
+                const match = selectedOrderForMap.address.match(pattern);
+                if (match) return parseFloat(match[1]);
+              }
+              return 0;
+            })(),
+            lng: (() => {
+              const gpsPatterns = [
+                /GPS:\s*([+-]?\d*\.?\d+),\s*([+-]?\d*\.?\d+)/,
+                /إحداثيات GPS:\s*([+-]?\d*\.?\d+),\s*([+-]?\d*\.?\d+)/,
+                /خط العرض\s*([+-]?\d*\.?\d+),\s*خط الطول\s*([+-]?\d*\.?\d+)/,
+                /إحداثيات GPS للسائق:\s*([+-]?\d*\.?\d+),\s*([+-]?\d*\.?\d+)/,
+                /([+-]?\d*\.?\d+),\s*([+-]?\d*\.?\d+)/
+              ];
+              for (const pattern of gpsPatterns) {
+                const match = selectedOrderForMap.address.match(pattern);
+                if (match) return parseFloat(match[2]);
+              }
+              return 0;
+            })(),
             address: selectedOrderForMap.address
           }}
           customerName={customers[selectedOrderForMap.customer_id]?.name || "عميل مجهول"}
