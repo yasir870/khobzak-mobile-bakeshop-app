@@ -290,19 +290,30 @@ const DriverMapModal = ({ isOpen, onClose, customerLocation, customerName, custo
               {/* زر توسيط الخريطة */}
               <Button
                 onClick={() => {
-                  if (map.current && currentLocation) {
-                    const group = new L.FeatureGroup([
-                      L.marker([currentLocation.lat, currentLocation.lng]),
-                      L.marker([customerLocation.lat, customerLocation.lng])
-                    ]);
-                    map.current.fitBounds(group.getBounds().pad(0.15));
+                  if (map.current) {
+                    if (currentLocation) {
+                      // إذا كان موقع السائق متوفراً، اعرض كلا الموقعين
+                      const group = new L.FeatureGroup([
+                        L.marker([currentLocation.lat, currentLocation.lng]),
+                        L.marker([customerLocation.lat, customerLocation.lng])
+                      ]);
+                      map.current.fitBounds(group.getBounds().pad(0.15));
+                    } else {
+                      // إذا لم يكن موقع السائق متوفراً، ركز على موقع العميل فقط
+                      map.current.setView([customerLocation.lat, customerLocation.lng], 16);
+                    }
+                    
+                    toast({
+                      title: currentLocation ? "تم عرض المسار كاملاً" : "تم التركيز على موقع العميل",
+                      description: currentLocation ? "يمكنك رؤية موقعك وموقع العميل" : "امنح إذن الموقع لرؤية المسار كاملاً"
+                    });
                   }
                 }}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium"
                 size="sm"
               >
                 <Navigation className="h-4 w-4 ml-1" />
-                عرض المسار كاملاً
+                {currentLocation ? "عرض المسار كاملاً" : "التركيز على العميل"}
               </Button>
 
               <Button
