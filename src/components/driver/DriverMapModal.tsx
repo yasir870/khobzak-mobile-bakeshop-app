@@ -50,10 +50,14 @@ const DriverMapModal = ({
   } = useToast();
   useEffect(() => {
     if (!isOpen) return;
-    
+
+    // Reset states when dialog opens
+    setIsLoading(true);
+    setMapError(null);
+
     const initMap = async () => {
       try {
-        // Cleanup existing map
+        // Cleanup any existing map
         if (map.current) {
           map.current.remove();
           map.current = null;
@@ -78,19 +82,54 @@ const DriverMapModal = ({
           scrollWheelZoom: true,
           doubleClickZoom: true,
           touchZoom: true
-        }).setView(
-          [customerLocation.lat, customerLocation.lng], 
-          15
-        );
+        }).setView([customerLocation.lat, customerLocation.lng], 16);
 
-        // Add tile layer with proper error handling
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        console.log('Map instance created, adding tiles...');
+
+        // Add OpenStreetMap tiles with better error handling
+        const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© OpenStreetMap contributors',
           maxZoom: 19,
-          minZoom: 1
-        }).addTo(mapInstance);
+          minZoom: 1,
+          crossOrigin: true
+        });
 
-        console.log('Map initialized successfully');
+        let tilesLoaded = false;
+        let tileErrorCount = 0;
+
+        tileLayer.on('loading', () => {
+          console.log('Tiles loading...');
+        });
+
+        tileLayer.on('load', () => {
+          console.log('Tiles loaded successfully');
+          tilesLoaded = true;
+          setTimeout(() => {
+            if (tilesLoaded) {
+              setIsLoading(false);
+              setMapError(null);
+            }
+          }, 1000);
+        });
+
+        tileLayer.on('tileerror', (error) => {
+          console.warn('Tile error:', error);
+          tileErrorCount++;
+          if (tileErrorCount > 5) {
+            setMapError('فشل في تحميل بلاطات الخريطة. تحقق من اتصالك بالإنترنت.');
+            setIsLoading(false);
+          }
+        });
+
+        // Timeout for loading
+        setTimeout(() => {
+          if (!tilesLoaded) {
+            setMapError('انتهت مهلة تحميل الخريطة. يرجى المحاولة مرة أخرى.');
+            setIsLoading(false);
+          }
+        }, 15000);
+
+        tileLayer.addTo(mapInstance);
 
         // Customer marker (red)
         const customerIcon = L.divIcon({
