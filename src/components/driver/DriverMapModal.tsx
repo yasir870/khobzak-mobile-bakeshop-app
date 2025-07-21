@@ -50,45 +50,47 @@ const DriverMapModal = ({
   } = useToast();
   useEffect(() => {
     if (!isOpen) return;
-    setIsLoading(true);
-    setMapError(null);
+    
     const initMap = async () => {
       try {
+        // Cleanup existing map
         if (map.current) {
           map.current.remove();
           map.current = null;
         }
+
+        // Wait for DOM to be ready
         await new Promise(resolve => setTimeout(resolve, 200));
+
         if (!mapContainer.current) {
-          setMapError('عنصر الخريطة غير موجود');
+          const error = 'عنصر الخريطة غير موجود';
+          console.error('Map container not found');
+          setMapError(error);
           setIsLoading(false);
           return;
         }
 
-        // Initialize map centered on customer location
+        console.log('Initializing Leaflet map...');
+
+        // Initialize map
         const mapInstance = L.map(mapContainer.current, {
           zoomControl: true,
           scrollWheelZoom: true,
           doubleClickZoom: true,
           touchZoom: true
-        }).setView([customerLocation.lat, customerLocation.lng], 15);
+        }).setView(
+          [customerLocation.lat, customerLocation.lng], 
+          15
+        );
 
-        // Add OpenStreetMap tiles
-        const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // Add tile layer with proper error handling
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© OpenStreetMap contributors',
           maxZoom: 19,
-          minZoom: 1,
-          crossOrigin: true
-        });
-        tileLayer.on('load', () => {
-          setIsLoading(false);
-          setMapError(null);
-        });
-        tileLayer.on('tileerror', () => {
-          setMapError('فشل في تحميل الخريطة');
-          setIsLoading(false);
-        });
-        tileLayer.addTo(mapInstance);
+          minZoom: 1
+        }).addTo(mapInstance);
+
+        console.log('Map initialized successfully');
 
         // Customer marker (red)
         const customerIcon = L.divIcon({
@@ -97,6 +99,7 @@ const DriverMapModal = ({
           iconSize: [32, 32],
           iconAnchor: [16, 32]
         });
+        
         L.marker([customerLocation.lat, customerLocation.lng], {
           icon: customerIcon
         }).addTo(mapInstance).bindPopup(`
@@ -111,17 +114,25 @@ const DriverMapModal = ({
               </div>
             </div>
           `);
+
         map.current = mapInstance;
+        setIsLoading(false);
+        setMapError(null);
 
         // Try to get driver's current location
         getCurrentDriverLocation();
+
       } catch (error) {
-        console.error('Error loading map:', error);
+        console.error('Error initializing map:', error);
         setMapError('خطأ في تحميل الخريطة');
         setIsLoading(false);
       }
     };
+
+    setIsLoading(true);
+    setMapError(null);
     initMap();
+
     return () => {
       if (map.current) {
         map.current.remove();
