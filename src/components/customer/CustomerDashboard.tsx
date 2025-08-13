@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, User, Clock, MessageSquare, LogOut, MapPin } from 'lucide-react';
+import { ShoppingCart, User, Clock, MessageSquare, LogOut, MapPin, Truck } from 'lucide-react';
 import ProductDetailModal from './ProductDetailModal';
 import CartPage from './CartPage';
 import ProfilePage from './ProfilePage';
@@ -14,6 +14,7 @@ import BreadMenuList from "./BreadMenuList";
 import ContactDialog from "./ContactDialog";
 import Footer from "./Footer";
 import OrdersDialog from "./OrdersDialog";
+import OrderTrackingModal from './OrderTrackingModal';
 import { useTranslation } from '@/context/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -52,6 +53,8 @@ const CustomerDashboard = ({
   const [contactOpen, setContactOpen] = useState(false);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [showTrackingModal, setShowTrackingModal] = useState(false);
+  const [selectedOrderForTracking, setSelectedOrderForTracking] = useState<any>(null);
 
   // عدل صور المنتجات من Emoji إلى روابط الصور الحقيقية التي رفعتها على Supabase
   const breadTypes: BreadProduct[] = [{
@@ -332,10 +335,44 @@ const CustomerDashboard = ({
         <BreadMenuList breadTypes={breadTypes} onProductClick={handleProductClick} />
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-6">
           <Button variant="outline" className="h-12 flex items-center justify-center space-x-2 text-sm" onClick={() => setShowOrders(true)}>
             <Clock className="h-4 w-4" />
             <span>{t('myOrders')}</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            className="h-12 flex items-center justify-center space-x-2 text-sm bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700" 
+            onClick={() => {
+              // فتح نافذة تتبع آخر طلب نشط
+              const customerId = localStorage.getItem('customerId');
+              if (customerId) {
+                // جلب آخر طلب نشط للعميل
+                supabase
+                  .from('orders')
+                  .select('*')
+                  .eq('customer_id', parseInt(customerId))
+                  .in('status', ['accepted', 'in-transit'])
+                  .order('created_at', { ascending: false })
+                  .limit(1)
+                  .single()
+                  .then(({ data, error }) => {
+                    if (data && !error) {
+                      setSelectedOrderForTracking(data);
+                      setShowTrackingModal(true);
+                    } else {
+                      toast({
+                        title: "لا توجد طلبات نشطة",
+                        description: "ليس لديك طلبات قيد التوصيل حالياً",
+                        variant: "destructive"
+                      });
+                    }
+                  });
+              }
+            }}
+          >
+            <Truck className="h-4 w-4" />
+            <span>تتبع الطلب</span>
           </Button>
           <Button variant="outline" className="h-12 flex items-center justify-center space-x-2 text-sm" onClick={() => setShowProfile(true)}>
             <User className="h-4 w-4" />
@@ -356,6 +393,19 @@ const CustomerDashboard = ({
 
       {/* Contact Dialog */}
       <ContactDialog open={contactOpen} onOpenChange={setContactOpen} />
+
+      {/* Order Tracking Modal */}
+      {selectedOrderForTracking && (
+        <OrderTrackingModal
+          isOpen={showTrackingModal}
+          onClose={() => {
+            setShowTrackingModal(false);
+            setSelectedOrderForTracking(null);
+          }}
+          order={selectedOrderForTracking}
+          customerLocation={userLocation}
+        />
+      )}
     </div>;
 };
 export default CustomerDashboard;

@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Info } from 'lucide-react';
 import DriverMapModal from './DriverMapModal';
+import { useDriverLocation } from '@/hooks/useDriverLocation';
 
 type OrderStatus = 'pending' | 'accepted' | 'in-transit' | 'delivered' | 'rejected';
 
@@ -65,7 +66,18 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
   const [customers, setCustomers] = useState<Record<number, Customer>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [tab, setTab] = useState<'active' | 'archive'>('active');
+  const [activeOrderId, setActiveOrderId] = useState<number | null>(null);
   const { toast } = useToast();
+
+  // معرف السائق (في التطبيق الحقيقي سيأتي من نظام المصادقة)
+  const driverId = "driver-123";
+
+  // تتبع الموقع للطلب النشط
+  const { isTracking, error: locationError } = useDriverLocation({
+    driverId,
+    orderId: activeOrderId?.toString(),
+    isActive: activeOrderId !== null
+  });
 
   // جلب الطلبات والعملاء
   const fetchOrders = async () => {
@@ -375,17 +387,31 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
                             )}
                             {order.status === 'accepted' && (
                               <Button size="sm" className="bg-purple-600 hover:bg-purple-700"
-                                onClick={() => updateOrderStatus(order.id, "in-transit")}
+                                onClick={() => {
+                                  updateOrderStatus(order.id, "in-transit");
+                                  setActiveOrderId(order.id); // بدء تتبع الموقع
+                                }}
                               >
                                 بدء التوصيل
                               </Button>
                             )}
                             {order.status === 'in-transit' && (
-                              <Button size="sm" className="bg-blue-600 hover:bg-blue-700"
-                                onClick={() => updateOrderStatus(order.id, "delivered")}
-                              >
-                                تم التسليم
-                              </Button>
+                              <>
+                                <Button size="sm" className="bg-blue-600 hover:bg-blue-700"
+                                  onClick={() => {
+                                    updateOrderStatus(order.id, "delivered");
+                                    setActiveOrderId(null); // إيقاف تتبع الموقع
+                                  }}
+                                >
+                                  تم التسليم
+                                </Button>
+                                {activeOrderId === order.id && (
+                                  <div className="text-xs text-green-600 flex items-center">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
+                                    يتم تتبع موقعك
+                                  </div>
+                                )}
+                              </>
                             )}
                             {/* اتصال بالعميل */}
                             <Button size="sm" variant="outline" asChild>
