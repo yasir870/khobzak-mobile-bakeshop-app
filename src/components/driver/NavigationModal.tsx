@@ -61,21 +61,33 @@ const NavigationModal = ({
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      // Clean up when modal closes
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+      return;
+    }
 
     const initMap = async () => {
       try {
-        // Cleanup existing map
+        // Cleanup existing map first
         if (map.current) {
           map.current.remove();
           map.current = null;
         }
 
+        // Clear the container innerHTML to ensure clean state
+        if (mapContainer.current) {
+          mapContainer.current.innerHTML = '';
+        }
+
         setIsLoading(true);
         setMapError(null);
 
-        // Wait for DOM to be ready
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Wait for DOM to be ready and container to be cleared
+        await new Promise(resolve => setTimeout(resolve, 100));
 
         if (!mapContainer.current) {
           setMapError('عنصر الخريطة غير موجود');
@@ -106,31 +118,37 @@ const NavigationModal = ({
         });
 
         let tilesLoaded = false;
+        let loadingTimeout: NodeJS.Timeout;
 
-        tileLayer.on('load', () => {
+        const handleTileLoad = () => {
           console.log('Navigation map tiles loaded');
           tilesLoaded = true;
+          if (loadingTimeout) clearTimeout(loadingTimeout);
           setTimeout(() => {
-            if (tilesLoaded) {
+            if (tilesLoaded && map.current) {
               setIsLoading(false);
               setMapError(null);
             }
-          }, 500);
-        });
+          }, 300);
+        };
 
-        tileLayer.on('tileerror', (error) => {
+        const handleTileError = (error: any) => {
           console.warn('Navigation tile error:', error);
+          if (loadingTimeout) clearTimeout(loadingTimeout);
           setMapError('فشل في تحميل الخريطة');
           setIsLoading(false);
-        });
+        };
+
+        tileLayer.on('load', handleTileLoad);
+        tileLayer.on('tileerror', handleTileError);
 
         // Timeout for loading
-        setTimeout(() => {
+        loadingTimeout = setTimeout(() => {
           if (!tilesLoaded) {
             setMapError('انتهت مهلة تحميل الخريطة');
             setIsLoading(false);
           }
-        }, 10000);
+        }, 8000);
 
         tileLayer.addTo(mapInstance);
 
@@ -175,15 +193,28 @@ const NavigationModal = ({
       }
     };
 
-    initMap();
+    // Prevent multiple initializations
+    let initializationTimeout: NodeJS.Timeout;
+    
+    if (isOpen) {
+      initializationTimeout = setTimeout(initMap, 50);
+    }
 
     return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
+      if (initializationTimeout) {
+        clearTimeout(initializationTimeout);
+      }
+      // Only remove map when component unmounts completely
+      if (!isOpen && map.current) {
+        try {
+          map.current.remove();
+          map.current = null;
+        } catch (error) {
+          console.warn('Error removing map:', error);
+        }
       }
     };
-  }, [isOpen, customerLocation]);
+  }, [isOpen, customerLocation.lat, customerLocation.lng]);
 
   const getCurrentLocationAndCalculateRoute = () => {
     if (!navigator.geolocation) {
