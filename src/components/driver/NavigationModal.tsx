@@ -246,36 +246,62 @@ const NavigationModal = ({
     setIsCalculatingRoute(true);
     
     try {
-      const response = await fetch(
-        `https://router.project-osrm.org/route/v1/driving/${startLocation.lng},${startLocation.lat};${customerLocation.lng},${customerLocation.lat}?steps=true&geometries=geojson&overview=full&language=ar`
-      );
+      // Use multiple route services as fallbacks
+      const routeServices = [
+        `https://router.project-osrm.org/route/v1/driving/${startLocation.lng},${startLocation.lat};${customerLocation.lng},${customerLocation.lat}?steps=true&geometries=geojson&overview=full`,
+        `https://routing.openstreetmap.de/routed-car/route/v1/driving/${startLocation.lng},${startLocation.lat};${customerLocation.lng},${customerLocation.lat}?steps=true&geometries=geojson&overview=full`
+      ];
       
-      if (!response.ok) {
-        throw new Error('فشل في حساب المسار');
+      let response;
+      let data;
+      
+      for (const serviceUrl of routeServices) {
+        try {
+          console.log('Trying route service:', serviceUrl);
+          response = await fetch(serviceUrl, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            data = await response.json();
+            if (data.routes && data.routes.length > 0) {
+              console.log('Route calculated successfully');
+              break;
+            }
+          }
+        } catch (serviceError) {
+          console.warn('Route service failed:', serviceError);
+          continue;
+        }
       }
       
-      const data = await response.json();
+      if (!data || !data.routes || data.routes.length === 0) {
+        throw new Error('لم يتم العثور على مسار');
+      }
       
-      if (data.routes && data.routes.length > 0) {
-        const route = data.routes[0];
-        const steps = route.legs[0].steps;
-        
-        // Convert instructions to Arabic
-        const arabicSteps = steps.map((step: any, index: number) => ({
-          instruction: translateInstruction(step.maneuver.type, step.name || ''),
-          distance: formatDistance(step.distance),
-          duration: formatDuration(step.duration),
-          type: step.maneuver.type
-        }));
-        
-        setNavigationSteps(arabicSteps);
-        setRouteInfo({
-          distance: formatDistance(route.distance),
-          duration: formatDuration(route.duration)
-        });
-        
-        // Draw route on map
-        if (map.current) {
+      const route = data.routes[0];
+      const steps = route.legs && route.legs[0] && route.legs[0].steps ? route.legs[0].steps : [];
+      
+      // Convert instructions to Arabic
+      const arabicSteps = steps.map((step: any, index: number) => ({
+        instruction: translateInstruction(step.maneuver?.type || 'straight', step.name || ''),
+        distance: formatDistance(step.distance || 0),
+        duration: formatDuration(step.duration || 0),
+        type: step.maneuver?.type || 'straight'
+      }));
+      
+      setNavigationSteps(arabicSteps);
+      setRouteInfo({
+        distance: formatDistance(route.distance || 0),
+        duration: formatDuration(route.duration || 0)
+      });
+      
+      // Draw route on map
+      if (map.current && route.geometry) {
+        try {
           const coordinates = route.geometry.coordinates.map((coord: [number, number]) => [coord[1], coord[0]]);
           
           // Remove existing route
@@ -295,21 +321,74 @@ const NavigationModal = ({
           
           // Fit map to show route
           map.current.fitBounds(routeLine.getBounds().pad(0.1));
+        } catch (mapError) {
+          console.warn('Error drawing route on map:', mapError);
         }
-        
-        toast({
-          title: "تم حساب المسار",
-          description: `${formatDistance(route.distance)} - ${formatDuration(route.duration)}`
-        });
       }
+      
+      toast({
+        title: "تم حساب المسار",
+        description: `${formatDistance(route.distance || 0)} - ${formatDuration(route.duration || 0)}`
+      });
       
     } catch (error) {
       console.error('Route calculation error:', error);
-      toast({
-        title: "خطأ في حساب المسار",
-        description: "فشل في الحصول على تعليمات التوجه",
-        variant: "destructive"
-      });
+      
+      // Show fallback simple route if available
+      if (currentLocation && map.current) {
+        try {
+          // Draw a simple straight line as fallback
+          const straightLine = L.polyline([
+            [currentLocation.lat, currentLocation.lng],
+            [customerLocation.lat, customerLocation.lng]
+          ], {
+            color: '#dc2626',
+            weight: 4,
+            opacity: 0.7,
+            dashArray: '10, 10',
+            className: 'fallback-route'
+          }).addTo(map.current);
+          
+          map.current.fitBounds(straightLine.getBounds().pad(0.1));
+          
+          // Calculate simple distance
+          const distance = map.current.distance(
+            [currentLocation.lat, currentLocation.lng],
+            [customerLocation.lat, customerLocation.lng]
+          );
+          
+          setRouteInfo({
+            distance: formatDistance(distance),
+            duration: 'غير محدد'
+          });
+          
+          setNavigationSteps([{
+            instruction: `توجه مباشرة إلى ${customerName}`,
+            distance: formatDistance(distance),
+            duration: 'غير محدد',
+            type: 'straight'
+          }]);
+          
+          toast({
+            title: "تم عرض مسار تقريبي",
+            description: "لم يتم الحصول على تعليمات مفصلة",
+            variant: "default"
+          });
+        } catch (fallbackError) {
+          console.error('Fallback route error:', fallbackError);
+          toast({
+            title: "خطأ في حساب المسار",
+            description: "تعذر الحصول على أي معلومات للمسار",
+            variant: "destructive"
+          });
+        }
+      } else {
+        toast({
+          title: "خطأ في حساب المسار",
+          description: "تأكد من تفعيل الموقع وإعادة المحاولة",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsCalculatingRoute(false);
     }
