@@ -345,19 +345,20 @@ const CustomerDashboard = ({
             className="h-12 flex items-center justify-center space-x-2 text-sm bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700" 
             onClick={() => {
               // فتح نافذة تتبع آخر طلب نشط
-              const customerId = localStorage.getItem('customerId');
-              if (customerId) {
+              const userPhone = localStorage.getItem('userPhone');
+              if (userPhone) {
                 // جلب آخر طلب نشط للعميل
                 supabase
                   .from('orders')
                   .select('*')
-                  .eq('customer_id', parseInt(customerId))
-                  .in('status', ['accepted', 'in-transit'])
+                  .eq('customer_phone', localStorage.getItem('userPhone'))
+                  .in('status', ['confirmed', 'in_progress'])
+                  .not('driver_id', 'is', null)
                   .order('created_at', { ascending: false })
                   .limit(1)
                   .single()
                   .then(({ data, error }) => {
-                    if (data && !error) {
+                    if (data && !error && data.driver_id) {
                       setSelectedOrderForTracking(data);
                       setShowTrackingModal(true);
                     } else {
