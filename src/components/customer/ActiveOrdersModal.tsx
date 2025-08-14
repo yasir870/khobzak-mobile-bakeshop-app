@@ -49,7 +49,7 @@ const ActiveOrdersModal = ({ isOpen, onClose, onTrackOrder }: ActiveOrdersModalP
         .from('orders')
         .select('*')
         .eq('customer_phone', userPhone)
-        .in('status', ['pending', 'confirmed', 'in_progress'])
+        .in('status', ['pending', 'accepted', 'in-transit', 'confirmed', 'in_progress'])
         .order('created_at', { ascending: false });
 
       if (fetchError) {
@@ -80,7 +80,9 @@ const ActiveOrdersModal = ({ isOpen, onClose, onTrackOrder }: ActiveOrdersModalP
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-500 hover:bg-yellow-600';
+      case 'accepted': return 'bg-blue-500 hover:bg-blue-600';
       case 'confirmed': return 'bg-blue-500 hover:bg-blue-600';
+      case 'in-transit': return 'bg-green-500 hover:bg-green-600';
       case 'in_progress': return 'bg-green-500 hover:bg-green-600';
       default: return 'bg-gray-500 hover:bg-gray-600';
     }
@@ -89,7 +91,9 @@ const ActiveOrdersModal = ({ isOpen, onClose, onTrackOrder }: ActiveOrdersModalP
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending': return 'في الانتظار';
+      case 'accepted': return 'مقبول من السائق';
       case 'confirmed': return 'مؤكد';
+      case 'in-transit': return 'قيد التوصيل';
       case 'in_progress': return 'قيد التوصيل';
       default: return status;
     }
@@ -114,7 +118,7 @@ const ActiveOrdersModal = ({ isOpen, onClose, onTrackOrder }: ActiveOrdersModalP
       };
     }
     
-    if (order.status === 'confirmed' || order.status === 'in_progress') {
+    if (order.status === 'accepted' || order.status === 'confirmed' || order.status === 'in-transit' || order.status === 'in_progress') {
       return {
         canTrack: true,
         reason: 'متاح للتتبع',

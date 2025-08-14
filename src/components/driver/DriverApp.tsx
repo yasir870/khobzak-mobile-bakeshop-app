@@ -69,8 +69,8 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
   const [activeOrderId, setActiveOrderId] = useState<number | null>(null);
   const { toast } = useToast();
 
-  // معرف السائق (في التطبيق الحقيقي سيأتي من نظام المصادقة)
-  const driverId = "driver-123";
+  // معرف السائق (يجب أن يأتي من نظام المصادقة - مؤقتاً سنستخدم رقم)
+  const driverId = "driver-1"; // معرف رقمي للسائق
 
   // تتبع الموقع للطلب النشط
   const { isTracking, error: locationError } = useDriverLocation({
@@ -121,20 +121,39 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
   }, []);
 
   // تحديث حالة الطلب
-  const updateOrderStatus = async (orderId: number, nextStatus: OrderStatus) => {
+  const updateOrderStatus = async (orderId: number, nextStatus: OrderStatus, assignDriver: boolean = false) => {
+    const updateData: any = { status: nextStatus };
+    
+    // إذا كان السائق يقبل الطلب، نربط معرف السائق
+    if (assignDriver && nextStatus === 'accepted') {
+      updateData.driver_id = parseInt(driverId.replace('driver-', ''));
+      console.log('ربط السائق بالطلب:', { orderId, driverId: updateData.driver_id });
+    }
+    
+    // إذا تم تسليم الطلب، نضع وقت التسليم
+    if (nextStatus === 'delivered') {
+      updateData.delivered_at = new Date().toISOString();
+    }
+
     const { error } = await supabase
       .from('orders')
-      .update({ status: nextStatus })
+      .update(updateData)
       .eq('id', orderId);
+      
     if (error) {
+      console.error('خطأ في تحديث الطلب:', error);
       toast({
         title: "فشل تحديث الحالة",
-        description: "لم يتم تغيير حالة الطلب.",
+        description: `لم يتم تغيير حالة الطلب: ${error.message}`,
         variant: "destructive"
       });
       return;
     }
-    toast({ title: "تم تحديث حالة الطلب بنجاح" });
+    
+    toast({ 
+      title: "تم تحديث حالة الطلب بنجاح",
+      description: `تم تغيير حالة الطلب إلى: ${STATUS_LABELS[nextStatus]}`
+    });
     fetchOrders();
   };
 
@@ -374,7 +393,7 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
                             {order.status === 'pending' && (
                               <>
                                 <Button size="sm" className="bg-green-600 hover:bg-green-700"
-                                  onClick={() => updateOrderStatus(order.id, "accepted")}
+                                  onClick={() => updateOrderStatus(order.id, "accepted", true)}
                                 >
                                   قبول الطلب
                                 </Button>
@@ -386,14 +405,26 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
                               </>
                             )}
                             {order.status === 'accepted' && (
-                              <Button size="sm" className="bg-purple-600 hover:bg-purple-700"
-                                onClick={() => {
-                                  updateOrderStatus(order.id, "in-transit");
-                                  setActiveOrderId(order.id); // بدء تتبع الموقع
-                                }}
-                              >
-                                بدء التوصيل
-                              </Button>
+                              <>
+                                <Button size="sm" className="bg-purple-600 hover:bg-purple-700"
+                                  onClick={() => {
+                                    updateOrderStatus(order.id, "in-transit");
+                                    setActiveOrderId(order.id); // بدء تتبع الموقع
+                                    toast({
+                                      title: "تم بدء التوصيل",
+                                      description: "الآن يتم تتبع موقعك وإرساله للعميل",
+                                    });
+                                  }}
+                                >
+                                  بدء التوصيل
+                                </Button>
+                                {activeOrderId === order.id && (
+                                  <div className="text-xs text-green-600 flex items-center">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
+                                    الآن يتم تتبع موقعك
+                                  </div>
+                                )}
+                              </>
                             )}
                             {order.status === 'in-transit' && (
                               <>
