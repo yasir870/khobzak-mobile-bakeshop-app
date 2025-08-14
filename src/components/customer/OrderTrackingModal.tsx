@@ -346,12 +346,21 @@ const OrderTrackingModal = ({ isOpen, onClose, order, customerLocation }: OrderT
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-md mx-auto">
           <DialogHeader>
-            <DialogTitle className="text-right">تتبع الطلب</DialogTitle>
+            <DialogTitle className="text-right text-xl">تتبع الطلب #{order.id}</DialogTitle>
           </DialogHeader>
           <div className="text-center py-8">
-            <Clock className="mx-auto mb-4 h-12 w-12 text-yellow-500" />
-            <h3 className="text-lg font-semibold mb-2">لم يتم تعيين سائق بعد</h3>
-            <p className="text-gray-600">سيتم تعيين سائق لطلبك قريباً</p>
+            <Clock className="mx-auto mb-4 h-16 w-16 text-yellow-500" />
+            <h3 className="text-xl font-bold mb-3 text-gray-800">لم يتم تعيين سائق بعد</h3>
+            <div className="space-y-2 text-gray-600">
+              <p className="text-base">طلبك رقم #{order.id} في انتظار تعيين سائق</p>
+              <p className="text-sm">حالة الطلب: <span className="font-semibold text-yellow-600">{getStatusText(order.status)}</span></p>
+              <p className="text-sm">سيتم إشعارك عند قبول السائق للطلب</p>
+            </div>
+            <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+              <p className="text-sm text-yellow-800">
+                <strong>ملاحظة:</strong> سيتم تفعيل خاصية التتبع بمجرد قبول السائق للطلب
+              </p>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

@@ -15,6 +15,7 @@ import ContactDialog from "./ContactDialog";
 import Footer from "./Footer";
 import OrdersDialog from "./OrdersDialog";
 import OrderTrackingModal from './OrderTrackingModal';
+import ActiveOrdersModal from './ActiveOrdersModal';
 import { useTranslation } from '@/context/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -55,6 +56,7 @@ const CustomerDashboard = ({
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [showTrackingModal, setShowTrackingModal] = useState(false);
   const [selectedOrderForTracking, setSelectedOrderForTracking] = useState<any>(null);
+  const [showActiveOrdersModal, setShowActiveOrdersModal] = useState(false);
 
   // عدل صور المنتجات من Emoji إلى روابط الصور الحقيقية التي رفعتها على Supabase
   const breadTypes: BreadProduct[] = [{
@@ -343,34 +345,7 @@ const CustomerDashboard = ({
           <Button 
             variant="outline" 
             className="h-12 flex items-center justify-center space-x-2 text-sm bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700" 
-            onClick={() => {
-              // فتح نافذة تتبع آخر طلب نشط
-              const userPhone = localStorage.getItem('userPhone');
-              if (userPhone) {
-                // جلب آخر طلب نشط للعميل
-                supabase
-                  .from('orders')
-                  .select('*')
-                  .eq('customer_phone', localStorage.getItem('userPhone'))
-                  .in('status', ['confirmed', 'in_progress'])
-                  .not('driver_id', 'is', null)
-                  .order('created_at', { ascending: false })
-                  .limit(1)
-                  .single()
-                  .then(({ data, error }) => {
-                    if (data && !error && data.driver_id) {
-                      setSelectedOrderForTracking(data);
-                      setShowTrackingModal(true);
-                    } else {
-                      toast({
-                        title: "لا توجد طلبات نشطة",
-                        description: "ليس لديك طلبات قيد التوصيل حالياً",
-                        variant: "destructive"
-                      });
-                    }
-                  });
-              }
-            }}
+            onClick={() => setShowActiveOrdersModal(true)}
           >
             <Truck className="h-4 w-4" />
             <span>تتبع الطلب</span>
@@ -394,6 +369,16 @@ const CustomerDashboard = ({
 
       {/* Contact Dialog */}
       <ContactDialog open={contactOpen} onOpenChange={setContactOpen} />
+
+      {/* Active Orders Modal */}
+      <ActiveOrdersModal
+        isOpen={showActiveOrdersModal}
+        onClose={() => setShowActiveOrdersModal(false)}
+        onTrackOrder={(order) => {
+          setSelectedOrderForTracking(order);
+          setShowTrackingModal(true);
+        }}
+      />
 
       {/* Order Tracking Modal */}
       {selectedOrderForTracking && (
