@@ -58,10 +58,22 @@ const ActiveOrdersModal = ({ isOpen, onClose, onTrackOrder }: ActiveOrdersModalP
         return;
       }
 
+      console.log('Fetched orders from database:', data);
+      
       setOrders(data || []);
       
       if (!data || data.length === 0) {
         setError('لا توجد طلبات نشطة حالياً');
+      } else {
+        console.log('Orders with driver_id details:');
+        data.forEach((order, index) => {
+          console.log(`Order ${index + 1}:`, {
+            id: order.id,
+            status: order.status,
+            driver_id: order.driver_id,
+            driver_id_type: typeof order.driver_id
+          });
+        });
       }
     } catch (err) {
       console.error('خطأ عام:', err);
@@ -100,7 +112,12 @@ const ActiveOrdersModal = ({ isOpen, onClose, onTrackOrder }: ActiveOrdersModalP
   };
 
   const getTrackingAvailability = (order: Order) => {
+    console.log('getTrackingAvailability for order:', order);
+    console.log('Order driver_id:', order.driver_id);
+    console.log('Order status:', order.status);
+    
     if (!order.driver_id) {
+      console.log('No driver_id found, returning not available');
       return {
         canTrack: false,
         reason: 'لم يتم تعيين سائق بعد',

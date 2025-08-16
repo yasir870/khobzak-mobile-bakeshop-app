@@ -284,7 +284,16 @@ const OrderTrackingModal = ({ isOpen, onClose, order, customerLocation }: OrderT
   };
 
   useEffect(() => {
-    if (!isOpen || !order.driver_id) return;
+    console.log('OrderTrackingModal useEffect - isOpen:', isOpen, 'order.driver_id:', order.driver_id, 'full order:', order);
+    
+    if (!isOpen) return;
+
+    // إذا لم يكن هناك سائق مُعيّن، إظهار رسالة واضحة
+    if (!order.driver_id) {
+      setMapError('لم يتم تعيين سائق لهذا الطلب بعد. يرجى الانتظار حتى يقبل أحد السائقين الطلب.');
+      setIsLoading(false);
+      return;
+    }
 
     initMap();
 
