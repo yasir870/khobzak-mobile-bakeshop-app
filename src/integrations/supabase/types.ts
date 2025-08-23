@@ -176,6 +176,33 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          name: string | null
+          phone: string | null
+          updated_at: string
+          user_type: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          name?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_type?: string
+        }
+        Relationships: []
+      }
       خبزك: {
         Row: {
           created_at: string
