@@ -1,50 +1,67 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Truck } from 'lucide-react';
-import LoginForm from '@/components/auth/LoginForm';
+import AuthPage from '@/components/auth/AuthPage';
 import CustomerApp from '@/components/customer/CustomerApp';
 import DriverApp from '@/components/driver/DriverApp';
 import { useTranslation } from '@/context/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useAuth } from '@/context/AuthContext';
 
 const Index = () => {
   const [selectedRole, setSelectedRole] = useState<'customer' | 'driver' | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState<'customer' | 'driver' | null>(null);
   const { t } = useTranslation();
+  const { user, getUserType, isLoading, signOut } = useAuth();
+
+  // Auto-redirect authenticated users to their app
+  useEffect(() => {
+    if (!isLoading && user) {
+      const userType = getUserType();
+      if (userType === 'customer') {
+        setSelectedRole('customer');
+      } else if (userType === 'driver') {
+        setSelectedRole('driver');
+      }
+    }
+  }, [user, isLoading, getUserType]);
 
   const handleRoleSelect = (role: 'customer' | 'driver') => {
     setSelectedRole(role);
   };
 
-  const handleAuthSuccess = (role: 'customer' | 'driver') => {
-    setIsAuthenticated(true);
-    setUserRole(role);
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
+  const handleLogout = async () => {
+    await signOut();
     setSelectedRole(null);
-    setUserRole(null);
   };
 
-  // If authenticated, show the appropriate app
-  if (isAuthenticated && userRole) {
-    return userRole === 'customer' ? (
-      <CustomerApp onLogout={handleLogout} />
-    ) : (
-      <DriverApp onLogout={handleLogout} />
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">جاري التحميل...</p>
+        </div>
+      </div>
     );
   }
 
-  // If role selected but not authenticated, show login
+  // If authenticated, show the appropriate app
+  if (user) {
+    const userType = getUserType();
+    return userType === 'customer' ? (
+      <CustomerApp onLogout={handleLogout} />
+    ) : userType === 'driver' ? (
+      <DriverApp onLogout={handleLogout} />
+    ) : null;
+  }
+
+  // If role selected but not authenticated, show auth page
   if (selectedRole) {
     return (
-      <LoginForm 
-        role={selectedRole} 
-        onAuthSuccess={handleAuthSuccess}
+      <AuthPage 
+        role={selectedRole}
         onBack={() => setSelectedRole(null)}
       />
     );

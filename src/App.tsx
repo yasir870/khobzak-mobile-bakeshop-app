@@ -10,13 +10,15 @@ import CheckCustomersPage from "@/pages/admin/CheckCustomers";
 import About from "./pages/About";
 import Privacy from "./pages/Privacy";
 import { LanguageProvider } from "./context/LanguageContext";
+import { AuthProvider } from "./context/AuthContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <LanguageProvider>
-      <TooltipProvider>
+    <AuthProvider>
+      <LanguageProvider>
+        <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -31,6 +33,7 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </LanguageProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
