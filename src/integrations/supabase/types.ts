@@ -44,39 +44,39 @@ export type Database = {
       driver_locations: {
         Row: {
           accuracy: number | null
-          created_at: string
-          driver_id: string
+          created_at: string | null
+          driver_id: number
           heading: number | null
-          id: string
+          id: number
           latitude: number
           longitude: number
-          order_id: string | null
+          order_id: number | null
           speed: number | null
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
           accuracy?: number | null
-          created_at?: string
-          driver_id: string
+          created_at?: string | null
+          driver_id: number
           heading?: number | null
-          id?: string
+          id?: number
           latitude: number
           longitude: number
-          order_id?: string | null
+          order_id?: number | null
           speed?: number | null
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
           accuracy?: number | null
-          created_at?: string
-          driver_id?: string
+          created_at?: string | null
+          driver_id?: number
           heading?: number | null
-          id?: string
+          id?: number
           latitude?: number
           longitude?: number
-          order_id?: string | null
+          order_id?: number | null
           speed?: number | null
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
