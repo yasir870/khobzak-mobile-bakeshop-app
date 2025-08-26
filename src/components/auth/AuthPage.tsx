@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AuthPageProps {
   role: 'customer' | 'driver';
@@ -14,8 +15,8 @@ interface AuthPageProps {
 }
 
 const AuthPage: React.FC<AuthPageProps> = ({ role, onBack }) => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
+const [isLogin, setIsLogin] = useState(true);
+  const [emailOrPhone, setEmailOrPhone] = useState('');
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
@@ -51,13 +52,26 @@ const AuthPage: React.FC<AuthPageProps> = ({ role, onBack }) => {
     return phoneRegex.test(phone);
   };
 
+  const isValidEmail = (str: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
+  const isValidPhone = (str: string) => /^07[3-9]\d{8}$/.test(str);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
+    if (!emailOrPhone || !password) {
       toast({
         title: "خطأ في البيانات",
         description: "يرجى ملء جميع الحقول المطلوبة",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate email or phone format for login
+    if (isLogin && !isValidEmail(emailOrPhone) && !isValidPhone(emailOrPhone)) {
+      toast({
+        title: "خطأ في البيانات",
+        description: "يرجى إدخال بريد إلكتروني صحيح أو رقم هاتف عراقي صحيح (07XXXXXXXXX)",
         variant: "destructive",
       });
       return;
@@ -91,9 +105,31 @@ const AuthPage: React.FC<AuthPageProps> = ({ role, onBack }) => {
       let result;
       
       if (isLogin) {
-        result = await signIn(email, password);
+        // For login, handle phone number login differently
+        if (isValidPhone(emailOrPhone)) {
+          // For phone login, we'll try to find user by email pattern
+          // Since we can't use admin methods, we'll need a different approach
+          toast({
+            title: "تسجيل دخول برقم الهاتف غير متاح حالياً",
+            description: "يرجى استخدام البريد الإلكتروني لتسجيل الدخول",
+            variant: "destructive",
+          });
+          return;
+        } else {
+          // Email login
+          result = await signIn(emailOrPhone, password);
+        }
       } else {
-        result = await signUp(email, password, normalizeIraqiPhone(phone), name, role);
+        // For signup, we need a proper email
+        if (!isValidEmail(emailOrPhone)) {
+          toast({
+            title: "خطأ في البيانات",
+            description: "يرجى إدخال بريد إلكتروني صحيح للتسجيل",
+            variant: "destructive",
+          });
+          return;
+        }
+        result = await signUp(emailOrPhone, password, normalizeIraqiPhone(phone), name, role);
       }
 
       if (result.error) {
@@ -144,13 +180,15 @@ const AuthPage: React.FC<AuthPageProps> = ({ role, onBack }) => {
         <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">البريد الإلكتروني</Label>
+              <Label htmlFor="emailOrPhone">
+                {isLogin ? "البريد الإلكتروني أو رقم الهاتف" : "البريد الإلكتروني"}
+              </Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="أدخل بريدك الإلكتروني"
+                id="emailOrPhone"
+                type={isLogin ? "text" : "email"}
+                value={emailOrPhone}
+                onChange={(e) => setEmailOrPhone(e.target.value)}
+                placeholder={isLogin ? "أدخل بريدك الإلكتروني أو رقم هاتفك" : "أدخل بريدك الإلكتروني"}
                 required
               />
             </div>
