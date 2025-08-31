@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +9,7 @@ interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   signUp: (email: string, password: string, phone: string, name: string, userType: 'customer' | 'driver') => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (emailOrPhone: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   getUserType: () => string | null;
 }
@@ -50,17 +51,71 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
+  const normalizeIraqiPhone = (phone: string): string => {
+    let normalized = phone.replace(/\D/g, '');
+    if (normalized.startsWith('964')) {
+      normalized = '0' + normalized.substring(3);
+    }
+    if (!normalized.startsWith('07')) {
+      if (normalized.startsWith('7')) {
+        normalized = '0' + normalized;
+      }
+    }
+    return normalized;
+  };
+
+  const isValidIraqiPhone = (phone: string): boolean => {
+    const phoneRegex = /^07[3-9]\d{8}$/;
+    return phoneRegex.test(phone);
+  };
+
+  const isValidEmail = (str: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
+
+  const findUserByPhone = async (phone: string): Promise<string | null> => {
+    try {
+      const normalizedPhone = normalizeIraqiPhone(phone);
+      
+      // Try to find in drivers table first
+      const { data: driverData, error: driverError } = await supabase
+        .from('drivers')
+        .select('email')
+        .eq('phone', normalizedPhone)
+        .single();
+
+      if (!driverError && driverData) {
+        return driverData.email;
+      }
+
+      // Then try customers table
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .select('email')
+        .eq('phone', normalizedPhone)
+        .single();
+
+      if (!customerError && customerData) {
+        return customerData.email;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error finding user by phone:', error);
+      return null;
+    }
+  };
+
   const signUp = async (email: string, password: string, phone: string, name: string, userType: 'customer' | 'driver') => {
     try {
       const redirectUrl = `${window.location.origin}/`;
+      const normalizedPhone = normalizeIraqiPhone(phone);
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            phone,
+            phone: normalizedPhone,
             name,
             user_type: userType
           }
@@ -68,6 +123,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) throw error;
+
+      // Insert user data into appropriate table
+      if (data.user) {
+        const userData = {
+          id: parseInt(data.user.id.replace(/-/g, '').substring(0, 15), 16), // Convert UUID to number
+          name,
+          phone: normalizedPhone,
+          email,
+        };
+
+        if (userType === 'customer') {
+          const { error: insertError } = await supabase
+            .from('customers')
+            .insert([userData]);
+          
+          if (insertError) {
+            console.error('Error inserting customer:', insertError);
+          }
+        } else {
+          const { error: insertError } = await supabase
+            .from('drivers')
+            .insert([userData]);
+          
+          if (insertError) {
+            console.error('Error inserting driver:', insertError);
+          }
+        }
+      }
 
       toast({
         title: "تم إنشاء الحساب بنجاح",
@@ -81,8 +164,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (emailOrPhone: string, password: string) => {
     try {
+      let email = emailOrPhone;
+
+      // If it's a phone number, find the associated email
+      if (!isValidEmail(emailOrPhone)) {
+        const normalizedPhone = normalizeIraqiPhone(emailOrPhone);
+        if (isValidIraqiPhone(normalizedPhone)) {
+          const foundEmail = await findUserByPhone(normalizedPhone);
+          if (!foundEmail) {
+            throw new Error('لم يتم العثور على حساب مرتبط بهذا الرقم');
+          }
+          email = foundEmail;
+        } else {
+          throw new Error('يرجى إدخال بريد إلكتروني صحيح أو رقم هاتف عراقي صحيح');
+        }
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
