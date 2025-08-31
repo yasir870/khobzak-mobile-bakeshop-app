@@ -9,7 +9,7 @@ interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   signUp: (email: string, password: string, phone: string, name: string, userType: 'customer' | 'driver') => Promise<{ error: Error | null }>;
-  signIn: (emailOrPhone: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (emailOrPhone: string, password: string, userType?: 'customer' | 'driver') => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   getUserType: () => string | null;
 }
@@ -71,36 +71,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const isValidEmail = (str: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
 
-  const findUserByPhone = async (phone: string): Promise<string | null> => {
+  const findUserByPhone = async (phone: string, userType?: 'customer' | 'driver'): Promise<string[]> => {
     try {
       const normalizedPhone = normalizeIraqiPhone(phone);
+      const emails: string[] = [];
       
-      // Try to find in drivers table first
-      const { data: driverData, error: driverError } = await supabase
-        .from('drivers')
-        .select('email')
-        .eq('phone', normalizedPhone)
-        .single();
+      // If user type is specified, search only in that table
+      if (userType === 'driver') {
+        const { data: driverData, error: driverError } = await supabase
+          .from('drivers')
+          .select('email')
+          .eq('phone', normalizedPhone);
 
-      if (!driverError && driverData) {
-        return driverData.email;
+        if (!driverError && driverData) {
+          emails.push(...driverData.map(d => d.email));
+        }
+      } else if (userType === 'customer') {
+        const { data: customerData, error: customerError } = await supabase
+          .from('customers')
+          .select('email')
+          .eq('phone', normalizedPhone);
+
+        if (!customerError && customerData) {
+          emails.push(...customerData.map(c => c.email));
+        }
+      } else {
+        // Search in both tables if no user type specified
+        const { data: driverData } = await supabase
+          .from('drivers')
+          .select('email')
+          .eq('phone', normalizedPhone);
+
+        const { data: customerData } = await supabase
+          .from('customers')
+          .select('email')
+          .eq('phone', normalizedPhone);
+
+        if (driverData) {
+          emails.push(...driverData.map(d => d.email));
+        }
+        if (customerData) {
+          emails.push(...customerData.map(c => c.email));
+        }
       }
 
-      // Then try customers table
-      const { data: customerData, error: customerError } = await supabase
-        .from('customers')
-        .select('email')
-        .eq('phone', normalizedPhone)
-        .single();
-
-      if (!customerError && customerData) {
-        return customerData.email;
-      }
-
-      return null;
+      return emails;
     } catch (error) {
       console.error('Error finding user by phone:', error);
-      return null;
+      return [];
     }
   };
 
@@ -164,7 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signIn = async (emailOrPhone: string, password: string) => {
+  const signIn = async (emailOrPhone: string, password: string, userType?: 'customer' | 'driver') => {
     try {
       let email = emailOrPhone;
 
@@ -172,22 +190,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!isValidEmail(emailOrPhone)) {
         const normalizedPhone = normalizeIraqiPhone(emailOrPhone);
         if (isValidIraqiPhone(normalizedPhone)) {
-          const foundEmail = await findUserByPhone(normalizedPhone);
-          if (!foundEmail) {
+          const foundEmails = await findUserByPhone(normalizedPhone, userType);
+          if (foundEmails.length === 0) {
             throw new Error('لم يتم العثور على حساب مرتبط بهذا الرقم');
           }
-          email = foundEmail;
+          
+          // Try each email until one works
+          let loginSuccessful = false;
+          let lastError: any = null;
+          
+          for (const foundEmail of foundEmails) {
+            try {
+              const { error } = await supabase.auth.signInWithPassword({
+                email: foundEmail,
+                password,
+              });
+              
+              if (!error) {
+                loginSuccessful = true;
+                break;
+              } else {
+                lastError = error;
+              }
+            } catch (e) {
+              lastError = e;
+            }
+          }
+          
+          if (!loginSuccessful) {
+            throw lastError || new Error('فشل في تسجيل الدخول');
+          }
         } else {
           throw new Error('يرجى إدخال بريد إلكتروني صحيح أو رقم هاتف عراقي صحيح');
         }
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) throw error;
       }
-
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
 
       toast({
         title: "تم تسجيل الدخول بنجاح",

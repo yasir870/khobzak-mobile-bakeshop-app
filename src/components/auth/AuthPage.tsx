@@ -104,7 +104,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ role, onBack }) => {
       let result;
       
       if (isLogin) {
-        result = await signIn(emailOrPhone, password);
+        result = await signIn(emailOrPhone, password, role);
       } else {
         result = await signUp(emailOrPhone, password, normalizeIraqiPhone(phone), name, role);
       }
