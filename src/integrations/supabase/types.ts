@@ -203,6 +203,33 @@ export type Database = {
         }
         Relationships: []
       }
+      temp_auth_users: {
+        Row: {
+          created_at: string | null
+          email: string
+          name: string | null
+          password: string | null
+          phone: string | null
+          user_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          name?: string | null
+          password?: string | null
+          phone?: string | null
+          user_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          name?: string | null
+          password?: string | null
+          phone?: string | null
+          user_type?: string | null
+        }
+        Relationships: []
+      }
       خبزك: {
         Row: {
           created_at: string
@@ -223,6 +250,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_auth_user_for_existing: {
+        Args: {
+          user_email: string
+          user_name: string
+          user_password: string
+          user_phone: string
+          user_type: string
+        }
+        Returns: string
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
