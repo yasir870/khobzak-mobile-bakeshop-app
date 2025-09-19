@@ -3,7 +3,10 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { ArrowLeft, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface Customer {
   id: number;
@@ -16,6 +19,7 @@ interface Customer {
 export default function CheckCustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchCustomers() {
@@ -33,8 +37,31 @@ export default function CheckCustomersPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center p-4">
-      <Card className="max-w-2xl w-full shadow-lg border-0 bg-white/90 backdrop-blur-sm">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 p-4">
+      {/* Navigation */}
+      <div className="flex items-center gap-4 mb-6">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          العودة للرئيسية
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate('/admin/test-drivers')}
+          className="flex items-center gap-2"
+        >
+          <Users className="h-4 w-4" />
+          إدارة السائقين التجريبيين
+        </Button>
+      </div>
+      
+      <div className="flex items-center justify-center">
+        <Card className="max-w-2xl w-full shadow-lg border-0 bg-white/90 backdrop-blur-sm">
         <CardHeader className="pb-2">
           <CardTitle className="text-xl text-amber-800">جرد جميع حسابات الزبائن (customers) — لوحة خاصة للإدارة</CardTitle>
           <p className="text-amber-700 text-sm pt-1">
@@ -87,7 +114,8 @@ export default function CheckCustomersPage() {
             )}
           </ScrollArea>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }

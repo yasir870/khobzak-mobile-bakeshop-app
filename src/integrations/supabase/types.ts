@@ -41,6 +41,7 @@ export type Database = {
       driver_locations: {
         Row: {
           accuracy: number | null
+          auth_user_id: string | null
           created_at: string | null
           driver_id: number
           heading: number | null
@@ -53,6 +54,7 @@ export type Database = {
         }
         Insert: {
           accuracy?: number | null
+          auth_user_id?: string | null
           created_at?: string | null
           driver_id: number
           heading?: number | null
@@ -65,6 +67,7 @@ export type Database = {
         }
         Update: {
           accuracy?: number | null
+          auth_user_id?: string | null
           created_at?: string | null
           driver_id?: number
           heading?: number | null
@@ -224,6 +227,36 @@ export type Database = {
         }
         Relationships: []
       }
+      test_credentials: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: number
+          name: string
+          password: string
+          phone: string
+          user_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: number
+          name: string
+          password: string
+          phone: string
+          user_type: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: number
+          name?: string
+          password?: string
+          phone?: string
+          user_type?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -278,6 +311,10 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_driver_id_from_auth: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       has_role: {
         Args: {

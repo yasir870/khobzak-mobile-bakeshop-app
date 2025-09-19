@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import CheckCustomersPage from "@/pages/admin/CheckCustomers";
+import TestDriversPage from "@/components/admin/TestDriversPage";
 import About from "./pages/About";
 import Privacy from "./pages/Privacy";
 import { LanguageProvider } from "./context/LanguageContext";
@@ -27,6 +28,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="/about" element={<About />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/admin/test-drivers" element={<TestDriversPage />} />
             <Route path="/admin/check-customers" element={<CheckCustomersPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
