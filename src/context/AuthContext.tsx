@@ -142,10 +142,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) throw error;
 
-      // Insert user data into appropriate table
+      // Insert user data into appropriate table for legacy compatibility
       if (data.user) {
         const userData = {
-          id: parseInt(data.user.id.replace(/-/g, '').substring(0, 15), 16), // Convert UUID to number
           name,
           phone: normalizedPhone,
           email,
@@ -249,13 +248,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
 
-      // Clear any localStorage data from old system
+      // Clear any localStorage data from old insecure system
       localStorage.removeItem('customerData');
       localStorage.removeItem('driverData');
       localStorage.removeItem('customerId');
       localStorage.removeItem('driverId');
       localStorage.removeItem('customerPhone');
       localStorage.removeItem('driverPhone');
+      localStorage.removeItem('userPhone');
+      localStorage.removeItem('khobzak_customer_credentials');
 
       toast({
         title: "تم تسجيل الخروج",
