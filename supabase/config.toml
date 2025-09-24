@@ -1,1 +1,7 @@
 project_id = "lakvfrohnlinfcqfwkqq"
+
+[auth]
+enable_signup = true
+
+[functions.create-test-drivers]
+verify_jwt = false

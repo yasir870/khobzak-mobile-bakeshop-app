@@ -60,13 +60,25 @@ serve(async (req) => {
     
     for (const driver of testDrivers) {
       try {
-        console.log(`Creating driver account for: ${driver.email}`);
+        console.log(`Processing driver: ${driver.email}`);
+        
+        // Check if user already exists by listing users and filtering
+        const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
+        const existingUser = usersData?.users?.find(u => u.email === driver.email);
+        
+        if (existingUser) {
+          console.log(`User ${driver.email} already exists with ID: ${existingUser.id}`);
+          
+          // Delete existing user first to recreate with correct settings
+          await supabaseAdmin.auth.admin.deleteUser(existingUser.id);
+          console.log(`Deleted existing user: ${driver.email}`);
+        }
         
         // Create auth user with admin client
         const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
           email: driver.email,
           password: driver.password,
-          email_confirm: true,
+          email_confirm: true, // Auto-confirm email
           user_metadata: {
             phone: driver.phone,
             name: driver.name,
@@ -87,6 +99,12 @@ serve(async (req) => {
         if (authData.user) {
           console.log(`Auth user created for ${driver.email}, ID: ${authData.user.id}`);
           
+          // Clear and re-insert test credentials
+          await supabaseAdmin
+            .from('test_credentials')
+            .delete()
+            .eq('email', driver.email);
+          
           // Insert into test_credentials table
           const { error: credError } = await supabaseAdmin
             .from('test_credentials')
@@ -104,6 +122,12 @@ serve(async (req) => {
             console.log(`Test credentials saved for ${driver.email}`);
           }
           
+          // Clear and re-insert driver record
+          await supabaseAdmin
+            .from('drivers')
+            .delete()
+            .eq('email', driver.email);
+          
           // Insert into drivers table
           const { data: driverData, error: driverError } = await supabaseAdmin
             .from('drivers')
@@ -118,15 +142,9 @@ serve(async (req) => {
 
           if (driverError) {
             console.error('Driver table insert error for', driver.email, ':', driverError);
-            results.push({ 
-              email: driver.email, 
-              success: false, 
-              error: `Failed to create driver record: ${driverError.message}` 
-            });
-            continue;
+          } else {
+            console.log(`Driver record created for ${driver.email}, driver ID: ${driverData.id}`);
           }
-
-          console.log(`Driver record created for ${driver.email}, driver ID: ${driverData.id}`);
         }
 
         results.push({ 
