@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { createTestDriverAccounts, getTestDriverCredentials } from '@/utils/createTestDrivers';
+import { supabase } from '@/integrations/supabase/client';
 import { Copy, Eye, EyeOff, Users, Key, UserPlus } from 'lucide-react';
 import { useEffect } from 'react';
 
@@ -34,11 +35,29 @@ const TestDriverSetup = () => {
   const handleCreateDrivers = async () => {
     setIsCreating(true);
     try {
-      const results = await createTestDriverAccounts();
+      console.log('Calling create-test-drivers edge function...');
+      
+      const { data, error } = await supabase.functions.invoke('create-test-drivers', {
+        body: {}
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        toast({
+          title: "خطأ في إنشاء الحسابات",
+          description: `فشل في استدعاء الوظيفة: ${error.message}`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      console.log('Edge function response:', data);
+      
+      const results = data?.results || [];
       setCreationResults(results);
       
-      const successful = results.filter(r => r.success).length;
-      const failed = results.filter(r => !r.success).length;
+      const successful = results.filter((r: any) => r.success).length;
+      const failed = results.filter((r: any) => !r.success).length;
       
       toast({
         title: "إنشاء حسابات السائقين",
