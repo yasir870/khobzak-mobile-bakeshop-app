@@ -143,7 +143,17 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
       let updateData: Partial<Order> = {};
       
       if (action === 'accept') {
-        updateData = { status: 'accepted' as OrderStatus };
+        // Get the driver's ID from the drivers table
+        const { data: driverData, error: driverError } = await supabase.rpc('get_driver_id_from_auth');
+        
+        if (driverError || !driverData) {
+          throw new Error('فشل في الحصول على معرف السائق');
+        }
+        
+        updateData = { 
+          status: 'accepted' as OrderStatus,
+          driver_id: driverData 
+        };
       } else if (action === 'reject') {
         updateData = { status: 'rejected' as OrderStatus };
       } else if (action === 'deliver') {
