@@ -101,6 +101,42 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
     initializeDriver();
   }, [user, authLoading, getUserType, onLogout, toast]);
 
+  // Real-time subscription for new orders
+  useEffect(() => {
+    if (!user) return;
+
+    // Subscribe to orders table changes
+    const channel = supabase
+      .channel('orders-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'orders'
+        },
+        (payload) => {
+          console.log('Order change received:', payload);
+          
+          if (payload.eventType === 'INSERT') {
+            // New order added
+            toast({
+              title: "طلب جديد!",
+              description: `تم إضافة طلب جديد #${payload.new.id}`,
+            });
+          }
+          
+          // Refresh orders list
+          fetchOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, toast]);
+
   const fetchOrders = async () => {
     try {
       const { data, error } = await supabase
@@ -243,6 +279,15 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
             <h1 className="text-2xl font-bold text-foreground">تطبيق السائق</h1>
           </div>
           <div className="flex items-center space-x-2 rtl:space-x-reverse">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={fetchOrders}
+              className="flex items-center space-x-2 rtl:space-x-reverse"
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
             <Button
               variant="outline"
               size="sm"
