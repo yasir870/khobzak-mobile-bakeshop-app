@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AuthPageProps {
   role: 'customer' | 'driver';
@@ -33,6 +34,31 @@ const AuthPage: React.FC<AuthPageProps> = ({ role, onBack }) => {
       navigate('/');
     }
   }, [user, navigate]);
+
+  // Auto-create test drivers when driver login page opens (runs once)
+  useEffect(() => {
+    if (role !== 'driver') return;
+    try {
+      const seeded = localStorage.getItem('seeded_test_drivers');
+      if (seeded === '1') return;
+    } catch {}
+
+    (async () => {
+      try {
+        console.log('Seeding test drivers via edge function...');
+        const { data, error } = await supabase.functions.invoke('create-test-drivers', { body: {} });
+        if (error) throw error;
+        console.log('Seed results:', data);
+        try { localStorage.setItem('seeded_test_drivers', '1'); } catch {}
+        toast({
+          title: 'تم تجهيز حسابات السائقين',
+          description: 'يمكنك الآن تسجيل الدخول بـ driver1@test.com / password123',
+        });
+      } catch (err) {
+        console.error('Seeding test drivers failed:', err);
+      }
+    })();
+  }, [role, toast]);
 
   const normalizeIraqiPhone = (phone: string): string => {
     let normalized = phone.replace(/\D/g, '');
