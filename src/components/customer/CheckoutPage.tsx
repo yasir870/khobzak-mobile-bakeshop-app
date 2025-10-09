@@ -9,6 +9,7 @@ import { ArrowLeft, MapPin, Clock, CreditCard, Banknote, Navigation } from 'luci
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
 import LeafletLocationPicker from './LeafletLocationPicker';
 
 interface CheckoutPageProps {
@@ -34,8 +35,41 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
   const [showMap, setShowMap] = useState(false);
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [isGettingCurrentLocation, setIsGettingCurrentLocation] = useState(false);
+  const [customerData, setCustomerData] = useState<any>(null);
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { user } = useAuth();
+
+  // Fetch customer data when component mounts
+  useEffect(() => {
+    const fetchCustomerData = async () => {
+      if (!user) return;
+      
+      const userPhone = user.user_metadata?.phone;
+      if (!userPhone) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('phone', userPhone)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error fetching customer:', error);
+          return;
+        }
+
+        if (data) {
+          setCustomerData(data);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+
+    fetchCustomerData();
+  }, [user]);
 
   // Load GPS location on component mount
   useEffect(() => {
@@ -108,27 +142,15 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
     );
   };
 
-  // helper: get customer_phone from localStorage OR ask user for it later if needed
-  const getCustomerPhone = () => {
-    // We store phone with "userPhone" key during login
-    return localStorage.getItem("userPhone") || "";
-  };
-
-  // helper: get customer_id from localStorage OR let Supabase assign
-  const getCustomerId = () => {
-    // Suppose you store customer ID with "customerId" key
-    // Else fallback to null
-    const val = localStorage.getItem("customerId");
-    return val ? parseInt(val) : null;
-  };
-
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    const customerId = getCustomerId();
+    // Get customer phone from user metadata
+    const customerPhone = user?.user_metadata?.phone;
+    const customerId = customerData?.id;
 
-    if (!address || !customerId) {
+    if (!address || !customerPhone) {
       toast({
         title: t('toastMissingInfoTitle'),
         description: !address
@@ -142,7 +164,6 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
 
     try {
       // Prepare order for Supabase
-      // Note: "type" will be a string من أنواع الخبز المطلوبة، آسهل شيء نفصلها بفارزة (CSV)
       const typeString = cartItems.map(item => `${item.name} x${item.quantity}`).join(", ");
 
       // Combine main address with location details and GPS coordinates for driver
@@ -156,7 +177,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
 
       const { data, error } = await supabase.from("orders").insert([
         {
-          customer_id: customerId,
+          customer_id: customerId || 0,
           driver_id: null,
           type: typeString,
           quantity: cartItems.reduce((sum, item) => sum + item.quantity, 0),
@@ -164,7 +185,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
           notes,
           status: 'pending',
           address: fullAddress,
-          customer_phone: getCustomerPhone() || t('unknown'),
+          customer_phone: customerPhone,
         }
       ]).select().single();
 
