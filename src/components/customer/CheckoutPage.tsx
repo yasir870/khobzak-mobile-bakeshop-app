@@ -146,9 +146,10 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
     e.preventDefault();
     setIsLoading(true);
 
-    // Get customer phone from user metadata
+    // Get customer info from user metadata
     const customerPhone = user?.user_metadata?.phone;
-    const customerId = customerData?.id;
+    const customerEmail = user?.email;
+    const customerName = user?.user_metadata?.name;
 
     if (!address || !customerPhone) {
       toast({
@@ -163,6 +164,28 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
     }
 
     try {
+      let customerId = customerData?.id;
+
+      // If customer doesn't exist in customers table, create them
+      if (!customerId) {
+        const { data: newCustomer, error: customerError } = await supabase
+          .from('customers')
+          .insert([{
+            name: customerName || 'عميل',
+            phone: customerPhone,
+            email: customerEmail || `${customerPhone}@temp.com`
+          }])
+          .select()
+          .single();
+
+        if (customerError) {
+          throw new Error('فشل في إنشاء بيانات العميل');
+        }
+
+        customerId = newCustomer.id;
+        setCustomerData(newCustomer);
+      }
+
       // Prepare order for Supabase
       const typeString = cartItems.map(item => `${item.name} x${item.quantity}`).join(", ");
 
@@ -177,7 +200,7 @@ const CheckoutPage = ({ onBack, onOrderComplete, cartItems, cartTotal }: Checkou
 
       const { data, error } = await supabase.from("orders").insert([
         {
-          customer_id: customerId || 0,
+          customer_id: customerId,
           driver_id: null,
           type: typeString,
           quantity: cartItems.reduce((sum, item) => sum + item.quantity, 0),
