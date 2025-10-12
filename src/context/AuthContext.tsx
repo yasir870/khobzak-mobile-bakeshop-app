@@ -184,6 +184,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (emailOrPhone: string, password: string, userType?: 'customer' | 'driver') => {
     try {
       let email = emailOrPhone;
+      let authResult;
 
       // If it's a phone number, find the associated email
       if (!isValidEmail(emailOrPhone)) {
@@ -200,16 +201,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           for (const foundEmail of foundEmails) {
             try {
-              const { error } = await supabase.auth.signInWithPassword({
+              const result = await supabase.auth.signInWithPassword({
                 email: foundEmail,
                 password,
               });
               
-              if (!error) {
+              if (!result.error) {
+                authResult = result;
                 loginSuccessful = true;
                 break;
               } else {
-                lastError = error;
+                lastError = result.error;
               }
             } catch (e) {
               lastError = e;
@@ -223,12 +225,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           throw new Error('يرجى إدخال بريد إلكتروني صحيح أو رقم هاتف عراقي صحيح');
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        authResult = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
-        if (error) throw error;
+        if (authResult.error) throw authResult.error;
+      }
+
+      // Verify user type matches the requested role
+      if (userType && authResult?.data?.user) {
+        const loggedInUserType = authResult.data.user.user_metadata?.user_type;
+        
+        if (loggedInUserType !== userType) {
+          // Sign out immediately if wrong user type
+          await supabase.auth.signOut();
+          
+          const roleText = userType === 'customer' ? 'العملاء' : 'السائقين';
+          throw new Error(`هذا الحساب غير مسجل كـ${roleText}. يرجى استخدام صفحة تسجيل الدخول المناسبة.`);
+        }
       }
 
       toast({
