@@ -191,7 +191,8 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
           driver_id: driverData 
         };
       } else if (action === 'reject') {
-        updateData = { status: 'rejected' as OrderStatus };
+        // Explicitly keep driver_id as NULL to satisfy RLS check
+        updateData = { status: 'rejected' as OrderStatus, driver_id: null };
       } else if (action === 'deliver') {
         setCompletingOrderId(orderId);
         setShowCompletionModal(true);

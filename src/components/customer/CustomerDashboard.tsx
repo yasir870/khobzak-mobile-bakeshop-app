@@ -338,17 +338,9 @@ const CustomerDashboard = ({
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-6">
-          <Button variant="outline" className="h-12 flex items-center justify-center space-x-2 text-sm" onClick={() => setShowOrders(true)}>
+          <Button variant="outline" className="h-12 flex items-center justify-center space-x-2 text-sm" onClick={() => setShowActiveOrdersModal(true)}>
             <Clock className="h-4 w-4" />
             <span>{t('myOrders')}</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            className="h-12 flex items-center justify-center space-x-2 text-sm bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700" 
-            onClick={() => setShowActiveOrdersModal(true)}
-          >
-            <Truck className="h-4 w-4" />
-            <span>تتبع الطلب</span>
           </Button>
           <Button variant="outline" className="h-12 flex items-center justify-center space-x-2 text-sm" onClick={() => setShowProfile(true)}>
             <User className="h-4 w-4" />

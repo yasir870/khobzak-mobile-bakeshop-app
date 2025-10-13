@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -39,9 +39,23 @@ const ActiveOrdersModal = ({ isOpen, onClose, onTrackOrder }: ActiveOrdersModalP
     setError(null);
     
     try {
-      const userPhone = localStorage.getItem('userPhone');
+      // Get authenticated user's phone from profiles (no localStorage)
+      const { data: userData } = await supabase.auth.getUser();
+      const authUser = userData?.user;
+      if (!authUser) {
+        setError('يرجى تسجيل الدخول مرة أخرى');
+        return;
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('phone')
+        .eq('id', authUser.id)
+        .maybeSingle();
+
+      const userPhone = profile?.phone || authUser.user_metadata?.phone;
       if (!userPhone) {
-        setError('لم يتم العثور على رقم الهاتف. يرجى تسجيل الدخول مرة أخرى');
+        setError('لم يتم العثور على رقم الهاتف في الحساب');
         return;
       }
 
@@ -206,10 +220,11 @@ const ActiveOrdersModal = ({ isOpen, onClose, onTrackOrder }: ActiveOrdersModalP
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-right text-xl font-bold">الطلبات النشطة</DialogTitle>
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={onClose} aria-label="إغلاق النافذة">
               <X className="h-4 w-4" />
             </Button>
           </div>
+          <DialogDescription className="sr-only">اعرض طلباتك النشطة وتابع طلبك مباشرة من نفس البطاقة</DialogDescription>
         </DialogHeader>
 
         <div className="mt-4">
