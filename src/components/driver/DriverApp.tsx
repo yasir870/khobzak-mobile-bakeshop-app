@@ -191,33 +191,72 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
           driver_id: driverData 
         };
       } else if (action === 'reject') {
-        // Explicitly keep driver_id as NULL to satisfy RLS check
+        // Log detailed information for debugging
+        console.log('🔍 Attempting to reject order:', {
+          orderId,
+          currentUserId: (await supabase.auth.getUser()).data.user?.id,
+          timestamp: new Date().toISOString()
+        });
+        
         updateData = { status: 'rejected' as OrderStatus, driver_id: null };
+        
+        console.log('📝 Update data for reject:', updateData);
       } else if (action === 'deliver') {
         setCompletingOrderId(orderId);
         setShowCompletionModal(true);
         return;
       }
 
-      const { error } = await supabase
+      console.log('🚀 Sending update to database:', {
+        table: 'orders',
+        orderId,
+        updateData,
+        action
+      });
+
+      const { data: updateResult, error } = await supabase
         .from('orders')
         .update(updateData)
-        .eq('id', orderId);
+        .eq('id', orderId)
+        .select();
 
-      if (error) throw error;
+      console.log('📊 Database response:', {
+        success: !error,
+        error: error,
+        data: updateResult,
+        errorDetails: error ? {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        } : null
+      });
 
+      if (error) {
+        console.error('❌ Full error object:', JSON.stringify(error, null, 2));
+        throw new Error(`فشل التحديث: ${error.message}\nالتفاصيل: ${error.details || 'لا توجد تفاصيل'}\nالرمز: ${error.code || 'غير معروف'}`);
+      }
+
+      console.log('✅ Update successful, refreshing orders...');
       await fetchOrders();
       
       toast({
-        title: "تم تحديث الطلب",
-        description: `تم ${action === 'accept' ? 'قبول' : 'رفض'} الطلب بنجاح`,
+        title: action === 'accept' ? "تم قبول الطلب" : action === 'reject' ? "تم رفض الطلب" : "تم تسليم الطلب",
+        description: action === 'accept' ? "تم تعيين الطلب لك بنجاح" : action === 'reject' ? "تم رفض الطلب" : "تم تحديث حالة الطلب بنجاح"
       });
     } catch (error) {
-      console.error('Error updating order:', error);
+      console.error('❌ خطأ في تحديث حالة الطلب:', error);
+      
+      // Show detailed error message
+      const errorMessage = error instanceof Error ? error.message : "حدث خطأ أثناء التحديث";
+      const errorDetails = error instanceof Error ? error.stack : JSON.stringify(error);
+      
+      console.error('💥 Stack trace:', errorDetails);
+      
       toast({
-        title: "خطأ في تحديث الطلب",
-        description: "حدث خطأ أثناء تحديث الطلب",
-        variant: "destructive",
+        title: "فشل تحديث حالة الطلب",
+        description: errorMessage,
+        variant: "destructive"
       });
     }
   };

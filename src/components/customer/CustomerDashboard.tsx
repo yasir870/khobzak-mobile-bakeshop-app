@@ -357,7 +357,14 @@ const CustomerDashboard = ({
       {selectedProduct && <ProductDetailModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onAddToCart={handleAddToCart} />}
 
       {/* Orders Dialog */}
-      <OrdersDialog open={showOrders} onOpenChange={setShowOrders} />
+      <OrdersDialog 
+        open={showOrders} 
+        onOpenChange={setShowOrders}
+        onTrackOrder={(order) => {
+          setSelectedOrder(order);
+          setShowOrderTracking(true);
+        }}
+      />
 
       {/* Contact Dialog */}
       <ContactDialog open={contactOpen} onOpenChange={setContactOpen} />
