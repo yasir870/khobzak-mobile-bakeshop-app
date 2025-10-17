@@ -361,8 +361,8 @@ const CustomerDashboard = ({
         open={showOrders} 
         onOpenChange={setShowOrders}
         onTrackOrder={(order) => {
-          setSelectedOrder(order);
-          setShowOrderTracking(true);
+          setSelectedOrderForTracking(order);
+          setShowTrackingModal(true);
         }}
       />
 
