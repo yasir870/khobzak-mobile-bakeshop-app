@@ -77,6 +77,51 @@ const OrdersDialog = ({ open, onOpenChange, onTrackOrder }: OrdersDialogProps) =
     }
   }, [open]);
 
+  // Real-time subscription for order status updates
+  useEffect(() => {
+    if (!open) return;
+
+    const channel = supabase
+      .channel('customer-orders-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders'
+        },
+        (payload) => {
+          console.log('Order status updated:', payload);
+          
+          // Show notification based on status change
+          if (payload.new.status === 'accepted') {
+            toast({
+              title: "تم قبول الطلب ✅",
+              description: `الطلب #${payload.new.id} تم قبوله من قبل السائق`,
+            });
+          } else if (payload.new.status === 'on_the_way') {
+            toast({
+              title: "السائق في الطريق 🚚",
+              description: `الطلب #${payload.new.id} في طريقه إليك`,
+            });
+          } else if (payload.new.status === 'received') {
+            toast({
+              title: "تم الاستلام ✨",
+              description: `تم تأكيد استلام الطلب #${payload.new.id}`,
+            });
+          }
+          
+          // Refresh orders
+          fetchOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [open, toast]);
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'delivered':
@@ -98,11 +143,15 @@ const OrdersDialog = ({ open, onOpenChange, onTrackOrder }: OrdersDialogProps) =
     switch (status) {
       case 'delivered':
         return 'تم التسليم';
+      case 'received':
+        return 'تم الاستلام';
+      case 'on_the_way':
+        return 'في الطريق';
       case 'in-transit':
       case 'in_progress':
         return 'قيد التوصيل';
       case 'accepted':
-        return 'مقبول';
+        return 'تم القبول';
       case 'confirmed':
         return 'مؤكد';
       case 'pending':
@@ -117,13 +166,15 @@ const OrdersDialog = ({ open, onOpenChange, onTrackOrder }: OrdersDialogProps) =
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'delivered':
+      case 'received':
         return 'bg-green-100 text-green-800';
+      case 'on_the_way':
       case 'in-transit':
       case 'in_progress':
         return 'bg-blue-100 text-blue-800';
       case 'accepted':
       case 'confirmed':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-cyan-100 text-cyan-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
       case 'rejected':
@@ -134,7 +185,36 @@ const OrdersDialog = ({ open, onOpenChange, onTrackOrder }: OrdersDialogProps) =
   };
 
   const canTrackOrder = (order: Order) => {
-    return order.driver_id && ['accepted', 'confirmed', 'in-transit', 'in_progress'].includes(order.status);
+    return order.driver_id && ['accepted', 'confirmed', 'on_the_way', 'in-transit', 'in_progress'].includes(order.status);
+  };
+
+  const canConfirmReceipt = (order: Order) => {
+    return ['on_the_way', 'in-transit'].includes(order.status);
+  };
+
+  const handleConfirmReceipt = async (orderId: number) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: 'received', delivered_at: new Date().toISOString() })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "تم تأكيد الاستلام ✅",
+        description: "شكراً لك! تم تأكيد استلام الطلب بنجاح",
+      });
+
+      await fetchOrders();
+    } catch (error) {
+      console.error('Error confirming receipt:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل تأكيد استلام الطلب",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleTrackOrder = async (order: Order) => {
@@ -234,17 +314,30 @@ const OrdersDialog = ({ open, onOpenChange, onTrackOrder }: OrdersDialogProps) =
                       </div>
                     )}
 
-                    {/* Track Order Button */}
-                    {canTrackOrder(order) && (
-                      <div className="pt-2 border-t border-amber-100">
-                        <Button
-                          onClick={() => handleTrackOrder(order)}
-                          size="sm"
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                        >
-                          <Truck className="h-4 w-4 ml-2" />
-                          تتبع الطلب
-                        </Button>
+                    {/* Action Buttons */}
+                    {(canTrackOrder(order) || canConfirmReceipt(order)) && (
+                      <div className="pt-2 border-t border-amber-100 space-y-2">
+                        {canTrackOrder(order) && (
+                          <Button
+                            onClick={() => handleTrackOrder(order)}
+                            size="sm"
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            <Truck className="h-4 w-4 ml-2" />
+                            تتبع الطلب
+                          </Button>
+                        )}
+                        {canConfirmReceipt(order) && (
+                          <Button
+                            onClick={() => handleConfirmReceipt(order.id)}
+                            size="sm"
+                            variant="outline"
+                            className="w-full border-green-600 text-green-700 hover:bg-green-50"
+                          >
+                            <CheckCircle className="h-4 w-4 ml-2" />
+                            تم استلام الطلب
+                          </Button>
+                        )}
                       </div>
                     )}
                   </div>

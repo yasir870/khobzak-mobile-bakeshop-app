@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, MapPin, Phone, Clock, Archive, Truck, RefreshCw, Map } from 'lucide-react';
+import { LogOut, MapPin, Phone, Clock, Archive, Truck, RefreshCw, Map, CheckCircle } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,7 +12,7 @@ import { Info } from 'lucide-react';
 import { useDriverLocation } from '@/hooks/useDriverLocation';
 import { useAuth } from '@/context/AuthContext';
 
-type OrderStatus = 'pending' | 'accepted' | 'in-transit' | 'delivered' | 'rejected';
+type OrderStatus = 'pending' | 'accepted' | 'on_the_way' | 'in-transit' | 'delivered' | 'received' | 'rejected';
 
 interface Order {
   id: number;
@@ -43,8 +43,10 @@ interface DriverAppProps {
 const STATUS_LABELS: Record<OrderStatus, string> = {
   pending: "بانتظار القبول",
   accepted: "مقبول",
+  on_the_way: "في الطريق",
   "in-transit": "قيد التوصيل",
   delivered: "تم التسليم",
+  received: "تم الاستلام",
   rejected: "مرفوض",
 };
 
@@ -124,6 +126,12 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
               title: "طلب جديد!",
               description: `تم إضافة طلب جديد #${payload.new.id}`,
             });
+          } else if (payload.eventType === 'UPDATE' && payload.new.status === 'received') {
+            // Order received by customer
+            toast({
+              title: "تم استلام الطلب ✅",
+              description: `تم تأكيد استلام الطلب #${payload.new.id} من قبل العميل`,
+            });
           }
           
           // Refresh orders list
@@ -174,7 +182,7 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
     }
   };
 
-  const handleOrderAction = async (orderId: number, action: 'accept' | 'reject' | 'deliver') => {
+  const handleOrderAction = async (orderId: number, action: 'accept' | 'reject' | 'deliver' | 'start_delivery') => {
     try {
       let updateData: Partial<Order> = {};
       
@@ -190,6 +198,8 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
           status: 'accepted' as OrderStatus,
           driver_id: driverData 
         };
+      } else if (action === 'start_delivery') {
+        updateData = { status: 'on_the_way' as OrderStatus };
       } else if (action === 'reject') {
         // Log detailed information for debugging
         console.log('🔍 Attempting to reject order:', {
@@ -456,7 +466,7 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
           {/* Active Orders */}
           <TabsContent value="active" className="space-y-4">
             {orders
-              .filter(order => ['accepted', 'in-transit'].includes(order.status))
+              .filter(order => ['accepted', 'on_the_way', 'in-transit'].includes(order.status))
               .map(order => (
                 <Card key={order.id} className="border-l-4 border-l-primary">
                   <CardHeader className="pb-3">
@@ -488,10 +498,21 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
                     <div className="flex space-x-2 rtl:space-x-reverse pt-2">
                       {order.status === 'accepted' && (
                         <Button
-                          onClick={() => handleOrderAction(order.id, 'deliver')}
-                          className="w-full"
+                          onClick={() => handleOrderAction(order.id, 'start_delivery')}
+                          className="w-full bg-blue-600 hover:bg-blue-700"
                           size="sm"
                         >
+                          <Truck className="h-4 w-4 ml-2" />
+                          بدء التوصيل
+                        </Button>
+                      )}
+                      {order.status === 'on_the_way' && (
+                        <Button
+                          onClick={() => handleOrderAction(order.id, 'deliver')}
+                          className="w-full bg-green-600 hover:bg-green-700"
+                          size="sm"
+                        >
+                          <CheckCircle className="h-4 w-4 ml-2" />
                           تأكيد التسليم
                         </Button>
                       )}
@@ -500,7 +521,7 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
                 </Card>
               ))
             }
-            {orders.filter(order => ['accepted', 'in-transit'].includes(order.status)).length === 0 && (
+            {orders.filter(order => ['accepted', 'on_the_way', 'in-transit'].includes(order.status)).length === 0 && (
               <Card>
                 <CardContent className="text-center py-8">
                   <Archive className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -513,7 +534,7 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
           {/* Completed Orders */}
           <TabsContent value="completed" className="space-y-4">
             {orders
-              .filter(order => ['delivered', 'rejected'].includes(order.status))
+              .filter(order => ['delivered', 'received', 'rejected'].includes(order.status))
               .map(order => (
                 <Card key={order.id} className="opacity-75">
                   <CardHeader className="pb-3">
