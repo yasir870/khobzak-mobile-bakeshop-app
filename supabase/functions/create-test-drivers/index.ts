@@ -69,9 +69,38 @@ serve(async (req) => {
         if (existingUser) {
           console.log(`User ${driver.email} already exists with ID: ${existingUser.id}`);
           
-          // Delete existing user first to recreate with correct settings
-          await supabaseAdmin.auth.admin.deleteUser(existingUser.id);
-          console.log(`Deleted existing user: ${driver.email}`);
+          // Update password for existing user instead of delete/recreate
+          const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+            existingUser.id,
+            { 
+              password: driver.password,
+              email_confirm: true,
+              user_metadata: {
+                phone: driver.phone,
+                name: driver.name,
+                user_type: 'driver'
+              }
+            }
+          );
+          
+          if (updateError) {
+            console.error(`Error updating user ${driver.email}:`, updateError);
+            results.push({ 
+              email: driver.email, 
+              success: false, 
+              error: updateError.message 
+            });
+            continue;
+          }
+          
+          console.log(`Updated existing user: ${driver.email}`);
+          results.push({ 
+            email: driver.email, 
+            success: true, 
+            userId: existingUser.id,
+            updated: true
+          });
+          continue;
         }
         
         // Create auth user with admin client
