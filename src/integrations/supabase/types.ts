@@ -309,13 +309,10 @@ export type Database = {
         Returns: string
       }
       get_current_user_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
-      get_driver_id_from_auth: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
+      get_driver_id_from_auth: { Args: never; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -323,10 +320,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "driver" | "customer"
