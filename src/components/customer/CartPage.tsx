@@ -228,20 +228,21 @@ const CartPage = ({ onBack, cartItems, setCartItems }: CartPageProps) => {
       return;
     }
 
-    // Check if driver location exists
+    // Check if driver location exists - use limit(1) to get latest location
     try {
       const { data: locationData, error } = await supabase
         .from('driver_locations')
         .select('*')
         .eq('driver_id', order.driver_id)
-        .maybeSingle();
+        .order('updated_at', { ascending: false })
+        .limit(1);
 
       if (error) throw error;
 
-      if (!locationData) {
+      if (!locationData || locationData.length === 0) {
         toast({
           title: "الموقع غير متاح",
-          description: "موقع السائق غير متاح حالياً",
+          description: "السائق لم يبدأ التتبع بعد، يرجى الانتظار",
           variant: "destructive"
         });
         return;
