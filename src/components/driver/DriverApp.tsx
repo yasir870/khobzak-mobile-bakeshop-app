@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, MapPin, Phone, Clock, Archive, Truck, RefreshCw, Map, CheckCircle } from 'lucide-react';
+import { LogOut, MapPin, Phone, Clock, Archive, Truck, RefreshCw, Map, CheckCircle, Navigation } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Info } from 'lucide-react';
 import { useDriverLocation } from '@/hooks/useDriverLocation';
 import { useAuth } from '@/context/AuthContext';
+import DriverMapModal from './DriverMapModal';
 
 type OrderStatus = 'pending' | 'accepted' | 'on_the_way' | 'in-transit' | 'delivered' | 'received' | 'rejected';
 
@@ -57,6 +58,7 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [completingOrderId, setCompletingOrderId] = useState<number | null>(null);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [selectedOrderForMap, setSelectedOrderForMap] = useState<Order | null>(null);
   const { toast } = useToast();
   const { user, getUserType, isLoading: authLoading } = useAuth();
   
@@ -495,27 +497,43 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
                       {order.notes && <p><strong>ملاحظات:</strong> {order.notes}</p>}
                     </div>
 
-                    <div className="flex space-x-2 rtl:space-x-reverse pt-2">
-                      {order.status === 'accepted' && (
-                        <Button
-                          onClick={() => handleOrderAction(order.id, 'start_delivery')}
-                          className="w-full bg-blue-600 hover:bg-blue-700"
-                          size="sm"
-                        >
-                          <Truck className="h-4 w-4 ml-2" />
-                          بدء التوصيل
-                        </Button>
-                      )}
-                      {order.status === 'on_the_way' && (
-                        <Button
-                          onClick={() => handleOrderAction(order.id, 'deliver')}
-                          className="w-full bg-green-600 hover:bg-green-700"
-                          size="sm"
-                        >
-                          <CheckCircle className="h-4 w-4 ml-2" />
-                          تأكيد التسليم
-                        </Button>
-                      )}
+                    <div className="flex flex-col space-y-2 pt-2">
+                      {/* زر الخريطة */}
+                      <Button
+                        onClick={() => {
+                          setSelectedOrderForMap(order);
+                          setShowMapModal(true);
+                        }}
+                        variant="outline"
+                        className="w-full border-blue-600 text-blue-700 hover:bg-blue-50"
+                        size="sm"
+                      >
+                        <Navigation className="h-4 w-4 ml-2" />
+                        عرض الخريطة والتوجه للعميل
+                      </Button>
+                      
+                      <div className="flex space-x-2 rtl:space-x-reverse">
+                        {order.status === 'accepted' && (
+                          <Button
+                            onClick={() => handleOrderAction(order.id, 'start_delivery')}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700"
+                            size="sm"
+                          >
+                            <Truck className="h-4 w-4 ml-2" />
+                            بدء التوصيل
+                          </Button>
+                        )}
+                        {order.status === 'on_the_way' && (
+                          <Button
+                            onClick={() => handleOrderAction(order.id, 'deliver')}
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            size="sm"
+                          >
+                            <CheckCircle className="h-4 w-4 ml-2" />
+                            تأكيد التسليم
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -605,21 +623,34 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
           </DialogContent>
         </Dialog>
 
-        {/* Map Modal - تم تعطيل الخريطة مؤقتاً */}
-        <Dialog open={showMapModal} onOpenChange={setShowMapModal}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>خريطة الطلبات</DialogTitle>
-              <DialogDescription>
-                ميزة الخريطة قيد التطوير حالياً
-              </DialogDescription>
-            </DialogHeader>
-            <div className="text-center py-4">
-              <Map className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">سيتم إضافة خريطة تفاعلية قريباً</p>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Map Modal للسائق */}
+        {selectedOrderForMap && (() => {
+          // Extract GPS coordinates from address
+          const gpsMatch = selectedOrderForMap.address.match(/GPS:\s*([-\d.]+),\s*([-\d.]+)/);
+          const customerLocation = gpsMatch 
+            ? { lat: parseFloat(gpsMatch[1]), lng: parseFloat(gpsMatch[2]), address: selectedOrderForMap.address }
+            : { lat: 33.3152, lng: 44.3661, address: selectedOrderForMap.address }; // Default to Baghdad
+          
+          return (
+            <DriverMapModal
+              isOpen={showMapModal}
+              onClose={() => {
+                setShowMapModal(false);
+                setSelectedOrderForMap(null);
+              }}
+              customerLocation={customerLocation}
+              customerName={getCustomerName(selectedOrderForMap.customer_phone)}
+              customerPhone={selectedOrderForMap.customer_phone}
+              orderInfo={{
+                id: selectedOrderForMap.id,
+                type: selectedOrderForMap.type,
+                quantity: selectedOrderForMap.quantity,
+                address: selectedOrderForMap.address,
+                totalPrice: selectedOrderForMap.total_price
+              }}
+            />
+          );
+        })()}
       </div>
     </div>
   );
