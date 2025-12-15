@@ -625,11 +625,46 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
 
         {/* Map Modal للسائق */}
         {selectedOrderForMap && (() => {
-          // Extract GPS coordinates from address
-          const gpsMatch = selectedOrderForMap.address.match(/GPS:\s*([-\d.]+),\s*([-\d.]+)/);
-          const customerLocation = gpsMatch 
-            ? { lat: parseFloat(gpsMatch[1]), lng: parseFloat(gpsMatch[2]), address: selectedOrderForMap.address }
-            : { lat: 33.3152, lng: 44.3661, address: selectedOrderForMap.address }; // Default to Baghdad
+          // Extract GPS coordinates from address - multiple formats support
+          // Format 1: "GPS: lat, lng" or "GPS lat, lng"
+          // Format 2: "إحداثيات للسائق: GPS ... lat, lng" at end of address
+          // Format 3: Just coordinates "lat, lng" at end
+          let lat: number | null = null;
+          let lng: number | null = null;
+          
+          const address = selectedOrderForMap.address || '';
+          
+          // Try format: coordinates at end like "36.855541, 42.842285"
+          const endCoordsMatch = address.match(/([-]?\d+\.?\d*),\s*([-]?\d+\.?\d*)\s*$/);
+          if (endCoordsMatch) {
+            const coord1 = parseFloat(endCoordsMatch[1]);
+            const coord2 = parseFloat(endCoordsMatch[2]);
+            // Determine which is lat and which is lng based on typical Iraq coordinates
+            // Iraq: lat ~29-37, lng ~38-48
+            if (coord1 >= 29 && coord1 <= 42 && coord2 >= 38 && coord2 <= 50) {
+              lat = coord1;
+              lng = coord2;
+            } else if (coord2 >= 29 && coord2 <= 42 && coord1 >= 38 && coord1 <= 50) {
+              lat = coord2;
+              lng = coord1;
+            }
+          }
+          
+          // Try format: "GPS: lat, lng" or "GPS lat, lng"
+          if (!lat || !lng) {
+            const gpsMatch = address.match(/GPS[:\s]+([-]?\d+\.?\d*)[,\s]+([-]?\d+\.?\d*)/i);
+            if (gpsMatch) {
+              lat = parseFloat(gpsMatch[1]);
+              lng = parseFloat(gpsMatch[2]);
+            }
+          }
+          
+          // Default to Baghdad if no coordinates found
+          const customerLocation = (lat && lng) 
+            ? { lat, lng, address }
+            : { lat: 33.3152, lng: 44.3661, address };
+          
+          console.log('Extracted coordinates:', { lat, lng, originalAddress: address });
           
           return (
             <DriverMapModal
