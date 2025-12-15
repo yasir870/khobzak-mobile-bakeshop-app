@@ -463,45 +463,86 @@ const NavigationModal = ({
     }
   };
 
+  const getStepIcon = (type: string, index: number) => {
+    const iconClass = "h-4 w-4";
+    if (type === 'depart') return <Navigation className={iconClass} />;
+    if (type === 'arrive') return <MapPin className={iconClass} />;
+    if (type.includes('right')) return <span className="text-xs font-bold">↗</span>;
+    if (type.includes('left')) return <span className="text-xs font-bold">↖</span>;
+    if (type === 'roundabout-enter' || type === 'roundabout-exit') return <span className="text-xs font-bold">⟳</span>;
+    return <span className="font-bold text-sm">{index + 1}</span>;
+  };
+
+  const getStepColor = (type: string, index: number, total: number) => {
+    if (index === 0) return 'bg-emerald-500';
+    if (index === total - 1) return 'bg-red-500';
+    return 'bg-primary';
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-full max-h-[100vh] w-full h-full p-0 m-0">
-        <div className="relative w-full h-full flex">
-          {/* Navigation Panel */}
-          <div className="w-80 bg-white border-l border-gray-200 flex flex-col z-10">
-            {/* Header */}
-            <DialogHeader className="border-b border-gray-200 p-4">
+      <DialogContent className="max-w-full max-h-[100vh] w-full h-full p-0 m-0 overflow-hidden">
+        <div className="relative w-full h-full flex flex-row-reverse">
+          {/* Navigation Panel - Right Side for RTL */}
+          <div className="w-[380px] bg-gradient-to-b from-card to-secondary/30 border-r border-border flex flex-col z-10 shadow-xl">
+            {/* Header with gradient */}
+            <DialogHeader className="border-b border-border bg-gradient-to-r from-primary to-primary/80 p-5">
               <div className="flex items-center justify-between">
-                <DialogTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <Route className="h-5 w-5 text-blue-600" />
+                <DialogTitle className="text-lg font-bold text-primary-foreground flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                    <Route className="h-5 w-5" />
+                  </div>
                   التوجه إلى العميل
                 </DialogTitle>
-                <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
-                  <X className="h-4 w-4" />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={onClose} 
+                  className="h-9 w-9 text-primary-foreground hover:bg-white/20 rounded-lg"
+                >
+                  <X className="h-5 w-5" />
                 </Button>
               </div>
             </DialogHeader>
 
-            {/* Route Info */}
-            <div className="p-4 border-b border-gray-200 bg-blue-50">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">من موقعك الحالي</span>
-              </div>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-3 h-3 bg-red-500 rounded-full transform rotate-45"></div>
-                <span className="text-sm text-gray-900 font-medium">{customerName}</span>
+            {/* Location Indicators */}
+            <div className="p-5 border-b border-border bg-card">
+              <div className="space-y-4">
+                {/* Start Point */}
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="w-4 h-4 bg-emerald-500 rounded-full ring-4 ring-emerald-100 animate-pulse"></div>
+                    <div className="absolute top-6 left-1/2 -translate-x-1/2 w-0.5 h-8 bg-gradient-to-b from-emerald-400 to-primary/60"></div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium">نقطة الانطلاق</p>
+                    <p className="text-sm font-semibold text-foreground">موقعك الحالي</p>
+                  </div>
+                </div>
+                
+                {/* End Point */}
+                <div className="flex items-center gap-4 pt-4">
+                  <div className="w-4 h-4 bg-red-500 rounded-full ring-4 ring-red-100"></div>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium">الوجهة</p>
+                    <p className="text-sm font-semibold text-foreground">{customerName}</p>
+                    {customerPhone && (
+                      <p className="text-xs text-muted-foreground mt-0.5 font-mono">{customerPhone}</p>
+                    )}
+                  </div>
+                </div>
               </div>
               
+              {/* Route Stats */}
               {routeInfo.distance && (
-                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-blue-200">
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-gray-900">{routeInfo.distance}</span>
+                <div className="flex items-center justify-center gap-6 mt-5 pt-5 border-t border-border">
+                  <div className="flex items-center gap-2 bg-primary/10 px-4 py-2.5 rounded-xl">
+                    <MapPin className="h-5 w-5 text-primary" />
+                    <span className="text-base font-bold text-primary">{routeInfo.distance}</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-gray-900">{routeInfo.duration}</span>
+                  <div className="flex items-center gap-2 bg-primary/10 px-4 py-2.5 rounded-xl">
+                    <Clock className="h-5 w-5 text-primary" />
+                    <span className="text-base font-bold text-primary">{routeInfo.duration}</span>
                   </div>
                 </div>
               )}
@@ -510,36 +551,67 @@ const NavigationModal = ({
             {/* Navigation Steps */}
             <div className="flex-1 overflow-y-auto">
               {isCalculatingRoute ? (
-                <div className="flex items-center justify-center p-8">
+                <div className="flex items-center justify-center p-10">
                   <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-3"></div>
-                    <p className="text-sm text-gray-600">جاري حساب المسار...</p>
+                    <div className="relative">
+                      <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary mx-auto"></div>
+                      <Navigation className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-4 font-medium">جاري حساب أفضل مسار...</p>
                   </div>
                 </div>
               ) : navigationSteps.length > 0 ? (
-                <div className="p-4 space-y-3">
-                  <h3 className="font-medium text-gray-900 mb-3">تعليمات التوجه</h3>
-                  {navigationSteps.map((step, index) => (
-                    <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                      <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center font-medium text-xs flex-shrink-0 mt-1">
-                        {index + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm text-gray-900 font-medium mb-1">
-                          {step.instruction}
+                <div className="p-5">
+                  <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
+                    <Settings className="h-4 w-4 text-primary" />
+                    تعليمات التوجه
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full mr-auto">
+                      {navigationSteps.length} خطوات
+                    </span>
+                  </h3>
+                  <div className="space-y-2">
+                    {navigationSteps.map((step, index) => (
+                      <div 
+                        key={index} 
+                        className={`
+                          flex items-start gap-4 p-4 rounded-xl transition-all duration-200
+                          ${index === 0 
+                            ? 'bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800' 
+                            : index === navigationSteps.length - 1 
+                              ? 'bg-red-50 border border-red-200 dark:bg-red-950/30 dark:border-red-800'
+                              : 'bg-secondary/50 hover:bg-secondary border border-transparent hover:border-border'
+                          }
+                        `}
+                      >
+                        <div className={`
+                          w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-md
+                          ${getStepColor(step.type, index, navigationSteps.length)}
+                        `}>
+                          {getStepIcon(step.type, index)}
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {step.distance}
+                        <div className="flex-1 min-w-0">
+                          <p className={`
+                            text-sm font-medium mb-1
+                            ${index === 0 ? 'text-emerald-700 dark:text-emerald-300' : 
+                              index === navigationSteps.length - 1 ? 'text-red-700 dark:text-red-300' : 'text-foreground'}
+                          `}>
+                            {step.instruction}
+                          </p>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            <span className="bg-background px-2 py-0.5 rounded-md">{step.distance}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-center p-8">
+                <div className="flex items-center justify-center p-10">
                   <div className="text-center">
-                    <Navigation className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-sm text-gray-600">
+                    <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Navigation className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm text-muted-foreground font-medium">
                       {currentLocation ? 'جاري حساب المسار...' : 'امنح إذن الموقع لعرض التعليمات'}
                     </p>
                   </div>
@@ -548,43 +620,61 @@ const NavigationModal = ({
             </div>
 
             {/* Customer Info & Actions */}
-            <div className="border-t border-gray-200 p-4 bg-gray-50">
-              <div className="text-sm space-y-2">
-                <div><strong>الطلب:</strong> {orderInfo.type} × {orderInfo.quantity}</div>
-                <div><strong>المبلغ:</strong> {orderInfo.totalPrice} د.ع</div>
-                {customerPhone && (
-                  <Button 
-                    onClick={() => window.open(`tel:${customerPhone}`, '_self')} 
-                    className="w-full mt-3 bg-green-600 hover:bg-green-700"
-                    size="sm"
-                  >
-                    <Phone className="h-4 w-4 ml-1" />
-                    اتصل بالعميل
-                  </Button>
-                )}
+            <div className="border-t border-border p-5 bg-card">
+              {/* Order Summary */}
+              <div className="bg-secondary/50 rounded-xl p-4 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">الطلب</span>
+                  <span className="text-sm font-bold text-foreground">{orderInfo.type} × {orderInfo.quantity}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">المبلغ الإجمالي</span>
+                  <span className="text-lg font-bold text-primary">{orderInfo.totalPrice.toLocaleString()} د.ع</span>
+                </div>
               </div>
+              
+              {/* Call Button */}
+              {customerPhone && (
+                <Button 
+                  onClick={() => window.open(`tel:${customerPhone}`, '_self')} 
+                  className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 dark:shadow-none transition-all hover:scale-[1.02]"
+                  size="lg"
+                >
+                  <Phone className="h-5 w-5 ml-2" />
+                  اتصل بالعميل
+                </Button>
+              )}
             </div>
           </div>
 
           {/* Map Container */}
-          <div className="flex-1 relative">
+          <div className="flex-1 relative bg-muted">
             <div ref={mapContainer} className="w-full h-full" />
             
             {isLoading && !mapError && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-20">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                  <p className="text-gray-600">جاري تحميل الخريطة...</p>
+              <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-20">
+                <div className="text-center bg-card p-8 rounded-2xl shadow-xl">
+                  <div className="relative">
+                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20 border-t-primary mx-auto"></div>
+                    <MapPin className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-primary" />
+                  </div>
+                  <p className="text-foreground font-medium mt-4">جاري تحميل الخريطة...</p>
                 </div>
               </div>
             )}
 
             {mapError && (
-              <div className="absolute inset-0 flex items-center justify-center bg-red-50 z-20">
-                <div className="text-center p-6">
-                  <X className="h-16 w-16 mx-auto mb-4 text-red-600" />
-                  <p className="text-red-600 mb-4">{mapError}</p>
-                  <Button onClick={() => window.location.reload()}>
+              <div className="absolute inset-0 flex items-center justify-center bg-destructive/5 z-20">
+                <div className="text-center p-8 bg-card rounded-2xl shadow-xl max-w-sm mx-4">
+                  <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <X className="h-8 w-8 text-destructive" />
+                  </div>
+                  <p className="text-destructive font-bold mb-2">خطأ في الخريطة</p>
+                  <p className="text-sm text-muted-foreground mb-4">{mapError}</p>
+                  <Button 
+                    onClick={() => window.location.reload()}
+                    className="bg-primary hover:bg-primary/90"
+                  >
                     إعادة المحاولة
                   </Button>
                 </div>
