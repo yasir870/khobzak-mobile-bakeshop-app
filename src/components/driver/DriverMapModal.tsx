@@ -97,42 +97,15 @@ const DriverMapModal = ({
           crossOrigin: true
         });
 
-        let tilesLoaded = false;
-        let tileErrorCount = 0;
-
-        tileLayer.on('loading', () => {
-          console.log('Tiles loading...');
-        });
-
-        tileLayer.on('load', () => {
-          console.log('Tiles loaded successfully');
-          tilesLoaded = true;
-          setTimeout(() => {
-            if (tilesLoaded) {
-              setIsLoading(false);
-              setMapError(null);
-            }
-          }, 1000);
-        });
-
-        tileLayer.on('tileerror', (error) => {
-          console.warn('Tile error:', error);
-          tileErrorCount++;
-          if (tileErrorCount > 5) {
-            setMapError('فشل في تحميل بلاطات الخريطة. تحقق من اتصالك بالإنترنت.');
-            setIsLoading(false);
-          }
-        });
-
-        // Timeout for loading
-        setTimeout(() => {
-          if (!tilesLoaded) {
-            setMapError('انتهت مهلة تحميل الخريطة. يرجى المحاولة مرة أخرى.');
-            setIsLoading(false);
-          }
-        }, 15000);
-
         tileLayer.addTo(mapInstance);
+
+        // Mark loading done immediately after map instance is created
+        // Tiles load progressively - no need to wait for all of them
+        mapInstance.whenReady(() => {
+          console.log('Map is ready');
+          setIsLoading(false);
+          setMapError(null);
+        });
 
         // Customer marker (red)
         const customerIcon = L.divIcon({
@@ -292,7 +265,7 @@ const DriverMapModal = ({
                   <div className="text-center p-6">
                     <X className="h-16 w-16 mx-auto mb-4 text-red-600" />
                     <p className="text-red-600 mb-4">{mapError}</p>
-                    <Button onClick={() => window.location.reload()}>
+                    <Button onClick={() => { setMapError(null); setIsLoading(true); if (map.current) { map.current.remove(); map.current = null; } setTimeout(() => { if (mapContainer.current) mapContainer.current.innerHTML = ''; }, 50); }}>
                       إعادة المحاولة
                     </Button>
                   </div>

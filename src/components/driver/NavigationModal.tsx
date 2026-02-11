@@ -117,40 +117,14 @@ const NavigationModal = ({
           minZoom: 1
         });
 
-        let tilesLoaded = false;
-        let loadingTimeout: NodeJS.Timeout;
-
-        const handleTileLoad = () => {
-          console.log('Navigation map tiles loaded');
-          tilesLoaded = true;
-          if (loadingTimeout) clearTimeout(loadingTimeout);
-          setTimeout(() => {
-            if (tilesLoaded && map.current) {
-              setIsLoading(false);
-              setMapError(null);
-            }
-          }, 300);
-        };
-
-        const handleTileError = (error: any) => {
-          console.warn('Navigation tile error:', error);
-          if (loadingTimeout) clearTimeout(loadingTimeout);
-          setMapError('فشل في تحميل الخريطة');
-          setIsLoading(false);
-        };
-
-        tileLayer.on('load', handleTileLoad);
-        tileLayer.on('tileerror', handleTileError);
-
-        // Timeout for loading
-        loadingTimeout = setTimeout(() => {
-          if (!tilesLoaded) {
-            setMapError('انتهت مهلة تحميل الخريطة');
-            setIsLoading(false);
-          }
-        }, 8000);
-
         tileLayer.addTo(mapInstance);
+
+        // Mark loading done when map is ready - don't wait for all tiles
+        mapInstance.whenReady(() => {
+          console.log('Navigation map is ready');
+          setIsLoading(false);
+          setMapError(null);
+        });
 
         // Customer marker (destination)
         const destinationIcon = L.divIcon({
@@ -277,36 +251,40 @@ const NavigationModal = ({
     setIsCalculatingRoute(true);
     
     try {
-      // Use multiple route services as fallbacks
+      // Use multiple route services - race them for fastest response
       const routeServices = [
         `https://router.project-osrm.org/route/v1/driving/${startLocation.lng},${startLocation.lat};${customerLocation.lng},${customerLocation.lat}?steps=true&geometries=geojson&overview=full`,
         `https://routing.openstreetmap.de/routed-car/route/v1/driving/${startLocation.lng},${startLocation.lat};${customerLocation.lng},${customerLocation.lat}?steps=true&geometries=geojson&overview=full`
       ];
       
-      let response;
       let data;
       
-      for (const serviceUrl of routeServices) {
-        try {
-          console.log('Trying route service:', serviceUrl);
-          response = await fetch(serviceUrl, {
-            method: 'GET',
-            headers: {
-              'Accept': 'application/json'
-            }
+      // Race both services - use whichever responds first
+      const fetchWithTimeout = (url: string, timeoutMs: number) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        return fetch(url, { signal: controller.signal })
+          .then(async (res) => {
+            clearTimeout(timeoutId);
+            if (!res.ok) throw new Error('Not OK');
+            const json = await res.json();
+            if (!json.routes || json.routes.length === 0) throw new Error('No routes');
+            return json;
           });
-          
-          if (response.ok) {
-            data = await response.json();
-            if (data.routes && data.routes.length > 0) {
-              console.log('Route calculated successfully');
-              break;
-            }
-          }
-        } catch (serviceError) {
-          console.warn('Route service failed:', serviceError);
-          continue;
+      };
+      
+      try {
+        // Race both services, settle on first success
+        const results = await Promise.allSettled(
+          routeServices.map(url => fetchWithTimeout(url, 10000))
+        );
+        const fulfilled = results.find(r => r.status === 'fulfilled');
+        if (fulfilled && fulfilled.status === 'fulfilled') {
+          data = fulfilled.value;
+          console.log('Route calculated successfully');
         }
+      } catch (e) {
+        console.warn('All route services failed:', e);
       }
       
       if (!data || !data.routes || data.routes.length === 0) {
