@@ -58,15 +58,21 @@ const NavigationModal = ({
   const [navigationSteps, setNavigationSteps] = useState<NavigationStep[]>([]);
   const [routeInfo, setRouteInfo] = useState({ distance: '', duration: '' });
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
+  const [tripStarted, setTripStarted] = useState(false);
+  const [locationReady, setLocationReady] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     if (!isOpen) {
-      // Clean up when modal closes
       if (map.current) {
         map.current.remove();
         map.current = null;
       }
+      // Reset state when closing
+      setTripStarted(false);
+      setLocationReady(false);
+      setNavigationSteps([]);
+      setRouteInfo({ distance: '', duration: '' });
       return;
     }
 
@@ -157,8 +163,8 @@ const NavigationModal = ({
 
         map.current = mapInstance;
 
-        // Get current location and calculate route
-        getCurrentLocationAndCalculateRoute();
+        // Only get current location and show markers - don't calculate route yet
+        getDriverLocation();
 
       } catch (error) {
         console.error('Error initializing navigation map:', error);
@@ -190,7 +196,7 @@ const NavigationModal = ({
     };
   }, [isOpen, customerLocation.lat, customerLocation.lng]);
 
-  const getCurrentLocationAndCalculateRoute = () => {
+  const getDriverLocation = () => {
     if (!navigator.geolocation) {
       toast({
         title: "الموقع غير مدعوم",
@@ -207,6 +213,7 @@ const NavigationModal = ({
           lng: position.coords.longitude
         };
         setCurrentLocation(driverLoc);
+        setLocationReady(true);
 
         if (map.current) {
           // Driver marker (start point)
@@ -231,10 +238,14 @@ const NavigationModal = ({
               <strong>موقعك الحالي</strong>
             </div>
           `);
-        }
 
-        // Calculate route
-        calculateRoute(driverLoc);
+          // Fit map to show both markers
+          const group = new L.FeatureGroup([
+            L.marker([driverLoc.lat, driverLoc.lng]),
+            L.marker([customerLocation.lat, customerLocation.lng])
+          ]);
+          map.current.fitBounds(group.getBounds().pad(0.2));
+        }
       },
       (error) => {
         console.warn('Could not get current location:', error);
@@ -245,6 +256,19 @@ const NavigationModal = ({
         });
       }
     );
+  };
+
+  const startTrip = () => {
+    if (!currentLocation) {
+      toast({
+        title: "الموقع غير متاح",
+        description: "يرجى السماح بالوصول لموقعك أولاً",
+        variant: "destructive"
+      });
+      return;
+    }
+    setTripStarted(true);
+    calculateRoute(currentLocation);
   };
 
   const calculateRoute = async (startLocation: Location) => {
@@ -583,15 +607,41 @@ const NavigationModal = ({
                     ))}
                   </div>
                 </div>
+              ) : !tripStarted ? (
+                <div className="flex items-center justify-center p-8">
+                  <div className="text-center w-full">
+                    <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-5">
+                      <Navigation className="h-10 w-10 text-emerald-600" />
+                    </div>
+                    {locationReady ? (
+                      <>
+                        <p className="text-sm text-muted-foreground font-medium mb-1">تم تحديد موقعك وموقع العميل</p>
+                        <p className="text-xs text-muted-foreground mb-5">اضغط لرسم المسار وبدء التوجه</p>
+                        <Button 
+                          onClick={startTrip}
+                          className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-lg rounded-xl shadow-lg shadow-emerald-200 dark:shadow-none transition-all hover:scale-[1.02]"
+                          size="lg"
+                        >
+                          <Navigation className="h-6 w-6 ml-2" />
+                          ابدأ الرحلة
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-200 border-t-emerald-600 mx-auto mb-3"></div>
+                        <p className="text-sm text-muted-foreground font-medium">جاري تحديد موقعك...</p>
+                        <p className="text-xs text-muted-foreground mt-1">يرجى السماح بالوصول للموقع</p>
+                      </>
+                    )}
+                  </div>
+                </div>
               ) : (
                 <div className="flex items-center justify-center p-10">
                   <div className="text-center">
                     <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
                       <Navigation className="h-8 w-8 text-muted-foreground" />
                     </div>
-                    <p className="text-sm text-muted-foreground font-medium">
-                      {currentLocation ? 'جاري حساب المسار...' : 'امنح إذن الموقع لعرض التعليمات'}
-                    </p>
+                    <p className="text-sm text-muted-foreground font-medium">جاري حساب المسار...</p>
                   </div>
                 </div>
               )}
