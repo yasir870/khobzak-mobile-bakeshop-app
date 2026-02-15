@@ -3,7 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { X, Navigation, MapPin, Clock, Route, Phone, Settings } from 'lucide-react';
+import { X, Navigation, MapPin, Clock, Route, Phone, Settings, Locate } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // Fix for default markers in Leaflet
@@ -679,6 +679,30 @@ const NavigationModal = ({
           <div className="flex-1 relative bg-muted">
             <div ref={mapContainer} className="w-full h-full" />
             
+            {/* My Location Button */}
+            {!isLoading && !mapError && (
+              <button
+                onClick={() => {
+                  if (currentLocation && map.current) {
+                    map.current.flyTo([currentLocation.lat, currentLocation.lng], 17);
+                  } else {
+                    navigator.geolocation?.getCurrentPosition(
+                      (pos) => {
+                        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                        setCurrentLocation(loc);
+                        map.current?.flyTo([loc.lat, loc.lng], 17);
+                      },
+                      () => toast({ title: "تعذر تحديد موقعك", variant: "destructive" })
+                    );
+                  }
+                }}
+                className="absolute bottom-24 left-4 z-[1000] w-11 h-11 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 active:scale-95 transition-all"
+                title="موقعي الحالي"
+              >
+                <Locate className="h-5 w-5 text-blue-600" />
+              </button>
+            )}
+
             {isLoading && !mapError && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-20">
                 <div className="text-center bg-card p-8 rounded-2xl shadow-xl">
