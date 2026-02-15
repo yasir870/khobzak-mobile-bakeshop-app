@@ -53,7 +53,13 @@ const DriverMapModal = ({
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+      return;
+    }
 
     const initMap = async () => {
       try {
@@ -63,11 +69,16 @@ const DriverMapModal = ({
           map.current = null;
         }
 
+        // Clear container
+        if (mapContainer.current) {
+          mapContainer.current.innerHTML = '';
+        }
+
         setIsLoading(true);
         setMapError(null);
 
         // Wait for DOM to be ready
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 150));
 
         if (!mapContainer.current) {
           const error = 'عنصر الخريطة غير موجود';
