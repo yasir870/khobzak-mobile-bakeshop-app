@@ -697,14 +697,12 @@ const NavigationModal = ({
                     );
                   }
                 }}
-                className="absolute bottom-24 left-4 z-[1000] flex flex-col items-center active:scale-95 transition-all"
+                className="absolute bottom-24 left-4 z-[1000] w-12 h-12 bg-black rounded-full shadow-lg flex items-center justify-center hover:bg-gray-900 active:scale-95 transition-all border-2 border-gray-700"
                 title="موقعي الحالي"
               >
-                <div className="bg-white rounded-full w-12 h-12 shadow-lg flex items-center justify-center border border-gray-200">
-                  <svg viewBox="0 0 24 24" className="h-6 w-6 text-blue-600" fill="currentColor">
-                    <path d="M12 2L4 20h16L12 2z" />
-                  </svg>
-                </div>
+                <svg viewBox="0 0 24 24" className="h-6 w-6 text-blue-500 rotate-45 drop-shadow-md" fill="currentColor">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                </svg>
               </button>
             )}
 
