@@ -485,9 +485,9 @@ const NavigationModal = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-full max-h-[100vh] w-full h-full p-0 m-0 overflow-hidden">
-        <div className="relative w-full h-full flex flex-row-reverse">
-          {/* Navigation Panel - Right Side for RTL */}
-          <div className="w-[380px] bg-gradient-to-b from-card to-secondary/30 border-r border-border flex flex-col z-10 shadow-xl">
+        <div className="relative w-full h-full flex flex-col sm:flex-row-reverse">
+          {/* Navigation Panel - Top on mobile, Right Side on desktop */}
+          <div className="w-full sm:w-[380px] max-h-[45vh] sm:max-h-none bg-gradient-to-b from-card to-secondary/30 border-b sm:border-b-0 sm:border-r border-border flex flex-col z-10 shadow-xl overflow-y-auto">
             {/* Header with gradient */}
             <DialogHeader className="border-b border-border bg-gradient-to-r from-primary to-primary/80 p-5">
               <div className="flex items-center justify-between">
@@ -677,7 +677,7 @@ const NavigationModal = ({
           </div>
 
           {/* Map Container */}
-          <div className="flex-1 relative bg-muted">
+          <div className="flex-1 relative bg-muted min-h-[55vh] sm:min-h-0">
             <div ref={mapContainer} className="w-full h-full" />
             
             {/* My Location Button */}
