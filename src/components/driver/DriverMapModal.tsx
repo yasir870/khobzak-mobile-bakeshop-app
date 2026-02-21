@@ -283,52 +283,53 @@ const DriverMapModal = ({
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div className="absolute top-4 right-4 z-30 flex flex-col gap-2">
-                {/* زر التوجه المتقدم */}
-                <Button 
-                  onClick={() => setShowNavigationModal(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium" 
-                  size="sm"
-                >
-                  <Route className="h-4 w-4 ml-1" />
-                  توجه إلى العميل
-                </Button>
-
-                <Button onClick={openInGoogleMaps} variant="outline" className="bg-white/90 hover:bg-white border-green-600 text-green-700 px-3 py-2 rounded-lg shadow-lg text-sm font-medium" size="sm">
-                  <ExternalLink className="h-4 w-4 ml-1" />
-                  جوجل ماب خارجي
-                </Button>
-                
-                <Button onClick={openInOpenStreetMap} variant="outline" className="bg-white/90 hover:bg-white border-blue-600 text-blue-700 px-3 py-2 rounded-lg shadow-lg text-sm font-medium" size="sm">
-                  <ExternalLink className="h-4 w-4 ml-1" />
-                  خريطة خارجية
-                </Button>
-
-                <Button onClick={copyCoordinates} variant="outline" className="bg-white/90 hover:bg-white border-gray-600 text-gray-700 px-3 py-2 rounded-lg shadow-lg text-sm font-medium" size="sm">
-                  <Copy className="h-4 w-4 ml-1" />
-                  نسخ الإحداثيات
-                </Button>
-
-                {customerPhone && (
-                  <Button onClick={() => window.open(`tel:${customerPhone}`, '_self')} className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium" size="sm">
-                    <Phone className="h-4 w-4 ml-1" />
-                    اتصل بالعميل
-                  </Button>
-                )}
-              </div>
-
-              {/* Customer Info Panel */}
-              <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg p-3 z-30 max-w-xs">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <div className="font-medium text-gray-900 text-sm">معلومات العميل</div>
+              {/* Customer Info Panel - top right on mobile */}
+              <div className="absolute top-2 right-2 sm:top-4 sm:left-4 sm:right-auto bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg p-2 sm:p-3 z-30 max-w-[200px] sm:max-w-xs">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
+                  <div className="font-medium text-gray-900 text-xs sm:text-sm">معلومات العميل</div>
                 </div>
-                <div className="text-xs space-y-1">
+                <div className="text-[10px] sm:text-xs space-y-0.5">
                   <div><strong>الاسم:</strong> {customerName}</div>
                   <div><strong>الطلب:</strong> {orderInfo.type} × {orderInfo.quantity}</div>
                   <div><strong>المبلغ:</strong> {orderInfo.totalPrice} د.ع</div>
                   {customerPhone && <div><strong>الهاتف:</strong> {customerPhone}</div>}
+                </div>
+              </div>
+
+              {/* Action Buttons - bottom bar on mobile, side panel on desktop */}
+              <div className="absolute bottom-0 left-0 right-0 sm:bottom-auto sm:top-4 sm:right-4 sm:left-auto z-30 bg-white/95 sm:bg-transparent backdrop-blur-sm sm:backdrop-blur-none border-t sm:border-t-0 border-gray-200 p-2 sm:p-0">
+                <div className="flex flex-wrap gap-1.5 sm:flex-col sm:gap-2 justify-center sm:justify-start">
+                  <Button 
+                    onClick={() => setShowNavigationModal(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg shadow-lg text-xs sm:text-sm font-medium flex-1 sm:flex-none min-w-[calc(50%-4px)] sm:min-w-0" 
+                    size="sm"
+                  >
+                    <Route className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-1" />
+                    توجه للعميل
+                  </Button>
+
+                  <Button onClick={openInGoogleMaps} variant="outline" className="bg-white/90 hover:bg-white border-green-600 text-green-700 px-3 py-1.5 sm:px-3 sm:py-2 rounded-lg shadow-lg text-xs sm:text-sm font-medium flex-1 sm:flex-none min-w-[calc(50%-4px)] sm:min-w-0" size="sm">
+                    <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-1" />
+                    جوجل ماب
+                  </Button>
+                  
+                  <Button onClick={openInOpenStreetMap} variant="outline" className="bg-white/90 hover:bg-white border-blue-600 text-blue-700 px-3 py-1.5 sm:px-3 sm:py-2 rounded-lg shadow-lg text-xs sm:text-sm font-medium flex-1 sm:flex-none min-w-[calc(50%-4px)] sm:min-w-0" size="sm">
+                    <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-1" />
+                    خريطة خارجية
+                  </Button>
+
+                  <Button onClick={copyCoordinates} variant="outline" className="bg-white/90 hover:bg-white border-gray-600 text-gray-700 px-3 py-1.5 sm:px-3 sm:py-2 rounded-lg shadow-lg text-xs sm:text-sm font-medium flex-1 sm:flex-none min-w-[calc(50%-4px)] sm:min-w-0" size="sm">
+                    <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-1" />
+                    نسخ الإحداثيات
+                  </Button>
+
+                  {customerPhone && (
+                    <Button onClick={() => window.open(`tel:${customerPhone}`, '_self')} className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 sm:px-3 sm:py-2 rounded-lg shadow-lg text-xs sm:text-sm font-medium flex-1 sm:flex-none min-w-[calc(50%-4px)] sm:min-w-0" size="sm">
+                      <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-1" />
+                      اتصل بالعميل
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
