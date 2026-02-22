@@ -484,16 +484,17 @@ const NavigationModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-full max-h-[100vh] w-full h-full p-0 m-0 overflow-hidden">
+      {/* Desktop: full screen side-by-side | Mobile: scrollable vertical */}
+      <DialogContent className="max-w-full sm:max-h-[100vh] sm:h-full w-full p-0 m-0 overflow-hidden max-h-[95vh]">
         <div className="relative w-full h-full flex flex-col sm:flex-row-reverse">
-          {/* Navigation Panel - Top on mobile, Right Side on desktop */}
-          <div className="w-full sm:w-[380px] max-h-[45vh] sm:max-h-none bg-gradient-to-b from-card to-secondary/30 border-b sm:border-b-0 sm:border-r border-border flex flex-col z-10 shadow-xl overflow-y-auto">
+          {/* Navigation Panel */}
+          <div className="w-full sm:w-[380px] sm:max-h-none bg-gradient-to-b from-card to-secondary/30 border-b sm:border-b-0 sm:border-r border-border flex flex-col z-10 shadow-xl overflow-y-auto flex-shrink-0">
             {/* Header with gradient */}
-            <DialogHeader className="border-b border-border bg-gradient-to-r from-primary to-primary/80 p-5">
+            <DialogHeader className="border-b border-border bg-gradient-to-r from-primary to-primary/80 p-4 sm:p-5">
               <div className="flex items-center justify-between">
-                <DialogTitle className="text-lg font-bold text-primary-foreground flex items-center gap-3">
-                  <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                    <Route className="h-5 w-5" />
+                <DialogTitle className="text-base sm:text-lg font-bold text-primary-foreground flex items-center gap-2 sm:gap-3">
+                  <div className="p-1.5 sm:p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                    <Route className="h-4 w-4 sm:h-5 sm:w-5" />
                   </div>
                   التوجه إلى العميل
                 </DialogTitle>
@@ -501,36 +502,38 @@ const NavigationModal = ({
                   variant="ghost" 
                   size="icon" 
                   onClick={onClose} 
-                  className="h-9 w-9 text-primary-foreground hover:bg-white/20 rounded-lg"
+                  className="h-8 w-8 sm:h-9 sm:w-9 text-primary-foreground hover:bg-white/20 rounded-lg"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
               </div>
             </DialogHeader>
 
-            {/* Location Indicators */}
-            <div className="p-5 border-b border-border bg-card">
-              <div className="space-y-4">
-                {/* Start Point */}
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <div className="w-4 h-4 bg-emerald-500 rounded-full ring-4 ring-emerald-100 animate-pulse"></div>
-                    <div className="absolute top-6 left-1/2 -translate-x-1/2 w-0.5 h-8 bg-gradient-to-b from-emerald-400 to-primary/60"></div>
-                  </div>
+            {/* Location Indicators - compact on mobile */}
+            <div className="p-3 sm:p-5 border-b border-border bg-card">
+              <div className="flex items-center gap-3 sm:gap-4 sm:flex-col sm:items-stretch">
+                {/* Mobile: horizontal layout | Desktop: vertical */}
+                <div className="flex items-center gap-2 sm:gap-4 flex-1">
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-emerald-500 rounded-full ring-2 sm:ring-4 ring-emerald-100 animate-pulse flex-shrink-0"></div>
                   <div>
-                    <p className="text-xs text-muted-foreground font-medium">نقطة الانطلاق</p>
-                    <p className="text-sm font-semibold text-foreground">موقعك الحالي</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">نقطة الانطلاق</p>
+                    <p className="text-xs sm:text-sm font-semibold text-foreground">موقعك الحالي</p>
                   </div>
                 </div>
                 
-                {/* End Point */}
-                <div className="flex items-center gap-4 pt-4">
-                  <div className="w-4 h-4 bg-red-500 rounded-full ring-4 ring-red-100"></div>
+                {/* Divider */}
+                <div className="hidden sm:block">
+                  <div className="w-0.5 h-6 bg-gradient-to-b from-emerald-400 to-primary/60 mx-auto"></div>
+                </div>
+                <div className="sm:hidden text-muted-foreground">→</div>
+                
+                <div className="flex items-center gap-2 sm:gap-4 flex-1">
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-500 rounded-full ring-2 sm:ring-4 ring-red-100 flex-shrink-0"></div>
                   <div>
-                    <p className="text-xs text-muted-foreground font-medium">الوجهة</p>
-                    <p className="text-sm font-semibold text-foreground">{customerName}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">الوجهة</p>
+                    <p className="text-xs sm:text-sm font-semibold text-foreground">{customerName}</p>
                     {customerPhone && (
-                      <p className="text-xs text-muted-foreground mt-0.5 font-mono">{customerPhone}</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground font-mono">{customerPhone}</p>
                     )}
                   </div>
                 </div>
@@ -538,46 +541,46 @@ const NavigationModal = ({
               
               {/* Route Stats */}
               {routeInfo.distance && (
-                <div className="flex items-center justify-center gap-6 mt-5 pt-5 border-t border-border">
-                  <div className="flex items-center gap-2 bg-primary/10 px-4 py-2.5 rounded-xl">
-                    <MapPin className="h-5 w-5 text-primary" />
-                    <span className="text-base font-bold text-primary">{routeInfo.distance}</span>
+                <div className="flex items-center justify-center gap-3 sm:gap-6 mt-3 sm:mt-5 pt-3 sm:pt-5 border-t border-border">
+                  <div className="flex items-center gap-1.5 sm:gap-2 bg-primary/10 px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-xl">
+                    <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                    <span className="text-sm sm:text-base font-bold text-primary">{routeInfo.distance}</span>
                   </div>
-                  <div className="flex items-center gap-2 bg-primary/10 px-4 py-2.5 rounded-xl">
-                    <Clock className="h-5 w-5 text-primary" />
-                    <span className="text-base font-bold text-primary">{routeInfo.duration}</span>
+                  <div className="flex items-center gap-1.5 sm:gap-2 bg-primary/10 px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-xl">
+                    <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                    <span className="text-sm sm:text-base font-bold text-primary">{routeInfo.duration}</span>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Navigation Steps */}
-            <div className="flex-1 overflow-y-auto">
+            {/* Start Trip / Navigation Steps - compact on mobile */}
+            <div className="overflow-y-auto flex-shrink-0 sm:flex-1">
               {isCalculatingRoute ? (
-                <div className="flex items-center justify-center p-10">
+                <div className="flex items-center justify-center p-6 sm:p-10">
                   <div className="text-center">
                     <div className="relative">
-                      <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary mx-auto"></div>
-                      <Navigation className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
+                      <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-4 border-primary/20 border-t-primary mx-auto"></div>
+                      <Navigation className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                     </div>
-                    <p className="text-sm text-muted-foreground mt-4 font-medium">جاري حساب أفضل مسار...</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-3 sm:mt-4 font-medium">جاري حساب أفضل مسار...</p>
                   </div>
                 </div>
               ) : navigationSteps.length > 0 ? (
-                <div className="p-5">
-                  <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
+                <div className="p-3 sm:p-5">
+                  <h3 className="font-bold text-foreground mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
                     <Settings className="h-4 w-4 text-primary" />
                     تعليمات التوجه
                     <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full mr-auto">
                       {navigationSteps.length} خطوات
                     </span>
                   </h3>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     {navigationSteps.map((step, index) => (
                       <div 
                         key={index} 
                         className={`
-                          flex items-start gap-4 p-4 rounded-xl transition-all duration-200
+                          flex items-start gap-2.5 sm:gap-4 p-2.5 sm:p-4 rounded-xl transition-all duration-200
                           ${index === 0 
                             ? 'bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800' 
                             : index === navigationSteps.length - 1 
@@ -587,21 +590,21 @@ const NavigationModal = ({
                         `}
                       >
                         <div className={`
-                          w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-md
+                          w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-md
                           ${getStepColor(step.type, index, navigationSteps.length)}
                         `}>
                           {getStepIcon(step.type, index)}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className={`
-                            text-sm font-medium mb-1
+                            text-xs sm:text-sm font-medium mb-0.5 sm:mb-1
                             ${index === 0 ? 'text-emerald-700 dark:text-emerald-300' : 
                               index === navigationSteps.length - 1 ? 'text-red-700 dark:text-red-300' : 'text-foreground'}
                           `}>
                             {step.instruction}
                           </p>
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                            <span className="bg-background px-2 py-0.5 rounded-md">{step.distance}</span>
+                          <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-muted-foreground">
+                            <span className="bg-background px-1.5 sm:px-2 py-0.5 rounded-md">{step.distance}</span>
                           </div>
                         </div>
                       </div>
@@ -609,56 +612,56 @@ const NavigationModal = ({
                   </div>
                 </div>
               ) : !tripStarted ? (
-                <div className="flex items-center justify-center p-8">
+                <div className="flex items-center justify-center p-4 sm:p-8">
                   <div className="text-center w-full">
-                    <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-5">
-                      <Navigation className="h-10 w-10 text-emerald-600" />
+                    <div className="w-14 h-14 sm:w-20 sm:h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-5">
+                      <Navigation className="h-7 w-7 sm:h-10 sm:w-10 text-emerald-600" />
                     </div>
                     {locationReady ? (
                       <>
-                        <p className="text-sm text-muted-foreground font-medium mb-1">تم تحديد موقعك وموقع العميل</p>
-                        <p className="text-xs text-muted-foreground mb-5">اضغط لرسم المسار وبدء التوجه</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground font-medium mb-1">تم تحديد موقعك وموقع العميل</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground mb-3 sm:mb-5">اضغط لرسم المسار وبدء التوجه</p>
                         <Button 
                           onClick={startTrip}
-                          className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-lg rounded-xl shadow-lg shadow-emerald-200 dark:shadow-none transition-all hover:scale-[1.02]"
+                          className="w-full h-12 sm:h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base sm:text-lg rounded-xl shadow-lg shadow-emerald-200 dark:shadow-none transition-all hover:scale-[1.02]"
                           size="lg"
                         >
-                          <Navigation className="h-6 w-6 ml-2" />
+                          <Navigation className="h-5 w-5 sm:h-6 sm:w-6 ml-2" />
                           ابدأ الرحلة
                         </Button>
                       </>
                     ) : (
                       <>
-                        <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-200 border-t-emerald-600 mx-auto mb-3"></div>
-                        <p className="text-sm text-muted-foreground font-medium">جاري تحديد موقعك...</p>
-                        <p className="text-xs text-muted-foreground mt-1">يرجى السماح بالوصول للموقع</p>
+                        <div className="animate-spin rounded-full h-7 w-7 sm:h-8 sm:w-8 border-2 border-emerald-200 border-t-emerald-600 mx-auto mb-2 sm:mb-3"></div>
+                        <p className="text-xs sm:text-sm text-muted-foreground font-medium">جاري تحديد موقعك...</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">يرجى السماح بالوصول للموقع</p>
                       </>
                     )}
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-center p-10">
+                <div className="flex items-center justify-center p-6 sm:p-10">
                   <div className="text-center">
-                    <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Navigation className="h-8 w-8 text-muted-foreground" />
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                      <Navigation className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" />
                     </div>
-                    <p className="text-sm text-muted-foreground font-medium">جاري حساب المسار...</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground font-medium">جاري حساب المسار...</p>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Customer Info & Actions */}
-            <div className="border-t border-border p-5 bg-card">
+            {/* Customer Info & Actions - compact on mobile */}
+            <div className="border-t border-border p-3 sm:p-5 bg-card flex-shrink-0">
               {/* Order Summary */}
-              <div className="bg-secondary/50 rounded-xl p-4 mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-muted-foreground">الطلب</span>
-                  <span className="text-sm font-bold text-foreground">{orderInfo.type} × {orderInfo.quantity}</span>
+              <div className="bg-secondary/50 rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
+                <div className="flex items-center justify-between mb-1 sm:mb-2">
+                  <span className="text-xs sm:text-sm text-muted-foreground">الطلب</span>
+                  <span className="text-xs sm:text-sm font-bold text-foreground">{orderInfo.type} × {orderInfo.quantity}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">المبلغ الإجمالي</span>
-                  <span className="text-lg font-bold text-primary">{orderInfo.totalPrice.toLocaleString()} د.ع</span>
+                  <span className="text-xs sm:text-sm text-muted-foreground">المبلغ الإجمالي</span>
+                  <span className="text-base sm:text-lg font-bold text-primary">{orderInfo.totalPrice.toLocaleString()} د.ع</span>
                 </div>
               </div>
               
@@ -666,18 +669,18 @@ const NavigationModal = ({
               {customerPhone && (
                 <Button 
                   onClick={() => window.open(`tel:${customerPhone}`, '_self')} 
-                  className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 dark:shadow-none transition-all hover:scale-[1.02]"
+                  className="w-full h-10 sm:h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 dark:shadow-none transition-all hover:scale-[1.02] text-sm sm:text-base"
                   size="lg"
                 >
-                  <Phone className="h-5 w-5 ml-2" />
+                  <Phone className="h-4 w-4 sm:h-5 sm:w-5 ml-2" />
                   اتصل بالعميل
                 </Button>
               )}
             </div>
           </div>
 
-          {/* Map Container */}
-          <div className="flex-1 relative bg-muted min-h-[55vh] sm:min-h-0">
+          {/* Map Container - fixed height on mobile, flex on desktop */}
+          <div className="relative bg-muted h-[300px] sm:h-auto sm:flex-1 flex-shrink-0">
             <div ref={mapContainer} className="w-full h-full" />
             
             {/* My Location Button */}
@@ -697,10 +700,10 @@ const NavigationModal = ({
                     );
                   }
                 }}
-                className="absolute bottom-24 left-4 z-[1000] w-12 h-12 bg-black rounded-full shadow-lg flex items-center justify-center hover:bg-gray-900 active:scale-95 transition-all border-2 border-gray-700"
+                className="absolute bottom-20 left-4 z-[1000] w-10 h-10 sm:w-12 sm:h-12 bg-black rounded-full shadow-lg flex items-center justify-center hover:bg-gray-900 active:scale-95 transition-all border-2 border-gray-700"
                 title="موقعي الحالي"
               >
-                <svg viewBox="0 0 24 24" className="h-6 w-6 text-blue-500 rotate-45 drop-shadow-md" fill="currentColor">
+                <svg viewBox="0 0 24 24" className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500 rotate-45 drop-shadow-md" fill="currentColor">
                   <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
                 </svg>
               </button>
@@ -708,24 +711,24 @@ const NavigationModal = ({
 
             {isLoading && !mapError && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-20">
-                <div className="text-center bg-card p-8 rounded-2xl shadow-xl">
+                <div className="text-center bg-card p-6 sm:p-8 rounded-2xl shadow-xl">
                   <div className="relative">
-                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20 border-t-primary mx-auto"></div>
-                    <MapPin className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-primary" />
+                    <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-4 border-primary/20 border-t-primary mx-auto"></div>
+                    <MapPin className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </div>
-                  <p className="text-foreground font-medium mt-4">جاري تحميل الخريطة...</p>
+                  <p className="text-foreground font-medium mt-3 sm:mt-4 text-sm sm:text-base">جاري تحميل الخريطة...</p>
                 </div>
               </div>
             )}
 
             {mapError && (
               <div className="absolute inset-0 flex items-center justify-center bg-destructive/5 z-20">
-                <div className="text-center p-8 bg-card rounded-2xl shadow-xl max-w-sm mx-4">
-                  <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <X className="h-8 w-8 text-destructive" />
+                <div className="text-center p-6 sm:p-8 bg-card rounded-2xl shadow-xl max-w-sm mx-4">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <X className="h-6 w-6 sm:h-8 sm:w-8 text-destructive" />
                   </div>
-                  <p className="text-destructive font-bold mb-2">خطأ في الخريطة</p>
-                  <p className="text-sm text-muted-foreground mb-4">{mapError}</p>
+                  <p className="text-destructive font-bold mb-2 text-sm sm:text-base">خطأ في الخريطة</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">{mapError}</p>
                   <Button 
                     onClick={() => window.location.reload()}
                     className="bg-primary hover:bg-primary/90"
