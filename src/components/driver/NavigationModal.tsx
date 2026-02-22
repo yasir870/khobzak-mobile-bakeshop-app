@@ -485,10 +485,10 @@ const NavigationModal = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       {/* Desktop: full screen side-by-side | Mobile: scrollable vertical */}
-      <DialogContent className="max-w-full sm:max-h-[100vh] sm:h-full w-full p-0 m-0 overflow-hidden max-h-[95vh]">
-        <div className="relative w-full h-full flex flex-col sm:flex-row-reverse">
+      <DialogContent className="max-w-full sm:max-h-[100vh] sm:h-full w-full p-0 m-0 max-h-[95vh] overflow-y-auto sm:overflow-hidden">
+        <div className="relative w-full h-full flex flex-col-reverse sm:flex-row-reverse">
           {/* Navigation Panel */}
-          <div className="w-full sm:w-[380px] sm:max-h-none bg-gradient-to-b from-card to-secondary/30 border-b sm:border-b-0 sm:border-r border-border flex flex-col z-10 shadow-xl overflow-y-auto flex-shrink-0">
+          <div className="w-full sm:w-[380px] sm:max-h-none bg-gradient-to-b from-card to-secondary/30 border-t sm:border-t-0 sm:border-b-0 sm:border-r border-border flex flex-col z-10 shadow-xl overflow-y-auto flex-shrink-0">
             {/* Header with gradient */}
             <DialogHeader className="border-b border-border bg-gradient-to-r from-primary to-primary/80 p-4 sm:p-5">
               <div className="flex items-center justify-between">
@@ -568,47 +568,77 @@ const NavigationModal = ({
                 </div>
               ) : navigationSteps.length > 0 ? (
                 <div className="p-3 sm:p-5">
-                  <h3 className="font-bold text-foreground mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
-                    <Settings className="h-4 w-4 text-primary" />
-                    تعليمات التوجه
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full mr-auto">
-                      {navigationSteps.length} خطوات
-                    </span>
-                  </h3>
-                  <div className="space-y-1.5 sm:space-y-2">
-                    {navigationSteps.map((step, index) => (
-                      <div 
-                        key={index} 
-                        className={`
-                          flex items-start gap-2.5 sm:gap-4 p-2.5 sm:p-4 rounded-xl transition-all duration-200
-                          ${index === 0 
-                            ? 'bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800' 
-                            : index === navigationSteps.length - 1 
-                              ? 'bg-red-50 border border-red-200 dark:bg-red-950/30 dark:border-red-800'
-                              : 'bg-secondary/50 hover:bg-secondary border border-transparent hover:border-border'
-                          }
-                        `}
-                      >
-                        <div className={`
-                          w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-md
-                          ${getStepColor(step.type, index, navigationSteps.length)}
-                        `}>
-                          {getStepIcon(step.type, index)}
+                  {/* Mobile: only show start and arrive steps + distance */}
+                  <div className="sm:hidden space-y-2">
+                    {/* Start step */}
+                    {navigationSteps.length > 0 && (
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white bg-emerald-500 shadow-md flex-shrink-0">
+                          <Navigation className="h-4 w-4" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`
-                            text-xs sm:text-sm font-medium mb-0.5 sm:mb-1
-                            ${index === 0 ? 'text-emerald-700 dark:text-emerald-300' : 
-                              index === navigationSteps.length - 1 ? 'text-red-700 dark:text-red-300' : 'text-foreground'}
-                          `}>
-                            {step.instruction}
-                          </p>
-                          <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-muted-foreground">
-                            <span className="bg-background px-1.5 sm:px-2 py-0.5 rounded-md">{step.distance}</span>
-                          </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">ابدأ الرحلة</p>
+                          <p className="text-xs text-muted-foreground">{routeInfo.distance}</p>
                         </div>
                       </div>
-                    ))}
+                    )}
+                    {/* Arrive step */}
+                    {navigationSteps.length > 1 && (
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-red-50 border border-red-200 dark:bg-red-950/30 dark:border-red-800">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white bg-red-500 shadow-md flex-shrink-0">
+                          <MapPin className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-red-700 dark:text-red-300">وصلت إلى الوجهة</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Desktop: show all steps */}
+                  <div className="hidden sm:block">
+                    <h3 className="font-bold text-foreground mb-4 flex items-center gap-2 text-base">
+                      <Settings className="h-4 w-4 text-primary" />
+                      تعليمات التوجه
+                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full mr-auto">
+                        {navigationSteps.length} خطوات
+                      </span>
+                    </h3>
+                    <div className="space-y-2">
+                      {navigationSteps.map((step, index) => (
+                        <div 
+                          key={index} 
+                          className={`
+                            flex items-start gap-4 p-4 rounded-xl transition-all duration-200
+                            ${index === 0 
+                              ? 'bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800' 
+                              : index === navigationSteps.length - 1 
+                                ? 'bg-red-50 border border-red-200 dark:bg-red-950/30 dark:border-red-800'
+                                : 'bg-secondary/50 hover:bg-secondary border border-transparent hover:border-border'
+                            }
+                          `}
+                        >
+                          <div className={`
+                            w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-md
+                            ${getStepColor(step.type, index, navigationSteps.length)}
+                          `}>
+                            {getStepIcon(step.type, index)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`
+                              text-sm font-medium mb-1
+                              ${index === 0 ? 'text-emerald-700 dark:text-emerald-300' : 
+                                index === navigationSteps.length - 1 ? 'text-red-700 dark:text-red-300' : 'text-foreground'}
+                            `}>
+                              {step.instruction}
+                            </p>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                              <span className="bg-background px-2 py-0.5 rounded-md">{step.distance}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               ) : !tripStarted ? (
