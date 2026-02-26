@@ -38,6 +38,39 @@ export type Database = {
         }
         Relationships: []
       }
+      delivery_codes: {
+        Row: {
+          code: string
+          created_at: string
+          customer_phone: string
+          driver_id: number
+          expires_at: string
+          id: number
+          is_used: boolean
+          order_id: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          customer_phone: string
+          driver_id: number
+          expires_at?: string
+          id?: number
+          is_used?: boolean
+          order_id: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          customer_phone?: string
+          driver_id?: number
+          expires_at?: string
+          id?: number
+          is_used?: boolean
+          order_id?: number
+        }
+        Relationships: []
+      }
       driver_locations: {
         Row: {
           accuracy: number | null
@@ -107,6 +140,39 @@ export type Database = {
           name?: string
           phone?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          customer_phone: string
+          id: number
+          is_read: boolean
+          message: string
+          order_id: number
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          customer_phone: string
+          id?: number
+          is_read?: boolean
+          message: string
+          order_id: number
+          title: string
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          customer_phone?: string
+          id?: number
+          is_read?: boolean
+          message?: string
+          order_id?: number
+          title?: string
+          type?: string
         }
         Relationships: []
       }

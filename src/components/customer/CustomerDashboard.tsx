@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, User, Clock, MessageSquare, LogOut, MapPin, Truck } from 'lucide-react';
+import { ShoppingCart, User, Clock, MessageSquare, LogOut, MapPin, Truck, Bell } from 'lucide-react';
+import NotificationsPage from './NotificationsPage';
 import ProductDetailModal from './ProductDetailModal';
 import CartPage from './CartPage';
 import ProfilePage from './ProfilePage';
@@ -57,6 +58,8 @@ const CustomerDashboard = ({
   const [showTrackingModal, setShowTrackingModal] = useState(false);
   const [selectedOrderForTracking, setSelectedOrderForTracking] = useState<any>(null);
   const [showActiveOrdersModal, setShowActiveOrdersModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   // عدل صور المنتجات من Emoji إلى روابط الصور الحقيقية التي رفعتها على Supabase
   const breadTypes: BreadProduct[] = [{
@@ -130,6 +133,27 @@ const CustomerDashboard = ({
     if (savedLocation) {
       setUserLocation(JSON.parse(savedLocation));
     }
+  }, []);
+
+  // Fetch unread notifications count
+  useEffect(() => {
+    const fetchUnread = async () => {
+      const { count } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_read', false);
+      setUnreadNotifications(count || 0);
+    };
+    fetchUnread();
+
+    const channel = supabase
+      .channel('notif-count')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+        fetchUnread();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   // حفظ cart في localStorage كلما تغيرت
@@ -240,6 +264,9 @@ const CustomerDashboard = ({
   };
 
   // تمرير cartItems و setCartItems إلى CartPage ليستطيع التغيير (حذف، زيادة، ..)
+  if (showNotifications) {
+    return <NotificationsPage onBack={() => setShowNotifications(false)} />;
+  }
   if (showCart) {
     return <CartPage onBack={() => setShowCart(false)} cartItems={cartItems} setCartItems={setCartItems} />;
   }
@@ -289,6 +316,21 @@ const CustomerDashboard = ({
               )}
             </Button>
             
+            {/* Notifications Button */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="relative bg-amber-600 hover:bg-amber-700 text-white border-amber-600 hover:border-amber-700 shadow-lg px-3 py-2 rounded-full transition-all duration-300 hover:scale-105" 
+              onClick={() => setShowNotifications(true)}
+            >
+              <Bell className="h-4 w-4" />
+              {unreadNotifications > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold shadow-lg animate-pulse">
+                  {unreadNotifications}
+                </Badge>
+              )}
+            </Button>
+
             {/* Cart Button */}
             <Button 
               variant="outline" 

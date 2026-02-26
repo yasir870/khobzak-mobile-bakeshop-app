@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, MapPin, Phone, Clock, Archive, Truck, RefreshCw, Map, CheckCircle, Navigation } from 'lucide-react';
+import { LogOut, MapPin, Phone, Clock, Archive, Truck, RefreshCw, Map, CheckCircle, Navigation, Key } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -57,6 +58,12 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [completingOrderId, setCompletingOrderId] = useState<number | null>(null);
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [confirmationCode, setConfirmationCode] = useState('');
+  const [codeInput, setCodeInput] = useState('');
+  const [codeError, setCodeError] = useState('');
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
   const [selectedOrderForMap, setSelectedOrderForMap] = useState<Order | null>(null);
   const { toast } = useToast();
@@ -214,8 +221,64 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
         
         console.log('📝 Update data for reject:', updateData);
       } else if (action === 'deliver') {
+        // Generate confirmation code and send to customer
         setCompletingOrderId(orderId);
-        setShowCompletionModal(true);
+        setIsSendingCode(true);
+        setCodeInput('');
+        setCodeError('');
+        
+        try {
+          const order = orders.find(o => o.id === orderId);
+          if (!order) throw new Error('الطلب غير موجود');
+
+          // Generate 4-digit code
+          const code = Math.floor(1000 + Math.random() * 9000).toString();
+          setConfirmationCode(code);
+
+          // Get driver ID
+          const { data: driverId } = await supabase.rpc('get_driver_id_from_auth');
+          if (!driverId) throw new Error('فشل في الحصول على معرف السائق');
+
+          // Save code to delivery_codes table
+          const { error: codeError } = await supabase
+            .from('delivery_codes')
+            .insert({
+              order_id: orderId,
+              code,
+              driver_id: driverId,
+              customer_phone: order.customer_phone,
+            });
+
+          if (codeError) throw codeError;
+
+          // Send notification to customer
+          const { error: notifError } = await supabase
+            .from('notifications')
+            .insert({
+              customer_phone: order.customer_phone,
+              order_id: orderId,
+              title: '🔑 رمز تأكيد التسليم',
+              message: `رمز التأكيد لطلبك #${orderId} هو: ${code} - أعطِ هذا الرمز للسائق عند الاستلام`,
+              type: 'delivery_code',
+            });
+
+          if (notifError) throw notifError;
+
+          setShowCodeModal(true);
+          toast({
+            title: 'تم إرسال رمز التأكيد',
+            description: `تم إرسال رمز التأكيد إلى الزبون`,
+          });
+        } catch (err) {
+          console.error('Error generating delivery code:', err);
+          toast({
+            title: 'خطأ',
+            description: 'فشل في إنشاء رمز التأكيد',
+            variant: 'destructive',
+          });
+        } finally {
+          setIsSendingCode(false);
+        }
         return;
       }
 
@@ -273,10 +336,38 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
     }
   };
 
-  const handleDeliveryCompletion = async () => {
-    if (!completingOrderId) return;
+  const handleVerifyCode = async () => {
+    if (!completingOrderId || !codeInput) return;
+    
+    setIsVerifyingCode(true);
+    setCodeError('');
 
     try {
+      // Verify the code matches
+      const { data: codeData, error: fetchErr } = await supabase
+        .from('delivery_codes')
+        .select('*')
+        .eq('order_id', completingOrderId)
+        .eq('is_used', false)
+        .single();
+
+      if (fetchErr || !codeData) {
+        setCodeError('لم يتم العثور على رمز التأكيد');
+        return;
+      }
+
+      if (codeData.code !== codeInput) {
+        setCodeError('رمز التأكيد غير صحيح');
+        return;
+      }
+
+      // Mark code as used
+      await supabase
+        .from('delivery_codes')
+        .update({ is_used: true })
+        .eq('id', codeData.id);
+
+      // Mark order as delivered
       const { error } = await supabase
         .from('orders')
         .update({
@@ -287,21 +378,39 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
 
       if (error) throw error;
 
+      // Send delivery confirmed notification
+      const order = orders.find(o => o.id === completingOrderId);
+      if (order) {
+        await supabase
+          .from('notifications')
+          .insert({
+            customer_phone: order.customer_phone,
+            order_id: completingOrderId,
+            title: '✅ تم تسليم طلبك',
+            message: `تم تسليم طلبك #${completingOrderId} بنجاح. شكراً لاستخدامك خبزك!`,
+            type: 'delivered',
+          });
+      }
+
       await fetchOrders();
-      setShowCompletionModal(false);
+      setShowCodeModal(false);
       setCompletingOrderId(null);
+      setCodeInput('');
+      setConfirmationCode('');
       
       toast({
         title: "تم إكمال التوصيل",
-        description: "تم تسليم الطلب بنجاح",
+        description: "تم تأكيد التسليم بنجاح",
       });
     } catch (error) {
-      console.error('Error completing delivery:', error);
+      console.error('Error verifying code:', error);
       toast({
-        title: "خطأ في إكمال التوصيل",
-        description: "حدث خطأ أثناء إكمال التوصيل",
+        title: "خطأ في التحقق",
+        description: "حدث خطأ أثناء التحقق من الرمز",
         variant: "destructive",
       });
+    } finally {
+      setIsVerifyingCode(false);
     }
   };
 
@@ -600,25 +709,75 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
           </TabsContent>
         </Tabs>
 
-        {/* Completion Confirmation Modal */}
-        <Dialog open={showCompletionModal} onOpenChange={setShowCompletionModal}>
-          <DialogContent>
+        {/* Code Verification Modal */}
+        <Dialog open={showCodeModal} onOpenChange={(open) => {
+          if (!open) {
+            setShowCodeModal(false);
+            setCodeInput('');
+            setCodeError('');
+          }
+        }}>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>تأكيد التسليم</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <Key className="h-5 w-5 text-primary" />
+                تأكيد التسليم - طلب #{completingOrderId}
+              </DialogTitle>
               <DialogDescription>
-                هل تؤكد تسليم الطلب رقم #{completingOrderId}؟
+                تم إرسال رمز تأكيد مكون من 4 أرقام إلى الزبون عبر الإشعارات. اطلب الرمز من الزبون وأدخله هنا.
               </DialogDescription>
             </DialogHeader>
-            <div className="flex justify-end space-x-2 rtl:space-x-reverse mt-4">
-              <Button
-                variant="outline"
-                onClick={() => setShowCompletionModal(false)}
-              >
-                إلغاء
-              </Button>
-              <Button onClick={handleDeliveryCompletion}>
-                تأكيد التسليم
-              </Button>
+            <div className="space-y-4 mt-2">
+              <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-center">
+                <p className="text-sm text-amber-700 font-medium">اطلب من الزبون فتح الإشعارات في التطبيق</p>
+                <p className="text-xs text-amber-600 mt-1">الرمز موجود في إشعارات الزبون</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">أدخل رمز التأكيد:</label>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  placeholder="_ _ _ _"
+                  value={codeInput}
+                  onChange={(e) => {
+                    setCodeInput(e.target.value.replace(/\D/g, '').slice(0, 4));
+                    setCodeError('');
+                  }}
+                  className="text-center text-2xl font-bold tracking-[0.5em] h-14"
+                  dir="ltr"
+                />
+                {codeError && (
+                  <p className="text-sm text-destructive mt-2 text-center">{codeError}</p>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowCodeModal(false);
+                    setCodeInput('');
+                    setCodeError('');
+                  }}
+                  className="flex-1"
+                >
+                  إلغاء
+                </Button>
+                <Button
+                  onClick={handleVerifyCode}
+                  disabled={codeInput.length !== 4 || isVerifyingCode}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
+                  {isVerifyingCode ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4 ml-2" />
+                      تأكيد
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
