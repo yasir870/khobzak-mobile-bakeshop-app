@@ -260,8 +260,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      // Ignore AuthSessionMissingError - session already cleared
+      if (error && error.message !== 'Auth session missing!') throw error;
 
       // Clear any localStorage data from old insecure system
       localStorage.removeItem('customerData');
