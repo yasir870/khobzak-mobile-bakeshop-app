@@ -714,7 +714,7 @@ const NavigationModal = ({
             <div ref={mapContainer} className="w-full h-full" />
             
             {/* My Location Button */}
-            {!isLoading && !mapError && (
+            {!mapError && (
               <button
                 onClick={() => {
                   if (currentLocation && map.current) {
@@ -730,12 +730,13 @@ const NavigationModal = ({
                     );
                   }
                 }}
-                className="absolute bottom-20 left-4 z-[1000] w-10 h-10 sm:w-12 sm:h-12 bg-black rounded-full shadow-lg flex items-center justify-center hover:bg-gray-900 active:scale-95 transition-all border-2 border-gray-700"
+                disabled={isLoading}
+                aria-label="موقعي الحالي"
+                className="absolute left-4 z-[1200] h-11 w-11 sm:h-12 sm:w-12 rounded-full border border-border bg-background text-primary shadow-lg flex items-center justify-center transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{ bottom: 'max(1rem, env(safe-area-inset-bottom))' }}
                 title="موقعي الحالي"
               >
-                <svg viewBox="0 0 24 24" className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500 rotate-45 drop-shadow-md" fill="currentColor">
-                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-                </svg>
+                <Locate className="h-5 w-5 sm:h-6 sm:w-6" />
               </button>
             )}
 
