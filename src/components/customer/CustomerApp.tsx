@@ -80,7 +80,7 @@ const CustomerApp = ({ onLogout }: CustomerAppProps) => {
           onBack={() => setSelectedBakeryId(null)} 
         />
       ) : (
-        <BakeriesListPage onSelectBakery={(id) => setSelectedBakeryId(id)} />
+        <BakeriesListPage onSelectBakery={(id) => setSelectedBakeryId(id)} onLogout={onLogout} />
       )}
       <LocationPermissionDialog 
         isOpen={showLocationDialog}
