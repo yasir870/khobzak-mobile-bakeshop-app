@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, User, Clock, MessageSquare, LogOut, MapPin, Truck, Bell } from 'lucide-react';
+import { ShoppingCart, User, Clock, MessageSquare, LogOut, MapPin, Truck, Bell, ArrowRight } from 'lucide-react';
 import NotificationsPage from './NotificationsPage';
 import ProductDetailModal from './ProductDetailModal';
 import CartPage from './CartPage';
@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface CustomerDashboardProps {
   onLogout: () => void;
+  onBack?: () => void;
 }
 export interface BreadProduct {
   id: number;
@@ -39,7 +40,8 @@ export interface CartProduct extends BreadProduct {
   quantity: number;
 }
 const CustomerDashboard = ({
-  onLogout
+  onLogout,
+  onBack
 }: CustomerDashboardProps) => {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -279,6 +281,11 @@ const CustomerDashboard = ({
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-amber-200">
         <div className="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center gap-3">
+            {onBack && (
+              <Button variant="ghost" size="sm" onClick={onBack} className="p-1">
+                <ArrowRight className="h-5 w-5" />
+              </Button>
+            )}
             {/* Logo Image - متحركة مع hover */}
             <span
               className="w-12 h-12 md:w-16 md:h-16 bg-[url('https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//A_logo_on_a_grid-patterned_beige_background_featur.png')] bg-cover bg-center rounded-full border-2 border-amber-300 shadow transition-all duration-300 hover:scale-110 hover:w-20 hover:h-20"
