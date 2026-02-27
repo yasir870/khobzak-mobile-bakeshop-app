@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import CustomerDashboard from './CustomerDashboard';
+import BakeriesListPage from './BakeriesListPage';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import LocationPermissionDialog from './LocationPermissionDialog';
@@ -11,12 +12,13 @@ interface CustomerAppProps {
 const CustomerApp = ({ onLogout }: CustomerAppProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showLocationDialog, setShowLocationDialog] = useState(false);
+  const [selectedBakeryId, setSelectedBakeryId] = useState<number | null>(null);
   const { toast } = useToast();
   const { user, getUserType, isLoading: authLoading } = useAuth();
 
   useEffect(() => {
     const initializeCustomer = async () => {
-      if (authLoading) return; // Wait for auth to load
+      if (authLoading) return;
       
       if (!user) {
         toast({
@@ -39,7 +41,6 @@ const CustomerApp = ({ onLogout }: CustomerAppProps) => {
         return;
       }
 
-      // Check location permission
       if (navigator.geolocation) {
         navigator.permissions.query({ name: 'geolocation' }).then((result) => {
           if (result.state === 'prompt') {
@@ -73,7 +74,14 @@ const CustomerApp = ({ onLogout }: CustomerAppProps) => {
 
   return (
     <>
-      <CustomerDashboard onLogout={onLogout} />
+      {selectedBakeryId ? (
+        <CustomerDashboard 
+          onLogout={onLogout} 
+          onBack={() => setSelectedBakeryId(null)} 
+        />
+      ) : (
+        <BakeriesListPage onSelectBakery={(id) => setSelectedBakeryId(id)} />
+      )}
       <LocationPermissionDialog 
         isOpen={showLocationDialog}
         onClose={() => setShowLocationDialog(false)}
