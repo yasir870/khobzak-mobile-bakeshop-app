@@ -1,11 +1,11 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { X, Plus, Minus } from 'lucide-react';
+import { X, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { BreadProduct } from './CustomerDashboard';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useTranslation } from '@/context/LanguageContext';
+import { Separator } from '@/components/ui/separator';
 
 interface ProductDetailModalProps {
   product: BreadProduct;
@@ -29,127 +29,144 @@ const ProductDetailModal = ({
   };
 
   const handleAddToCart = () => {
-    console.log('Adding to cart:', { productId: product.id, quantity });
     onAddToCart(quantity);
   };
 
-  // هل النص رابط صورة؟
   const isImageUrl = (str: string) => str.startsWith('http://') || str.startsWith('https://') || str.startsWith('/');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-lg max-h-[90vh] overflow-hidden">
-        {/* زر الإغلاق الثابت */}
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={onClose} 
-          className="absolute right-2 top-2 z-50 bg-white hover:bg-gray-100 text-gray-800 font-bold rounded-full w-10 h-10 p-0 shadow-lg border"
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/40 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="relative w-full max-w-md bg-card rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden max-h-[85vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Handle bar (mobile) */}
+        <div className="flex justify-center pt-2 pb-1 sm:hidden">
+          <div className="w-10 h-1 rounded-full bg-border" />
+        </div>
+
+        {/* Close button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-card/80 backdrop-blur-sm text-muted-foreground hover:text-foreground"
         >
-          <X className="h-5 w-5" />
+          <X className="h-4 w-4" />
         </Button>
-        
-        <Card className="w-full h-full bg-white shadow-2xl border">
-          <div className="h-full max-h-[90vh] overflow-y-auto">
-            <CardHeader className="pt-16 pb-4">
-              {/* صور المنتج كسلايدر حديث */}
-              <div className="text-center mb-4">
-                <Carousel>
-                  <CarouselContent>
-                    {product.images.map((img, i) => (
-                      <CarouselItem key={i}>
-                        <div className="flex flex-col items-center">
-                          {isImageUrl(img) ? (
-                            <img 
-                              src={img} 
-                              alt={product.name} 
-                              className="h-44 w-44 object-cover rounded-xl mb-2 border shadow-lg" 
-                            />
-                          ) : (
-                            <div className="text-6xl mb-2">{img}</div>
-                          )}
-                        </div>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  {product.images.length > 1 && (
-                    <>
-                      <CarouselPrevious className="left-2 top-1/2 -translate-y-1/2 z-10 bg-white/90 border hover:bg-gray-50" />
-                      <CarouselNext className="right-2 top-1/2 -translate-y-1/2 z-10 bg-white/90 border hover:bg-gray-50" />
-                    </>
-                  )}
-                </Carousel>
-                <div className="flex justify-center gap-2 mt-3">
-                  {product.images.map((_, idx) => (
-                    <span key={idx} className="block w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm" />
-                  ))}
-                </div>
-              </div>
 
-              <CardTitle className="text-2xl text-amber-800 text-center font-bold">{product.name}</CardTitle>
-              <p className="text-amber-600 font-medium text-center text-lg">{product.nameAr}</p>
-              <div className="text-center">
-                <span className="inline-block bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-medium">
-                  {product.category}
-                </span>
+        {/* Scrollable content */}
+        <div className="overflow-y-auto flex-1">
+          {/* Image */}
+          <div className="px-4 pt-4 pb-2">
+            <Carousel>
+              <CarouselContent>
+                {product.images.map((img, i) => (
+                  <CarouselItem key={i}>
+                    <div className="flex justify-center">
+                      {isImageUrl(img) ? (
+                        <img
+                          src={img}
+                          alt={product.name}
+                          className="h-40 w-40 object-cover rounded-2xl border border-border shadow-sm"
+                        />
+                      ) : (
+                        <div className="text-6xl">{img}</div>
+                      )}
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              {product.images.length > 1 && (
+                <>
+                  <CarouselPrevious className="left-2 bg-card/90 border-border h-7 w-7" />
+                  <CarouselNext className="right-2 bg-card/90 border-border h-7 w-7" />
+                </>
+              )}
+            </Carousel>
+            {product.images.length > 1 && (
+              <div className="flex justify-center gap-1.5 mt-2">
+                {product.images.map((_, idx) => (
+                  <span key={idx} className="block w-1.5 h-1.5 rounded-full bg-primary" />
+                ))}
               </div>
-            </CardHeader>
-
-            <CardContent className="space-y-6 px-6 pb-6">
-              {/* الوصف التفصيلي */}
-              <div className="bg-amber-50 rounded-xl p-4">
-                <h3 className="font-semibold text-amber-800 mb-3 text-lg">{t('description')}</h3>
-                <p className="text-amber-700 leading-relaxed">{product.detailedDescription}</p>
-              </div>
-
-              {/* السعر */}
-              <div className="text-center bg-amber-100 rounded-xl p-4">
-                <span className="text-3xl font-bold text-amber-700">{product.price} IQD</span>
-              </div>
-
-              {/* اختيار الكمية */}
-              <div className="flex items-center justify-center space-x-4 bg-amber-50 rounded-xl p-4">
-                <span className="font-semibold text-amber-800 text-lg">{t('quantity')}:</span>
-                <div className="flex items-center space-x-3">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleQuantityChange(-1)} 
-                    disabled={quantity <= 1}
-                    className="h-10 w-10 rounded-full border-amber-300 hover:bg-amber-100"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="w-16 text-center font-bold text-xl text-amber-800 bg-white rounded-lg py-2 border">{quantity}</span>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleQuantityChange(1)}
-                    className="h-10 w-10 rounded-full border-amber-300 hover:bg-amber-100"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* السعر الإجمالي */}
-              <div className="text-center bg-green-50 rounded-xl p-4">
-                <p className="text-gray-700">
-                  {t('total')}: <span className="font-bold text-2xl text-green-600">{product.price * quantity} IQD</span>
-                </p>
-              </div>
-
-              {/* زر إضافة للسلة */}
-              <Button 
-                onClick={handleAddToCart} 
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold text-lg py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]" 
-                size="lg"
-              >
-                {t('addQuantityToCart', { quantity })}
-              </Button>
-            </CardContent>
+            )}
           </div>
-        </Card>
+
+          {/* Title & Category */}
+          <div className="px-4 pb-3 text-center space-y-1">
+            <h2 className="text-lg font-bold text-foreground">{product.name}</h2>
+            <span className="inline-block px-3 py-1 rounded-full text-[11px] font-medium bg-secondary text-muted-foreground">
+              {product.category}
+            </span>
+          </div>
+
+          <Separator className="mx-4" />
+
+          {/* Description */}
+          <div className="px-4 py-3">
+            <h4 className="text-xs font-semibold text-muted-foreground mb-1">{t('description')}</h4>
+            <p className="text-sm text-foreground leading-relaxed">{product.detailedDescription}</p>
+          </div>
+
+          <Separator className="mx-4" />
+
+          {/* Info rows */}
+          <div className="px-4 py-3 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-muted-foreground">السعر</span>
+              <span className="text-sm font-bold text-primary">{product.price} د.ع</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-muted-foreground">الكمية</span>
+              <span className="text-sm font-medium text-foreground">{product.pieces} {product.pieces === 1 ? "قطعة" : "قطع"}</span>
+            </div>
+            {product.notes && (
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-muted-foreground">ملاحظات</span>
+                <span className="text-sm text-muted-foreground">{product.notes}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Fixed bottom: quantity + add to cart */}
+        <div className="border-t border-border bg-card px-4 py-3 space-y-3">
+          {/* Quantity selector */}
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-foreground">{t('quantity')}</span>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handleQuantityChange(-1)}
+                disabled={quantity <= 1}
+                className="h-8 w-8 rounded-full border-border"
+              >
+                <Minus className="h-3.5 w-3.5" />
+              </Button>
+              <span className="w-8 text-center font-bold text-foreground">{quantity}</span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handleQuantityChange(1)}
+                className="h-8 w-8 rounded-full border-border"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Add to cart button */}
+          <Button
+            onClick={handleAddToCart}
+            className="w-full h-11 rounded-xl font-semibold text-sm gap-2"
+            size="lg"
+          >
+            <ShoppingBag className="h-4 w-4" />
+            {t('addQuantityToCart', { quantity })} — {product.price * quantity} د.ع
+          </Button>
+        </div>
       </div>
     </div>
   );
