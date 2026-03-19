@@ -1,6 +1,7 @@
 
 import BreadCard from "./BreadCard";
 import { BreadProduct } from "./CustomerDashboard";
+import { Separator } from "@/components/ui/separator";
 
 interface BreadMenuListProps {
   breadTypes: BreadProduct[];
@@ -10,10 +11,13 @@ interface BreadMenuListProps {
 const BreadMenuList = ({ breadTypes, onProductClick }: BreadMenuListProps) => {
   return (
     <div className="mb-8">
-      <h3 className="text-xl font-bold text-amber-800 mb-4">أنواع الخبز المتوفرة</h3>
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        {breadTypes.map((bread) => (
-          <BreadCard key={bread.id} bread={bread} onClick={onProductClick} />
+      <h3 className="text-base font-bold text-foreground mb-2 px-4">أنواع الخبز المتوفرة</h3>
+      <div className="bg-card rounded-xl border border-border overflow-hidden">
+        {breadTypes.map((bread, index) => (
+          <div key={bread.id}>
+            <BreadCard bread={bread} onClick={onProductClick} />
+            {index < breadTypes.length - 1 && <Separator className="mx-4" />}
+          </div>
         ))}
       </div>
     </div>
