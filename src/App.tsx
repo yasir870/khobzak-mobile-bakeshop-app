@@ -15,6 +15,7 @@ import { AuthProvider } from "./context/AuthContext";
 
 const queryClient = new QueryClient();
 
+// Application root with providers
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
