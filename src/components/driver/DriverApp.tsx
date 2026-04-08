@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,45 +13,7 @@ import { Info } from 'lucide-react';
 import { useDriverLocation } from '@/hooks/useDriverLocation';
 import { useAuth } from '@/context/AuthContext';
 import DriverMapModal from './DriverMapModal';
-
-type OrderStatus = 'pending' | 'accepted' | 'on_the_way' | 'in-transit' | 'delivered' | 'received' | 'rejected';
-
-interface Order {
-  id: number;
-  customer_id: number;
-  driver_id: number | null;
-  type: string;
-  quantity: number;
-  total_price: number;
-  notes: string | null;
-  status: OrderStatus;
-  address: string;
-  customer_phone: string;
-  delivered_at: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-interface Customer {
-  id: number;
-  name: string;
-  phone: string;
-}
-
-interface DriverAppProps {
-  onLogout: () => void;
-}
-
-const STATUS_LABELS: Record<OrderStatus, string> = {
-  pending: "بانتظار القبول",
-  accepted: "مقبول",
-  on_the_way: "في الطريق",
-  "in-transit": "قيد التوصيل",
-  delivered: "تم التسليم",
-  received: "تم الاستلام",
-  rejected: "مرفوض",
-};
-
+...
 const DriverApp = ({ onLogout }: DriverAppProps) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -67,7 +29,9 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
   const [showMapModal, setShowMapModal] = useState(false);
   const [selectedOrderForMap, setSelectedOrderForMap] = useState<Order | null>(null);
   const { toast } = useToast();
-  const { user, getUserType, isLoading: authLoading } = useAuth();
+  const { user, session, getUserType, isLoading: authLoading } = useAuth();
+  const activeUser = user ?? session?.user ?? null;
+  const logoutTriggered = useRef(false);
   
   const {
     isTracking,
@@ -75,15 +39,21 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
     startTracking,
     stopTracking,
   } = useDriverLocation({ 
-    driverId: user?.id || '', 
+    driverId: activeUser?.id || '', 
     isActive: true 
   });
 
   useEffect(() => {
     const initializeDriver = async () => {
-      if (authLoading) return; // Wait for auth to load
+      if (authLoading) return;
+
+      if (!activeUser && session) {
+        return;
+      }
       
-      if (!user) {
+      if (!activeUser && !session) {
+        if (logoutTriggered.current) return;
+        logoutTriggered.current = true;
         toast({
           title: 'جلسة منتهية',
           description: 'انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.',
@@ -92,6 +62,8 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
         setTimeout(() => onLogout(), 2000);
         return;
       }
+
+      logoutTriggered.current = false;
 
       const userType = getUserType();
       if (userType !== 'driver') {
@@ -110,19 +82,18 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
     };
 
     initializeDriver();
-  }, [user, authLoading, getUserType, onLogout, toast]);
+  }, [activeUser, session, authLoading, getUserType, onLogout, toast]);
 
   // Real-time subscription for new orders
   useEffect(() => {
-    if (!user) return;
+    if (!activeUser) return;
 
-    // Subscribe to orders table changes
     const channel = supabase
       .channel('orders-changes')
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          event: '*',
           schema: 'public',
           table: 'orders'
         },
@@ -130,20 +101,17 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
           console.log('Order change received:', payload);
           
           if (payload.eventType === 'INSERT') {
-            // New order added
             toast({
               title: "طلب جديد!",
               description: `تم إضافة طلب جديد #${payload.new.id}`,
             });
           } else if (payload.eventType === 'UPDATE' && payload.new.status === 'received') {
-            // Order received by customer
             toast({
               title: "تم استلام الطلب ✅",
               description: `تم تأكيد استلام الطلب #${payload.new.id} من قبل العميل`,
             });
           }
           
-          // Refresh orders list
           fetchOrders();
         }
       )
@@ -152,7 +120,7 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, toast]);
+  }, [activeUser, toast]);
 
   const fetchOrders = async () => {
     try {

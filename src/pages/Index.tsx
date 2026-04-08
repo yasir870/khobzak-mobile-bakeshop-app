@@ -13,11 +13,12 @@ import { useAuth } from '@/context/AuthContext';
 const Index = () => {
   const [selectedRole, setSelectedRole] = useState<'customer' | 'driver' | null>(null);
   const { t } = useTranslation();
-  const { user, getUserType, isLoading, signOut } = useAuth();
+  const { user, session, getUserType, isLoading, signOut } = useAuth();
+  const activeUser = user ?? session?.user ?? null;
 
   // Auto-redirect authenticated users to their app
   useEffect(() => {
-    if (!isLoading && user) {
+    if (!isLoading && activeUser) {
       const userType = getUserType();
       if (userType === 'customer') {
         setSelectedRole('customer');
@@ -25,7 +26,7 @@ const Index = () => {
         setSelectedRole('driver');
       }
     }
-  }, [user, isLoading, getUserType]);
+  }, [activeUser, isLoading, getUserType]);
 
   const handleRoleSelect = (role: 'customer' | 'driver') => {
     setSelectedRole(role);
@@ -48,7 +49,7 @@ const Index = () => {
   }
 
   // If authenticated, show the appropriate app
-  if (user) {
+  if (activeUser) {
     const userType = getUserType();
     return userType === 'customer' ? (
       <CustomerApp onLogout={handleLogout} />
