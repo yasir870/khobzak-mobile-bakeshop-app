@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,26 +30,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session);
-        // Ignore null sessions unless it's an explicit sign-out
-        // This prevents token refresh errors (500) from clearing valid sessions
-        if (!session && event !== 'SIGNED_OUT') {
+      (event, nextSession) => {
+        console.log('Auth state changed:', event, nextSession);
+
+        if (!nextSession && event !== 'SIGNED_OUT') {
           console.log('Ignoring null session for event:', event);
           return;
         }
-        setSession(session);
-        setUser(session?.user ?? null);
+
+        setSession(nextSession);
+        setUser(nextSession?.user ?? null);
         setIsLoading(false);
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      setSession(existingSession);
+      setUser(existingSession?.user ?? null);
       setIsLoading(false);
     });
 
@@ -82,7 +79,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const normalizedPhone = normalizeIraqiPhone(phone);
       const emails: string[] = [];
       
-      // If user type is specified, search only in that table
       if (userType === 'driver') {
         const { data: driverData, error: driverError } = await supabase
           .from('drivers')
@@ -102,7 +98,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           emails.push(...customerData.map(c => c.email));
         }
       } else {
-        // Search in both tables if no user type specified
         const { data: driverData } = await supabase
           .from('drivers')
           .select('email')
@@ -148,7 +143,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) throw error;
 
-      // Insert user data into appropriate table for legacy compatibility
       if (data.user) {
         const userData = {
           name,
@@ -176,8 +170,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       toast({
-        title: "تم إنشاء الحساب بنجاح",
-        description: "تم تسجيلك بنجاح في التطبيق",
+        title: 'تم إنشاء الحساب بنجاح',
+        description: 'تم تسجيلك بنجاح في التطبيق',
       });
 
       return { error: null };
@@ -189,10 +183,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (emailOrPhone: string, password: string, userType?: 'customer' | 'driver') => {
     try {
-      let email = emailOrPhone;
       let authResult;
 
-      // If it's a phone number, find the associated email
       if (!isValidEmail(emailOrPhone)) {
         const normalizedPhone = normalizeIraqiPhone(emailOrPhone);
         if (isValidIraqiPhone(normalizedPhone)) {
@@ -201,7 +193,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             throw new Error('لم يتم العثور على حساب مرتبط بهذا الرقم');
           }
           
-          // Try each email until one works
           let loginSuccessful = false;
           let lastError: any = null;
           
@@ -232,19 +223,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } else {
         authResult = await supabase.auth.signInWithPassword({
-          email,
+          email: emailOrPhone,
           password,
         });
 
         if (authResult.error) throw authResult.error;
       }
 
-      // Verify user type matches the requested role
       if (userType && authResult?.data?.user) {
         const loggedInUserType = authResult.data.user.user_metadata?.user_type;
         
         if (loggedInUserType !== userType) {
-          // Sign out immediately if wrong user type
           await supabase.auth.signOut();
           
           const roleText = userType === 'customer' ? 'العملاء' : 'السائقين';
@@ -253,8 +242,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       toast({
-        title: "تم تسجيل الدخول بنجاح",
-        description: "مرحباً بك في التطبيق",
+        title: 'تم تسجيل الدخول بنجاح',
+        description: 'مرحباً بك في التطبيق',
       });
 
       return { error: null };
@@ -267,10 +256,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut({ scope: 'local' });
-      // Ignore AuthSessionMissingError - session already cleared
       if (error && error.message !== 'Auth session missing!') throw error;
 
-      // Clear any localStorage data from old insecure system
       localStorage.removeItem('customerData');
       localStorage.removeItem('driverData');
       localStorage.removeItem('customerId');
@@ -281,22 +268,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('khobzak_customer_credentials');
 
       toast({
-        title: "تم تسجيل الخروج",
-        description: "تم تسجيل خروجك بنجاح",
+        title: 'تم تسجيل الخروج',
+        description: 'تم تسجيل خروجك بنجاح',
       });
     } catch (error) {
       console.error('SignOut error:', error);
       toast({
-        title: "خطأ في تسجيل الخروج",
-        description: "حدث خطأ أثناء تسجيل الخروج",
-        variant: "destructive",
+        title: 'خطأ في تسجيل الخروج',
+        description: 'حدث خطأ أثناء تسجيل الخروج',
+        variant: 'destructive',
       });
     }
   };
 
   const getUserType = (): string | null => {
-    if (!user?.user_metadata) return null;
-    return user.user_metadata.user_type || 'customer';
+    const authUser = user ?? session?.user ?? null;
+    if (!authUser?.user_metadata) return null;
+    return authUser.user_metadata.user_type || 'customer';
   };
 
   const value: AuthContextType = {

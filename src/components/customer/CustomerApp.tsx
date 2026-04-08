@@ -14,16 +14,20 @@ const CustomerApp = ({ onLogout }: CustomerAppProps) => {
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [selectedBakeryId, setSelectedBakeryId] = useState<number | null>(null);
   const { toast } = useToast();
-  const { user, getUserType, isLoading: authLoading } = useAuth();
+  const { user, session, getUserType, isLoading: authLoading } = useAuth();
+  const activeUser = user ?? session?.user ?? null;
 
   const logoutTriggered = useRef(false);
 
   useEffect(() => {
     const initializeCustomer = async () => {
       if (authLoading) return;
+
+      if (!activeUser && session) {
+        return;
+      }
       
-      if (!user) {
-        // Prevent duplicate logout triggers from rapid auth state changes
+      if (!activeUser && !session) {
         if (logoutTriggered.current) return;
         logoutTriggered.current = true;
         toast({
@@ -61,7 +65,7 @@ const CustomerApp = ({ onLogout }: CustomerAppProps) => {
     };
 
     initializeCustomer();
-  }, [user, authLoading, getUserType, onLogout, toast]);
+  }, [activeUser, session, authLoading, getUserType, onLogout, toast]);
 
   const handleLocationPermissionGranted = () => {
     setShowLocationDialog(false);
