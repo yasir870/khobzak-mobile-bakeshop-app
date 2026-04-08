@@ -35,6 +35,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session);
+        // Ignore null sessions unless it's an explicit sign-out
+        // This prevents token refresh errors (500) from clearing valid sessions
+        if (!session && event !== 'SIGNED_OUT') {
+          console.log('Ignoring null session for event:', event);
+          return;
+        }
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);

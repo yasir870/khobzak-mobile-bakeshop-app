@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import CustomerDashboard from './CustomerDashboard';
 import BakeriesListPage from './BakeriesListPage';
 import { useAuth } from '@/context/AuthContext';
@@ -16,11 +16,16 @@ const CustomerApp = ({ onLogout }: CustomerAppProps) => {
   const { toast } = useToast();
   const { user, getUserType, isLoading: authLoading } = useAuth();
 
+  const logoutTriggered = useRef(false);
+
   useEffect(() => {
     const initializeCustomer = async () => {
       if (authLoading) return;
       
       if (!user) {
+        // Prevent duplicate logout triggers from rapid auth state changes
+        if (logoutTriggered.current) return;
+        logoutTriggered.current = true;
         toast({
           title: 'جلسة منتهية',
           description: 'انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.',
@@ -29,6 +34,7 @@ const CustomerApp = ({ onLogout }: CustomerAppProps) => {
         setTimeout(() => onLogout(), 2000);
         return;
       }
+      logoutTriggered.current = false;
 
       const userType = getUserType();
       if (userType !== 'customer') {
