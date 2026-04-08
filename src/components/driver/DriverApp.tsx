@@ -13,7 +13,45 @@ import { Info } from 'lucide-react';
 import { useDriverLocation } from '@/hooks/useDriverLocation';
 import { useAuth } from '@/context/AuthContext';
 import DriverMapModal from './DriverMapModal';
-...
+
+type OrderStatus = 'pending' | 'accepted' | 'on_the_way' | 'in-transit' | 'delivered' | 'received' | 'rejected';
+
+interface Order {
+  id: number;
+  customer_id: number;
+  driver_id: number | null;
+  type: string;
+  quantity: number;
+  total_price: number;
+  notes: string | null;
+  status: OrderStatus;
+  address: string;
+  customer_phone: string;
+  delivered_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Customer {
+  id: number;
+  name: string;
+  phone: string;
+}
+
+interface DriverAppProps {
+  onLogout: () => void;
+}
+
+const STATUS_LABELS: Record<OrderStatus, string> = {
+  pending: 'بانتظار القبول',
+  accepted: 'مقبول',
+  on_the_way: 'في الطريق',
+  'in-transit': 'قيد التوصيل',
+  delivered: 'تم التسليم',
+  received: 'تم الاستلام',
+  rejected: 'مرفوض',
+};
+
 const DriverApp = ({ onLogout }: DriverAppProps) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -38,20 +76,16 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
     error: locationError,
     startTracking,
     stopTracking,
-  } = useDriverLocation({ 
-    driverId: activeUser?.id || '', 
-    isActive: true 
+  } = useDriverLocation({
+    driverId: activeUser?.id || '',
+    isActive: true,
   });
 
   useEffect(() => {
     const initializeDriver = async () => {
       if (authLoading) return;
 
-      if (!activeUser && session) {
-        return;
-      }
-      
-      if (!activeUser && !session) {
+      if (!activeUser) {
         if (logoutTriggered.current) return;
         logoutTriggered.current = true;
         toast({
@@ -82,9 +116,8 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
     };
 
     initializeDriver();
-  }, [activeUser, session, authLoading, getUserType, onLogout, toast]);
+  }, [activeUser, authLoading, getUserType, onLogout, toast]);
 
-  // Real-time subscription for new orders
   useEffect(() => {
     if (!activeUser) return;
 
@@ -95,29 +128,32 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
         {
           event: '*',
           schema: 'public',
-          table: 'orders'
+          table: 'orders',
         },
         (payload) => {
           console.log('Order change received:', payload);
-          
+
           if (payload.eventType === 'INSERT') {
             toast({
-              title: "طلب جديد!",
+              title: 'طلب جديد!',
               description: `تم إضافة طلب جديد #${payload.new.id}`,
             });
           } else if (payload.eventType === 'UPDATE' && payload.new.status === 'received') {
             toast({
-              title: "تم استلام الطلب ✅",
+              title: 'تم استلام الطلب ✅',
               description: `تم تأكيد استلام الطلب #${payload.new.id} من قبل العميل`,
             });
           }
-          
+
           fetchOrders();
         }
       )
       .subscribe();
 
     return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeUser, toast]);
       supabase.removeChannel(channel);
     };
   }, [activeUser, toast]);
