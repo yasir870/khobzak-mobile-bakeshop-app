@@ -154,9 +154,6 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
       supabase.removeChannel(channel);
     };
   }, [activeUser, toast]);
-      supabase.removeChannel(channel);
-    };
-  }, [activeUser, toast]);
 
   const fetchOrders = async () => {
     try {
