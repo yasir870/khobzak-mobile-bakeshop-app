@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import CheckCustomersPage from "@/pages/admin/CheckCustomers";
 import TestDriversPage from "@/components/admin/TestDriversPage";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
 import About from "./pages/About";
 import Privacy from "./pages/Privacy";
 import { LanguageProvider } from "./context/LanguageContext";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/admin/test-drivers" element={<TestDriversPage />} />
             <Route path="/admin/check-customers" element={<CheckCustomersPage />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
