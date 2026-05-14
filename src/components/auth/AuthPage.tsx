@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
 interface AuthPageProps {
-  role: 'customer' | 'driver';
+  role: 'customer' | 'driver' | 'bakery';
   onBack: () => void;
 }
 
@@ -130,9 +130,9 @@ const AuthPage: React.FC<AuthPageProps> = ({ role, onBack }) => {
       let result;
       
       if (isLogin) {
-        result = await signIn(emailOrPhone, password, role);
+        result = await signIn(emailOrPhone, password, role as any);
       } else {
-        result = await signUp(emailOrPhone, password, normalizeIraqiPhone(phone), name, role);
+        result = await signUp(emailOrPhone, password, normalizeIraqiPhone(phone), name, role as any);
       }
 
       if (result.error) {
@@ -158,7 +158,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ role, onBack }) => {
   };
 
   const getRoleText = () => {
-    return role === 'customer' ? 'الزبون' : 'السائق';
+    return role === 'customer' ? 'الزبون' : role === 'driver' ? 'السائق' : 'المخبز';
   };
 
   return (
