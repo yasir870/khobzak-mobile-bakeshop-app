@@ -14,6 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
+      bakeries: {
+        Row: {
+          address: string | null
+          approved: boolean
+          created_at: string
+          email: string | null
+          id: number
+          logo_url: string | null
+          name: string
+          owner_user_id: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          approved?: boolean
+          created_at?: string
+          email?: string | null
+          id?: number
+          logo_url?: string | null
+          name: string
+          owner_user_id?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          approved?: boolean
+          created_at?: string
+          email?: string | null
+          id?: number
+          logo_url?: string | null
+          name?: string
+          owner_user_id?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bread_products: {
+        Row: {
+          available: boolean
+          bakery_id: number
+          created_at: string
+          description: string | null
+          id: number
+          image_url: string | null
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          available?: boolean
+          bakery_id: number
+          created_at?: string
+          description?: string | null
+          id?: number
+          image_url?: string | null
+          name: string
+          price?: number
+          updated_at?: string
+        }
+        Update: {
+          available?: boolean
+          bakery_id?: number
+          created_at?: string
+          description?: string | null
+          id?: number
+          image_url?: string | null
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bread_products_bakery_id_fkey"
+            columns: ["bakery_id"]
+            isOneToOne: false
+            referencedRelation: "bakeries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           created_at: string
