@@ -6,12 +6,13 @@ import { Users, Truck } from 'lucide-react';
 import AuthPage from '@/components/auth/AuthPage';
 import CustomerApp from '@/components/customer/CustomerApp';
 import DriverApp from '@/components/driver/DriverApp';
+import BakeryApp from '@/components/bakery/BakeryApp';
 import { useTranslation } from '@/context/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useAuth } from '@/context/AuthContext';
 
 const Index = () => {
-  const [selectedRole, setSelectedRole] = useState<'customer' | 'driver' | null>(null);
+  const [selectedRole, setSelectedRole] = useState<'customer' | 'driver' | 'bakery' | null>(null);
   const { t } = useTranslation();
   const { user, session, getUserType, isLoading, signOut } = useAuth();
   const activeUser = user ?? session?.user ?? null;
@@ -24,11 +25,13 @@ const Index = () => {
         setSelectedRole('customer');
       } else if (userType === 'driver') {
         setSelectedRole('driver');
+      } else if (userType === 'bakery') {
+        setSelectedRole('bakery');
       }
     }
   }, [activeUser, isLoading, getUserType]);
 
-  const handleRoleSelect = (role: 'customer' | 'driver') => {
+  const handleRoleSelect = (role: 'customer' | 'driver' | 'bakery') => {
     setSelectedRole(role);
   };
 
@@ -55,6 +58,8 @@ const Index = () => {
       <CustomerApp onLogout={handleLogout} />
     ) : userType === 'driver' ? (
       <DriverApp onLogout={handleLogout} />
+    ) : userType === 'bakery' ? (
+      <BakeryApp onLogout={handleLogout} />
     ) : null;
   }
 
@@ -114,6 +119,19 @@ const Index = () => {
               <div className="text-left rtl:text-right">
                 <div>{t('driver')}</div>
                 <div className="text-sm opacity-75 font-normal">{t('driverDescription')}</div>
+              </div>
+            </Button>
+
+            <Button
+              onClick={() => handleRoleSelect('bakery')}
+              variant="secondary"
+              className="w-full h-16 font-semibold text-lg transition-all duration-200 hover:scale-[1.02]"
+              size="lg"
+            >
+              <Users className="mr-3 h-6 w-6" />
+              <div className="text-left rtl:text-right">
+                <div>المخبز</div>
+                <div className="text-sm opacity-75 font-normal">دخول لإدارة المخبز والمنتجات</div>
               </div>
             </Button>
             
