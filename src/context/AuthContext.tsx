@@ -74,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const isValidEmail = (str: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
 
-  const findUserByPhone = async (phone: string, userType?: 'customer' | 'driver'): Promise<string[]> => {
+  const findUserByPhone = async (phone: string, userType?: 'customer' | 'driver' | 'bakery' | 'admin'): Promise<string[]> => {
     try {
       const normalizedPhone = normalizeIraqiPhone(phone);
       const emails: string[] = [];
