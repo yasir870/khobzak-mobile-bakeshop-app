@@ -8,7 +8,7 @@ interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   signUp: (email: string, password: string, phone: string, name: string, userType: 'customer' | 'driver') => Promise<{ error: Error | null }>;
-  signIn: (emailOrPhone: string, password: string, userType?: 'customer' | 'driver') => Promise<{ error: Error | null }>;
+  signIn: (emailOrPhone: string, password: string, userType?: 'customer' | 'driver' | 'bakery' | 'admin') => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   getUserType: () => string | null;
 }
@@ -74,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const isValidEmail = (str: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
 
-  const findUserByPhone = async (phone: string, userType?: 'customer' | 'driver'): Promise<string[]> => {
+  const findUserByPhone = async (phone: string, userType?: 'customer' | 'driver' | 'bakery' | 'admin'): Promise<string[]> => {
     try {
       const normalizedPhone = normalizeIraqiPhone(phone);
       const emails: string[] = [];
@@ -181,7 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signIn = async (emailOrPhone: string, password: string, userType?: 'customer' | 'driver') => {
+  const signIn = async (emailOrPhone: string, password: string, userType?: 'customer' | 'driver' | 'bakery' | 'admin') => {
     try {
       let authResult;
 
@@ -236,7 +236,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (loggedInUserType !== userType) {
           await supabase.auth.signOut();
           
-          const roleText = userType === 'customer' ? 'العملاء' : 'السائقين';
+          const roleText = userType === 'customer' ? 'العملاء' : userType === 'driver' ? 'السائقين' : userType === 'bakery' ? 'المخابز' : 'المدراء';
           throw new Error(`هذا الحساب غير مسجل كـ${roleText}. يرجى استخدام صفحة تسجيل الدخول المناسبة.`);
         }
       }
