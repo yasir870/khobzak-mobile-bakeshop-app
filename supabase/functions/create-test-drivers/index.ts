@@ -134,12 +134,11 @@ serve(async (req) => {
             .delete()
             .eq('email', driver.email);
           
-          // Insert into test_credentials table
+          // Insert into test_credentials table (passwords are NOT stored)
           const { error: credError } = await supabaseAdmin
             .from('test_credentials')
             .insert({
               email: driver.email,
-              password: driver.password,
               phone: driver.phone,
               name: driver.name,
               user_type: 'driver'

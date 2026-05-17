@@ -349,40 +349,12 @@ export type Database = {
         }
         Relationships: []
       }
-      temp_auth_users: {
-        Row: {
-          created_at: string | null
-          email: string
-          name: string | null
-          password: string | null
-          phone: string | null
-          user_type: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          email: string
-          name?: string | null
-          password?: string | null
-          phone?: string | null
-          user_type?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          email?: string
-          name?: string | null
-          password?: string | null
-          phone?: string | null
-          user_type?: string | null
-        }
-        Relationships: []
-      }
       test_credentials: {
         Row: {
           created_at: string | null
           email: string
           id: number
           name: string
-          password: string
           phone: string
           user_type: string
         }
@@ -391,7 +363,6 @@ export type Database = {
           email: string
           id?: number
           name: string
-          password: string
           phone: string
           user_type: string
         }
@@ -400,7 +371,6 @@ export type Database = {
           email?: string
           id?: number
           name?: string
-          password?: string
           phone?: string
           user_type?: string
         }
