@@ -28,7 +28,7 @@ interface BakeriesListPageProps {
   onLogout: () => void;
 }
 
-const bakeries: Bakery[] = [
+const staticBakeries: Bakery[] = [
   {
     id: 1,
     name: 'مخبز خبزك الذهبي',
@@ -82,6 +82,38 @@ const BakeriesListPage = ({ onSelectBakery, onLogout }: BakeriesListPageProps) =
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [dbBakeries, setDbBakeries] = useState<Bakery[]>([]);
+
+  useEffect(() => {
+    const fetchBakeries = async () => {
+      const { data } = await supabase
+        .from('bakeries')
+        .select('id, name, logo_url, approved')
+        .eq('approved', true)
+        .order('created_at', { ascending: false });
+      if (data) {
+        setDbBakeries(
+          data.map((b: any) => ({
+            id: 10000 + Number(b.id),
+            name: b.name,
+            image:
+              b.logo_url ||
+              'https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//A_logo_on_a_grid-patterned_beige_background_featur.png',
+            rating: 4.5,
+            deliveryTime: '20-35',
+            deliveryPrice: 1500,
+            badge: 'جديد',
+          }))
+        );
+      }
+    };
+    fetchBakeries();
+    const ch = supabase
+      .channel('bakeries-list')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bakeries' }, fetchBakeries)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
 
   useEffect(() => {
     const fetchUnread = async () => {
@@ -110,7 +142,7 @@ const BakeriesListPage = ({ onSelectBakery, onLogout }: BakeriesListPageProps) =
     { key: 'fastest', label: 'الأسرع' },
   ];
 
-  const filteredBakeries = bakeries
+  const filteredBakeries = [...dbBakeries, ...staticBakeries]
     .filter((b) => b.name.includes(searchQuery))
     .sort((a, b) => {
       if (activeFilter === 'top_rated') return b.rating - a.rating;
