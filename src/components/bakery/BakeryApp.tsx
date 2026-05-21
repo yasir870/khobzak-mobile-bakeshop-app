@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Upload, Trash2, Plus, Image as ImageIcon } from 'lucide-react';
+import { LogOut, Upload, Trash2, Plus, Image as ImageIcon, Settings, Package, ClipboardList } from 'lucide-react';
 
 interface Bakery {
   id: number;
@@ -30,6 +31,17 @@ interface BreadProduct {
   available: boolean;
 }
 
+interface Order {
+  id: number;
+  type: string;
+  quantity: number;
+  total_price: number;
+  status: string;
+  address: string;
+  customer_phone: string;
+  created_at: string;
+}
+
 interface Props { onLogout: () => void }
 
 const BakeryApp = ({ onLogout }: Props) => {
@@ -38,6 +50,7 @@ const BakeryApp = ({ onLogout }: Props) => {
   const { toast } = useToast();
   const [bakery, setBakery] = useState<Bakery | null>(null);
   const [products, setProducts] = useState<BreadProduct[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: '', description: '', price: '' });
@@ -53,12 +66,12 @@ const BakeryApp = ({ onLogout }: Props) => {
       .maybeSingle();
     setBakery(b as any);
     if (b) {
-      const { data: p } = await supabase
-        .from('bread_products')
-        .select('*')
-        .eq('bakery_id', b.id)
-        .order('created_at', { ascending: false });
+      const [{ data: p }, { data: o }] = await Promise.all([
+        supabase.from('bread_products').select('*').eq('bakery_id', b.id).order('created_at', { ascending: false }),
+        supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(50),
+      ]);
       setProducts((p as any) || []);
+      setOrders((o as any) || []);
     }
     setLoading(false);
   };
@@ -147,65 +160,98 @@ const BakeryApp = ({ onLogout }: Props) => {
           </div>
         </div>
 
-        <Card>
-          <CardHeader><CardTitle>معلومات المخبز</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              {bakery.logo_url ? (
-                <img src={bakery.logo_url} alt="logo" className="w-20 h-20 rounded-full border object-cover" />
-              ) : (
-                <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center"><ImageIcon className="h-8 w-8 text-muted-foreground" /></div>
-              )}
-              <label className="cursor-pointer">
-                <Button type="button" variant="outline" size="sm" disabled={uploading} asChild>
-                  <span><Upload className="ml-2 h-4 w-4" />{uploading ? 'جاري الرفع...' : 'تغيير الشعار'}</span>
-                </Button>
-                <input type="file" accept="image/*" hidden onChange={handleLogoUpload} />
-              </label>
-            </div>
-            <div className="grid md:grid-cols-2 gap-3">
-              <div><Label>اسم المخبز</Label><Input value={bakery.name} onChange={e => setBakery({ ...bakery, name: e.target.value })} /></div>
-              <div><Label>الهاتف</Label><Input value={bakery.phone || ''} onChange={e => setBakery({ ...bakery, phone: e.target.value })} /></div>
-              <div className="md:col-span-2"><Label>العنوان</Label><Input value={bakery.address || ''} onChange={e => setBakery({ ...bakery, address: e.target.value })} /></div>
-            </div>
-            <Button onClick={saveBakery}>حفظ</Button>
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="orders" className="w-full">
+          <TabsList className="grid grid-cols-3 w-full">
+            <TabsTrigger value="orders"><ClipboardList className="ml-2 h-4 w-4" />الطلبات ({orders.length})</TabsTrigger>
+            <TabsTrigger value="products"><Package className="ml-2 h-4 w-4" />المنتجات</TabsTrigger>
+            <TabsTrigger value="settings"><Settings className="ml-2 h-4 w-4" />الإعدادات</TabsTrigger>
+          </TabsList>
 
-        <Card>
-          <CardHeader><CardTitle>إضافة منتج خبز جديد</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid md:grid-cols-3 gap-3">
-              <Input placeholder="اسم المنتج" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} />
-              <Input placeholder="السعر (د.ع)" type="number" value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} />
-              <Input placeholder="الوصف" value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} />
-            </div>
-            <Button onClick={addProduct}><Plus className="ml-2 h-4 w-4" />إضافة</Button>
-          </CardContent>
-        </Card>
+          <TabsContent value="orders">
+            <Card>
+              <CardHeader><CardTitle>الطلبات الواردة</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                {orders.map(o => (
+                  <div key={o.id} className="border rounded-lg p-3 flex justify-between items-center">
+                    <div>
+                      <div className="font-semibold">طلب #{o.id} · {o.type} × {o.quantity}</div>
+                      <div className="text-sm text-muted-foreground">{o.address} · {o.customer_phone}</div>
+                    </div>
+                    <div className="text-left">
+                      <Badge>{o.status}</Badge>
+                      <div className="text-sm mt-1">{o.total_price} د.ع</div>
+                    </div>
+                  </div>
+                ))}
+                {orders.length === 0 && <p className="text-muted-foreground text-center py-6">لا توجد طلبات حالياً</p>}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        <Card>
-          <CardHeader><CardTitle>المنتجات ({products.length})</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            {products.map(p => (
-              <div key={p.id} className="flex items-center gap-3 border rounded-lg p-3">
-                {p.image_url ? <img src={p.image_url} className="w-16 h-16 rounded object-cover" /> :
-                  <div className="w-16 h-16 rounded bg-muted flex items-center justify-center"><ImageIcon className="h-6 w-6 text-muted-foreground" /></div>}
-                <div className="flex-1">
-                  <div className="font-semibold">{p.name}</div>
-                  <div className="text-sm text-muted-foreground">{p.price} د.ع · {p.available ? 'متاح' : 'غير متاح'}</div>
+          <TabsContent value="products" className="space-y-4">
+            <Card>
+              <CardHeader><CardTitle>إضافة منتج خبز جديد</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid md:grid-cols-3 gap-3">
+                  <Input placeholder="اسم المنتج" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} />
+                  <Input placeholder="السعر (د.ع)" type="number" value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} />
+                  <Input placeholder="الوصف" value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} />
                 </div>
-                <label className="cursor-pointer">
-                  <Button type="button" variant="outline" size="sm" asChild><span><Upload className="h-4 w-4" /></span></Button>
-                  <input type="file" accept="image/*" hidden onChange={e => handleProductImage(e, p)} />
-                </label>
-                <Button variant="outline" size="sm" onClick={() => toggleAvail(p)}>{p.available ? 'إخفاء' : 'إظهار'}</Button>
-                <Button variant="destructive" size="sm" onClick={() => deleteProduct(p.id)}><Trash2 className="h-4 w-4" /></Button>
-              </div>
-            ))}
-            {products.length === 0 && <p className="text-muted-foreground text-center py-6">لا توجد منتجات بعد</p>}
-          </CardContent>
-        </Card>
+                <Button onClick={addProduct}><Plus className="ml-2 h-4 w-4" />إضافة</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle>المنتجات ({products.length})</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                {products.map(p => (
+                  <div key={p.id} className="flex items-center gap-3 border rounded-lg p-3">
+                    {p.image_url ? <img src={p.image_url} className="w-16 h-16 rounded object-cover" /> :
+                      <div className="w-16 h-16 rounded bg-muted flex items-center justify-center"><ImageIcon className="h-6 w-6 text-muted-foreground" /></div>}
+                    <div className="flex-1">
+                      <div className="font-semibold">{p.name}</div>
+                      <div className="text-sm text-muted-foreground">{p.price} د.ع · {p.available ? 'متاح' : 'غير متاح'}</div>
+                    </div>
+                    <label className="cursor-pointer">
+                      <Button type="button" variant="outline" size="sm" asChild><span><Upload className="h-4 w-4" /></span></Button>
+                      <input type="file" accept="image/*" hidden onChange={e => handleProductImage(e, p)} />
+                    </label>
+                    <Button variant="outline" size="sm" onClick={() => toggleAvail(p)}>{p.available ? 'إخفاء' : 'إظهار'}</Button>
+                    <Button variant="destructive" size="sm" onClick={() => deleteProduct(p.id)}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
+                ))}
+                {products.length === 0 && <p className="text-muted-foreground text-center py-6">لا توجد منتجات بعد</p>}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <Card>
+              <CardHeader><CardTitle>معلومات المخبز</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-4">
+                  {bakery.logo_url ? (
+                    <img src={bakery.logo_url} alt="logo" className="w-20 h-20 rounded-full border object-cover" />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center"><ImageIcon className="h-8 w-8 text-muted-foreground" /></div>
+                  )}
+                  <label className="cursor-pointer">
+                    <Button type="button" variant="outline" size="sm" disabled={uploading} asChild>
+                      <span><Upload className="ml-2 h-4 w-4" />{uploading ? 'جاري الرفع...' : 'تغيير الشعار'}</span>
+                    </Button>
+                    <input type="file" accept="image/*" hidden onChange={handleLogoUpload} />
+                  </label>
+                </div>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <div><Label>اسم المخبز</Label><Input value={bakery.name} onChange={e => setBakery({ ...bakery, name: e.target.value })} /></div>
+                  <div><Label>الهاتف</Label><Input value={bakery.phone || ''} onChange={e => setBakery({ ...bakery, phone: e.target.value })} /></div>
+                  <div className="md:col-span-2"><Label>العنوان</Label><Input value={bakery.address || ''} onChange={e => setBakery({ ...bakery, address: e.target.value })} /></div>
+                </div>
+                <Button onClick={saveBakery}>حفظ</Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
