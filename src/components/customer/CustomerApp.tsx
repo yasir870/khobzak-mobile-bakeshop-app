@@ -87,7 +87,8 @@ const CustomerApp = ({ onLogout }: CustomerAppProps) => {
       {selectedBakeryId ? (
         <CustomerDashboard 
           onLogout={onLogout} 
-          onBack={() => setSelectedBakeryId(null)} 
+          onBack={() => setSelectedBakeryId(null)}
+          bakeryId={selectedBakeryId}
         />
       ) : (
         <BakeriesListPage onSelectBakery={(id) => setSelectedBakeryId(id)} onLogout={onLogout} />
