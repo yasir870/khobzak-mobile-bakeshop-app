@@ -23,6 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 interface CustomerDashboardProps {
   onLogout: () => void;
   onBack?: () => void;
+  bakeryId?: number | null;
 }
 export interface BreadProduct {
   id: number;
@@ -41,7 +42,8 @@ export interface CartProduct extends BreadProduct {
 }
 const CustomerDashboard = ({
   onLogout,
-  onBack
+  onBack,
+  bakeryId
 }: CustomerDashboardProps) => {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -62,6 +64,45 @@ const CustomerDashboard = ({
   const [showActiveOrdersModal, setShowActiveOrdersModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [dbBreads, setDbBreads] = useState<BreadProduct[] | null>(null);
+  const [loadingBreads, setLoadingBreads] = useState(false);
+  // bakeryId >= 10000 means a real bakery from DB (offset added in BakeriesListPage)
+  const isDbBakery = typeof bakeryId === 'number' && bakeryId >= 10000;
+  const realBakeryId = isDbBakery ? (bakeryId as number) - 10000 : null;
+
+  useEffect(() => {
+    if (!isDbBakery || !realBakeryId) { setDbBreads(null); return; }
+    const fetchBreads = async () => {
+      setLoadingBreads(true);
+      const { data } = await supabase
+        .from('bread_products')
+        .select('*')
+        .eq('bakery_id', realBakeryId)
+        .eq('available', true)
+        .order('created_at', { ascending: false });
+      setDbBreads(
+        (data || []).map((p: any) => ({
+          id: Number(p.id),
+          name: p.name,
+          nameAr: '',
+          price: Number(p.price) || 0,
+          description: p.description || '',
+          detailedDescription: p.description || '',
+          images: [p.image_url || 'https://lakvfrohnlinfcqfwkqq.supabase.co/storage/v1/object/public/photos//A_logo_on_a_grid-patterned_beige_background_featur.png'],
+          category: '',
+          pieces: 1,
+          notes: '',
+        }))
+      );
+      setLoadingBreads(false);
+    };
+    fetchBreads();
+    const ch = supabase
+      .channel(`bread-products-${realBakeryId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bread_products', filter: `bakery_id=eq.${realBakeryId}` }, fetchBreads)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [isDbBakery, realBakeryId]);
 
   // عدل صور المنتجات من Emoji إلى روابط الصور الحقيقية التي رفعتها على Supabase
   const breadTypes: BreadProduct[] = [{
@@ -383,7 +424,17 @@ const CustomerDashboard = ({
         </Card>
 
         {/* Bread Menu */}
-        <BreadMenuList breadTypes={breadTypes} onProductClick={handleProductClick} />
+        {isDbBakery ? (
+          loadingBreads ? (
+            <p className="text-center text-muted-foreground py-8">جاري التحميل...</p>
+          ) : (dbBreads && dbBreads.length > 0) ? (
+            <BreadMenuList breadTypes={dbBreads} onProductClick={handleProductClick} />
+          ) : (
+            <p className="text-center text-muted-foreground py-12">لم يضف هذا المخبز أي منتجات بعد</p>
+          )
+        ) : (
+          <BreadMenuList breadTypes={breadTypes} onProductClick={handleProductClick} />
+        )}
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-6">
