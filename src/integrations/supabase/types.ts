@@ -95,6 +95,13 @@ export type Database = {
             referencedRelation: "bakeries"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bread_products_bakery_id_fkey"
+            columns: ["bakery_id"]
+            isOneToOne: false
+            referencedRelation: "bakeries_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       customers: {
@@ -414,7 +421,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      bakeries_public: {
+        Row: {
+          address: string | null
+          approved: boolean | null
+          created_at: string | null
+          id: number | null
+          logo_url: string | null
+          name: string | null
+        }
+        Insert: {
+          address?: string | null
+          approved?: boolean | null
+          created_at?: string | null
+          id?: number | null
+          logo_url?: string | null
+          name?: string | null
+        }
+        Update: {
+          address?: string | null
+          approved?: boolean | null
+          created_at?: string | null
+          id?: number | null
+          logo_url?: string | null
+          name?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       create_auth_user_for_existing: {
