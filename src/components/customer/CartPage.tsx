@@ -9,6 +9,7 @@ import { CartProduct } from './CustomerDashboard';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import OrderTrackingModal from './OrderTrackingModal';
+import { useAuth } from '@/context/AuthContext';
 
 interface CartPageProps {
   onBack: () => void;
@@ -38,6 +39,7 @@ const CartPage = ({ onBack, cartItems, setCartItems }: CartPageProps) => {
   const [selectedOrderForTracking, setSelectedOrderForTracking] = useState<Order | null>(null);
   const [showTrackingModal, setShowTrackingModal] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Fetch orders from Supabase
   const fetchOrders = async () => {
@@ -85,13 +87,10 @@ const CartPage = ({ onBack, cartItems, setCartItems }: CartPageProps) => {
 
   // Real-time subscription for order updates
   useEffect(() => {
-    if (activeTab !== 'orders') return;
-
-    const authUserId = (await supabase.auth.getUser()).data.user?.id;
-    if (!authUserId) return;
+    if (activeTab !== 'orders' || !user?.id) return;
 
     const channel = supabase
-      .channel(`cart-orders-changes:${authUserId}`, { config: { private: true } })
+      .channel(`cart-orders-changes:${user.id}`, { config: { private: true } })
       .on(
         'postgres_changes',
         {
@@ -129,7 +128,7 @@ const CartPage = ({ onBack, cartItems, setCartItems }: CartPageProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [activeTab, toast]);
+  }, [activeTab, toast, user?.id]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
