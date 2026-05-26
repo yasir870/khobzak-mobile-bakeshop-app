@@ -10,6 +10,7 @@ import ActiveOrdersModal from './ActiveOrdersModal';
 import OrderTrackingModal from './OrderTrackingModal';
 import NotificationsPage from './NotificationsPage';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 
 interface Bakery {
   id: number;
@@ -74,6 +75,7 @@ type ActiveView = 'home' | 'notifications' | 'profile';
 
 const BakeriesListPage = ({ onSelectBakery, onLogout }: BakeriesListPageProps) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [activeView, setActiveView] = useState<ActiveView>('home');
   const [contactOpen, setContactOpen] = useState(false);
   const [showActiveOrders, setShowActiveOrders] = useState(false);
@@ -116,6 +118,8 @@ const BakeriesListPage = ({ onSelectBakery, onLogout }: BakeriesListPageProps) =
   }, []);
 
   useEffect(() => {
+    if (!user?.id) return;
+
     const fetchUnread = async () => {
       const { count } = await supabase
         .from('notifications')
@@ -126,14 +130,14 @@ const BakeriesListPage = ({ onSelectBakery, onLogout }: BakeriesListPageProps) =
     fetchUnread();
 
     const channel = supabase
-      .channel(`notif-count-main:${userId}`, { config: { private: true } })
+      .channel(`notif-count-main:${user.id}`, { config: { private: true } })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
         fetchUnread();
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [user?.id]);
 
   const filters: { key: FilterType; label: string }[] = [
     { key: 'all', label: 'الكل' },
