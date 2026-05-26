@@ -122,7 +122,7 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
     if (!activeUser) return;
 
     const channel = supabase
-      .channel('orders-changes')
+      .channel(`driver-orders-changes:${activeUser.id}`, { config: { private: true } })
       .on(
         'postgres_changes',
         {

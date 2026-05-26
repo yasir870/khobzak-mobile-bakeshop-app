@@ -46,11 +46,12 @@ const NotificationsPage = ({ onBack }: NotificationsPageProps) => {
   };
 
   useEffect(() => {
+    if (!user?.id) return;
     fetchNotifications();
 
     // Real-time subscription
     const channel = supabase
-      .channel('notifications-realtime')
+      .channel(`notifications-realtime:${user?.id}`, { config: { private: true } })
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -61,7 +62,7 @@ const NotificationsPage = ({ onBack }: NotificationsPageProps) => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [user?.id]);
 
   const markAsRead = async (id: number) => {
     try {

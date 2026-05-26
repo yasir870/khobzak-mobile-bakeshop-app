@@ -81,8 +81,11 @@ const OrdersDialog = ({ open, onOpenChange, onTrackOrder }: OrdersDialogProps) =
   useEffect(() => {
     if (!open) return;
 
+    const authUserId = (await supabase.auth.getUser()).data.user?.id;
+    if (!authUserId) return;
+
     const channel = supabase
-      .channel('customer-orders-changes')
+      .channel(`customer-orders-changes:${authUserId}`, { config: { private: true } })
       .on(
         'postgres_changes',
         {

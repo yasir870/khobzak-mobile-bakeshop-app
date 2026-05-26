@@ -87,8 +87,11 @@ const CartPage = ({ onBack, cartItems, setCartItems }: CartPageProps) => {
   useEffect(() => {
     if (activeTab !== 'orders') return;
 
+    const authUserId = (await supabase.auth.getUser()).data.user?.id;
+    if (!authUserId) return;
+
     const channel = supabase
-      .channel('cart-orders-changes')
+      .channel(`cart-orders-changes:${authUserId}`, { config: { private: true } })
       .on(
         'postgres_changes',
         {
