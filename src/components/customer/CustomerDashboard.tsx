@@ -19,6 +19,7 @@ import OrderTrackingModal from './OrderTrackingModal';
 import ActiveOrdersModal from './ActiveOrdersModal';
 import { useTranslation } from '@/context/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 interface CustomerDashboardProps {
   onLogout: () => void;
@@ -47,6 +48,7 @@ const CustomerDashboard = ({
 }: CustomerDashboardProps) => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { user } = useAuth();
   // سنستخدم array من المنتجات مع quantity
   const [cartItems, setCartItems] = useState<CartProduct[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<BreadProduct | null>(null);
@@ -180,6 +182,8 @@ const CustomerDashboard = ({
 
   // Fetch unread notifications count
   useEffect(() => {
+    if (!user?.id) return;
+
     const fetchUnread = async () => {
       const { count } = await supabase
         .from('notifications')
@@ -190,14 +194,14 @@ const CustomerDashboard = ({
     fetchUnread();
 
     const channel = supabase
-      .channel('notif-count')
+      .channel(`notif-count:${user.id}`, { config: { private: true } })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
         fetchUnread();
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [user?.id]);
 
   // حفظ cart في localStorage كلما تغيرت
   useEffect(() => {

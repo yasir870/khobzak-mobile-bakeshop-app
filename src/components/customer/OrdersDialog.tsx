@@ -8,6 +8,7 @@ import { Clock, Package, CheckCircle, ShoppingBag, Truck, MapPin } from 'lucide-
 import { useTranslation } from '@/context/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 interface Order {
   id: number;
@@ -33,6 +34,7 @@ const OrdersDialog = ({ open, onOpenChange, onTrackOrder }: OrdersDialogProps) =
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -79,10 +81,10 @@ const OrdersDialog = ({ open, onOpenChange, onTrackOrder }: OrdersDialogProps) =
 
   // Real-time subscription for order status updates
   useEffect(() => {
-    if (!open) return;
+    if (!open || !user?.id) return;
 
     const channel = supabase
-      .channel('customer-orders-changes')
+      .channel(`customer-orders-changes:${user.id}`, { config: { private: true } })
       .on(
         'postgres_changes',
         {
@@ -120,7 +122,7 @@ const OrdersDialog = ({ open, onOpenChange, onTrackOrder }: OrdersDialogProps) =
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [open, toast]);
+  }, [open, toast, user?.id]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
