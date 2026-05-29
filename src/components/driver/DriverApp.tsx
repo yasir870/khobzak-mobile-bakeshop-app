@@ -121,24 +121,26 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
   useEffect(() => {
     if (!activeUser) return;
 
-    const channel = supabase
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    const subscribeToAssignedOrders = async () => {
+      const { data: driverId } = await supabase.rpc('get_driver_id_from_auth');
+      if (!driverId) return;
+
+      channel = supabase
       .channel(`driver-orders-changes:${activeUser.id}`, { config: { private: true } })
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'UPDATE',
           schema: 'public',
           table: 'orders',
+          filter: `driver_id=eq.${driverId}`,
         },
         (payload) => {
           console.log('Order change received:', payload);
 
-          if (payload.eventType === 'INSERT') {
-            toast({
-              title: 'طلب جديد!',
-              description: `تم إضافة طلب جديد #${payload.new.id}`,
-            });
-          } else if (payload.eventType === 'UPDATE' && payload.new.status === 'received') {
+          if (payload.eventType === 'UPDATE' && payload.new.status === 'received') {
             toast({
               title: 'تم استلام الطلب ✅',
               description: `تم تأكيد استلام الطلب #${payload.new.id} من قبل العميل`,
@@ -149,9 +151,12 @@ const DriverApp = ({ onLogout }: DriverAppProps) => {
         }
       )
       .subscribe();
+    };
+
+    subscribeToAssignedOrders();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
   }, [activeUser, toast]);
 

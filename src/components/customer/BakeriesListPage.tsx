@@ -89,7 +89,7 @@ const BakeriesListPage = ({ onSelectBakery, onLogout }: BakeriesListPageProps) =
   useEffect(() => {
     const fetchBakeries = async () => {
       const { data } = await supabase
-        .from('bakeries')
+        .from('bakeries_public')
         .select('id, name, logo_url, approved')
         .eq('approved', true)
         .order('created_at', { ascending: false });
