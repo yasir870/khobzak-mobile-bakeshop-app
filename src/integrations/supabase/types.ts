@@ -53,6 +53,41 @@ export type Database = {
         }
         Relationships: []
       }
+      bakeries_public: {
+        Row: {
+          address: string | null
+          approved: boolean
+          created_at: string
+          id: number
+          logo_url: string | null
+          name: string
+        }
+        Insert: {
+          address?: string | null
+          approved?: boolean
+          created_at: string
+          id: number
+          logo_url?: string | null
+          name: string
+        }
+        Update: {
+          address?: string | null
+          approved?: boolean
+          created_at?: string
+          id?: number
+          logo_url?: string | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bakeries_public_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "bakeries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bread_products: {
         Row: {
           available: boolean
@@ -93,13 +128,6 @@ export type Database = {
             columns: ["bakery_id"]
             isOneToOne: false
             referencedRelation: "bakeries"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bread_products_bakery_id_fkey"
-            columns: ["bakery_id"]
-            isOneToOne: false
-            referencedRelation: "bakeries_public"
             referencedColumns: ["id"]
           },
         ]
@@ -421,33 +449,7 @@ export type Database = {
       }
     }
     Views: {
-      bakeries_public: {
-        Row: {
-          address: string | null
-          approved: boolean | null
-          created_at: string | null
-          id: number | null
-          logo_url: string | null
-          name: string | null
-        }
-        Insert: {
-          address?: string | null
-          approved?: boolean | null
-          created_at?: string | null
-          id?: number | null
-          logo_url?: string | null
-          name?: string | null
-        }
-        Update: {
-          address?: string | null
-          approved?: boolean | null
-          created_at?: string | null
-          id?: number | null
-          logo_url?: string | null
-          name?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       create_auth_user_for_existing: {
